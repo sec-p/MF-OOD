@@ -1,0 +1,39 @@
+#!/bin/bash
+# ==============================================================================
+# Common parameters for all hyperparameter search scripts
+# ==============================================================================
+
+# Project root (relative to scripts directory)
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Default training parameters
+DEFAULT_EPOCHS=50
+DEFAULT_BATCH_SIZE=1024
+DEFAULT_LR=0.001
+DEFAULT_SEED=42
+DEFAULT_BACKBONE="ViT-B/16"
+DEFAULT_ROOT_PATH="/root/autodl-tmp"
+DEFAULT_SHOTS=16
+DEFAULT_CLASS_NEGATIVES_PATH="/root/FA/my_dataset/class_negatives.json"
+
+# Hyperparameter search grids
+LEARNING_RATES=(0.005)
+BATCH_SIZES=(1024)
+SEEDS=(42)
+
+# Loss function coefficients grids
+LAMBDA_LLM_NEGATIVES=(0.3 0.5)
+LAMBDA_MIXUP=(0)
+MARGIN_VALUES=(0.0 0.01 0.05)
+
+# Selector parameters grid
+NUM_SELECT_VALUES=(64)
+
+# Advanced parameters grid
+SELECTOR_TEMPERATURE=(1.0)
+PATCHES_PER_SLOT_ATTN=(8)
+
+# OOD score parameters
+SCORE_TYPE="MCM"
+TEMPERATURE=1.0
+LAMBDA_LOCAL=1.0
