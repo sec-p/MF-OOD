@@ -317,7 +317,7 @@ class QueryGuidedAttentionFuser(BaseFuser):
 
 
 class SelfAttentionFuser(BaseFuser):
-    def __init__(self, input_dim, num_heads=4, cfg=None):
+    def __init__(self, input_dim, num_heads=8, cfg=None):
         super().__init__(input_dim, cfg)
         
         # 允许配置层数，建议 2 层
@@ -757,7 +757,7 @@ class ModularCustomCLIP(nn.Module):
             'selected_feats': selected_feats,
             'final_feats': final_feats,
             'global_features': global_features,
-            'local_features': selected_feats
+            'local_features': local_features
         }
 
 

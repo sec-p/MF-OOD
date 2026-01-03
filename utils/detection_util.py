@@ -110,24 +110,28 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                 res=net(images)
                 global_features = res['global_features']  # .float()
                 local_features = res['local_features']  # .float()
+                selected_feats = res['selected_feats']
 
                 global_features = global_features.float()
                 local_features = local_features.float()
+                selected_feats = selected_feats.float()
 
                 global_features /= global_features.norm(dim=-1, keepdim=True)
-                local_features /= local_features.norm(dim=-1, keepdim=True)+1e-8
-                # local_features /= local_features.norm(dim=-1, keepdim=True)
+                local_features /= local_features.norm(dim=-1, keepdim=True)
+                selected_feats /= selected_feats.norm(dim=-1, keepdim=True)+1e-8
 
                 text_inputs = tokenizer([f"a photo of a {c}" for c in test_labels])
                 text_features = net.encode_text(text_inputs.cuda()).float()
                 text_features /= text_features.norm(dim=-1, keepdim=True)   
                 output_global = global_features @ text_features.T
                 output_local = local_features @ text_features.T
+                output_selected = selected_feats @ text_features.T
                 # import pdb
                 # pdb.set_trace()
 
                 smax_global = to_np(F.softmax(output_global/ args.T, dim=1))
                 smax_local = to_np(F.softmax(output_local/ args.T, dim=-1))  # batch, grid, grid, class
+                smax_selected = to_np(F.softmax(output_selected/ args.T, dim=-1))
 
                 if args.score == 'MCM':
                     _score.append(-np.max(smax_global, axis=1)) 
@@ -149,17 +153,49 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                     # patch_confidences = np.max(smax_local, axis=2) 
                     # mcm_local_score = -np.mean(patch_confidences, axis=1)
 
+                    mcm_local_score = -np.max(smax_local, axis=(1, 2))
 
-                    # 解法二：softmax+1 再在 Batch 维度取 Mean
-                    logits = (output_local / args.T).cpu().numpy()
-                    exp_x = np.exp(logits)
-                    # 分母 + 1
-                    probs = exp_x / (1 + np.sum(exp_x, axis=-1, keepdims=True))
-                    # 这样 Mean 就有意义了，背景 Patch 的 Max Prob 会很小
-                    mcm_local_score = np.mean(np.max(probs, axis=2), axis=1)
+                    mcm_selected_score= -np.min(np.max(smax_selected,axis=2), axis=(1))
+                    
 
 
-                    _score.append(mcm_global_score-args.lambda_local*mcm_local_score)
+                    _score.append(mcm_global_score+args.lambda_local*mcm_local_score+args.lambda_local*mcm_selected_score)
+
+                elif args.score == 'SA-MCM': # 推荐使用这个新名字：Structure-Aware MCM
+                    # 1. 确定目标类别 (基于最准的 Global 分数)
+                    # smax_global: (B, C)
+                    pred_labels = np.argmax(smax_global, axis=1) # (B,)
+                    
+                    # 2. 计算 Global Score
+                    mcm_global_score = -np.max(smax_global, axis=1) # 负号表示分数越高越ID(或越OOD，看你定义)
+                    
+                    # 3. 计算 Local Score (Selected Slots) - 修正部分
+                    # smax_selected: (B, K, C) -> 我们只关心 pred_labels 那一列
+                    B, K, C = smax_selected.shape
+                    
+                    # 使用花式索引提取：每个样本、所有Slot、对应的预测类
+                    # 结果形状: (B, K) -> 每个 Slot 对"预测类"的信心
+                    slot_confs = smax_selected[np.arange(B)[:, None], np.arange(K)[None, :], pred_labels[:, None]]
+                    
+                    # 4. 体现支撑集思想
+                    # 思想：木桶效应。如果是一个完整的 ID 物体，它的所有 Slot (头、腿、身) 都应该支持这个类。
+                    # 如果有一个 Slot 支持度极低 (比如腿不对)，说明结构不完整 -> OOD。
+                    min_slot_conf = np.min(slot_confs, axis=1) # (B,)
+                    
+                    mcm_selected_score = -min_slot_conf
+                    
+                    # 5. 计算原始 Local (Patch) Score - 修正部分
+                    # smax_local: (B, N, C)
+                    # 同样，我们只看预测类别的信心，而不是全局最大
+                    patch_confs = smax_local[np.arange(B)[:, None], np.arange(smax_local.shape[1])[None, :], pred_labels[:, None]]
+                    # 选最强的 Top-K Patch 平均 (排除背景)
+                    # topk_patch_conf = np.sort(patch_confs, axis=1)[:, -16:].mean(axis=1)
+                    # 或者简单点，用 Max
+                    mcm_local_score = -np.max(patch_confs, axis=1)
+
+                    # 6. 融合
+                    # 这里你可以调权重，min_slot_score 现在非常有意义了
+                    _score.append(mcm_global_score + args.lambda_local * mcm_selected_score)
 
                 else:
                     raise NotImplementedError

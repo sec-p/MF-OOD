@@ -135,7 +135,7 @@ class TrainEvalOrchestrator:
     def _setup_logging(self) -> str:
         """Setup logging directory and configure logging using file_ops utility."""
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        log_dir = f'/root/GL_MCM_FA/logs/{self.method}_{self.selector_type}_{self.seed}_{timestamp}'
+        log_dir = f'/data/ICML2026/GL_MCM_FA/logs/{self.method}_{self.selector_type}_{self.seed}_{timestamp}'
         os.makedirs(log_dir, exist_ok=True)
         os.makedirs(f'{log_dir}/checkpoints', exist_ok=True)
         
@@ -575,7 +575,7 @@ class TrainEvalOrchestrator:
             self.logger.debug(f'\n[Epoch {epoch+1}/{self.epochs}]')
             self.logger.debug(f'  Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%')
 
-            if (epoch+1) % 5 == 0 and epoch+1 > 10:
+            if (epoch+1) % 5 == 0 and epoch+1 > 20:
                 # Evaluate
                 eval_results = self.evaluate_epoch(epoch)
                 self.logger.debug(f'  ID Accuracy: {eval_results["id_accuracy"]:.2f}%')

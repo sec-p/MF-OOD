@@ -25,7 +25,7 @@ def process_args():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--in_dataset', default='ImageNet', type=str,
                         choices=['COCO_single', 'COCO_multi', 'VOC_single', 'ImageNet'], help='in-distribution dataset')
-    parser.add_argument('--root-dir', default="/root/autodl-tmp", type=str,
+    parser.add_argument('--root-dir', default="/data/ICML2026/clip/FA/my_dataset", type=str,
                         help='root dir of datasets')
     parser.add_argument('--name', default="eval_ood",
                         type=str, help="unique ID for the run")
@@ -39,9 +39,9 @@ def process_args():
     parser.add_argument('--model', default='modular', type=str, choices=['CLIP', 'modular'], help='model architecture')
     parser.add_argument('--CLIP_ckpt', type=str, default='ViT-B/16',
                         choices=['ViT-B/16', 'RN50', 'RN101'], help='which pretrained img encoder to use')
-    parser.add_argument('--score', default='MCM', type=str, choices=['MCM', 'L-MCM', 'GL-MCM','GL-MCM-L','GPT'], help='score options')
+    parser.add_argument('--score', default='MCM', type=str, choices=['MCM', 'L-MCM', 'GL-MCM','GL-MCM-L','GPT','SA-MCM'], help='score options')
     parser.add_argument('--num_ood_sumple', default=-1, type=int, help="numbers of ood_sumples")
-    parser.add_argument('--lambda_local', default=1.0, type=float, help='weight for local score')
+    parser.add_argument('--lambda_local', default=0.4, type=float, help='weight for local score')
     
     # Modular model parameters
     parser.add_argument('--model_path', type=str, default=None, help='path to trained modular model checkpoint')
