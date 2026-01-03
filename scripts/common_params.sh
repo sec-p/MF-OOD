@@ -12,12 +12,12 @@ DEFAULT_BATCH_SIZE=1024
 DEFAULT_LR=0.001
 DEFAULT_SEED=42
 DEFAULT_BACKBONE="ViT-B/16"
-DEFAULT_ROOT_PATH="/data/ICML2026/clip/FA/my_dataset"
+DEFAULT_ROOT_PATH="/root/autodl-tmp"
 DEFAULT_SHOTS=16
-DEFAULT_CLASS_NEGATIVES_PATH="/data/ICML2026/clip/FA/my_dataset/class_negatives.json"
+DEFAULT_CLASS_NEGATIVES_PATH="/root/MF-OOD/data/ImageNet/class_negatives.json"
 
 # Hyperparameter search grids
-LEARNING_RATES=(0.01)
+LEARNING_RATES=(0.005)
 BATCH_SIZES=(1024)
 SEEDS=(42)
 

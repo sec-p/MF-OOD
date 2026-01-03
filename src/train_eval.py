@@ -396,8 +396,8 @@ class TrainEvalOrchestrator:
             # Update progress bar with detailed loss info
             pbar.set_postfix(loss_info)
             
-            # Log detailed loss info occasionally
-            if batch_idx % 50 == 0:
+            # Log detailed loss info occasionally (reduced frequency)
+            if batch_idx % 100 == 0:
                 loss_str = f"CE: {ce_loss.item():.4f}"
                 for k, v in aux_losses.items():
                     loss_str += f", {k}: {v.item():.4f}"
@@ -575,8 +575,8 @@ class TrainEvalOrchestrator:
             self.logger.debug(f'\n[Epoch {epoch+1}/{self.epochs}]')
             self.logger.debug(f'  Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%')
 
-            if (epoch+1) % 5 == 0 and epoch+1 > 20:
-                # Evaluate
+            if (epoch+1) % 10 == 0 and epoch+1 > 20:
+                # Evaluate (reduced frequency from 5 to 10 epochs)
                 eval_results = self.evaluate_epoch(epoch)
                 self.logger.debug(f'  ID Accuracy: {eval_results["id_accuracy"]:.2f}%')
                 
@@ -589,8 +589,8 @@ class TrainEvalOrchestrator:
                 avg_fpr95 = eval_results["avg_ood_fpr95"]
                 self.logger.debug(f'  Avg OOD AUROC: {avg_auroc:.2f}%, Avg OOD FPR95: {avg_fpr95:.2f}%')
             
-                # Save checkpoint (Every 5 epochs or best)
-                if (epoch % 5 == 0 or epoch == self.epochs - 1) and epoch+1 > 10:
+                # Save checkpoint (Every 10 epochs or best)
+                if (epoch % 10 == 0 or epoch == self.epochs - 1) and epoch+1 > 20:
                     self.save_checkpoint(epoch, eval_results)
             
                 # Track best
@@ -605,10 +605,10 @@ class TrainEvalOrchestrator:
                 'train_loss': train_loss,
                 **eval_results
             })
-            
-            # Dump history
-            with open(os.path.join(self.log_dir, 'results.json'), 'w') as f:
-                json.dump(results_history, f, indent=2)
+                
+        # Save all results at once after training completes
+        with open(os.path.join(self.log_dir, 'results.json'), 'w') as f:
+            json.dump(results_history, f, indent=2)
                 
         self.logger.debug('\nTraining completed.')
 

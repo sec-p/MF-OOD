@@ -98,7 +98,19 @@ def get_ood_scores_clip(args, net, loader, test_labels):
     to_np = lambda x: x.data.cpu().numpy()
     concat = lambda x: np.concatenate(x, axis=0)
     _score = []
-    tokenizer = clip.tokenize
+    
+    # Use cached text features from model (already computed during initialization)
+    # No need to recompute - this avoids redundant computation
+    if hasattr(net, 'text_features') and net.text_features is not None:
+        text_features = net.text_features
+    else:
+        # Fallback: compute text features if not cached
+        tokenizer = clip.tokenize
+        with torch.no_grad():
+            text_inputs = tokenizer([f"a photo of a {c}" for c in test_labels])
+            text_features = net.encode_text(text_inputs.cuda()).float()
+            text_features /= text_features.norm(dim=-1, keepdim=True)
+    
     tqdm_object = tqdm(loader, total=len(loader))
     with torch.no_grad():
         with autocast():
@@ -112,17 +124,16 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                 local_features = res['local_features']  # .float()
                 selected_feats = res['selected_feats']
 
-                global_features = global_features.float()
-                local_features = local_features.float()
-                selected_feats = selected_feats.float()
+                # Remove unnecessary FP32 conversion - let autocast handle precision
+                # global_features = global_features.float()
+                # local_features = local_features.float()
+                # selected_feats = selected_feats.float()
 
                 global_features /= global_features.norm(dim=-1, keepdim=True)
                 local_features /= local_features.norm(dim=-1, keepdim=True)
                 selected_feats /= selected_feats.norm(dim=-1, keepdim=True)+1e-8
 
-                text_inputs = tokenizer([f"a photo of a {c}" for c in test_labels])
-                text_features = net.encode_text(text_inputs.cuda()).float()
-                text_features /= text_features.norm(dim=-1, keepdim=True)   
+                # Use cached text features from model (no recomputation needed)
                 output_global = global_features @ text_features.T
                 output_local = local_features @ text_features.T
                 output_selected = selected_feats @ text_features.T
