@@ -6,7 +6,7 @@ Now supports Automatic Mixed Precision (AMP) for stability and speed.
 """
 
 imagenet_templates = [
-    'a photo of the {}.'
+    'a photo of a {}.'
 ]
 
 import os
@@ -431,7 +431,7 @@ class TrainEvalOrchestrator:
         return id_acc
     
     def evaluate_ood_dataset(self, dataset_name: str, id_scores: np.ndarray) -> Tuple[float, float]:
-        """Evaluate on single OOD dataset using GL-MCM utils."""
+        """Evaluate on single OOD dataset using SA-MCM scoring."""
         if dataset_name not in self.ood_loaders:
             return 0.0, 0.0
         
@@ -448,9 +448,12 @@ class TrainEvalOrchestrator:
             lambda_local=self.lambda_local
         )
         
-        # Use GL-MCM's get_ood_scores_clip function for consistent scoring
-        # Use pre-computed ID scores to avoid redundant computation
-        out_score = get_ood_scores_clip(args, self.model, self.ood_loaders[dataset_name], self.classnames)
+        # Compute OOD scores using SA-MCM
+        if self.score_type == 'SA-MCM':
+            out_score = self._compute_sa_mcm_scores(self.model, self.ood_loaders[dataset_name], args)
+        else:
+            # Use GL-MCM's get_ood_scores_clip for other scoring methods
+            out_score = get_ood_scores_clip(args, self.model, self.ood_loaders[dataset_name], self.classnames)
         
         # Compute metrics using GL-MCM's get_measures
         if len(id_scores) == 0 or len(out_score) == 0:
@@ -461,6 +464,63 @@ class TrainEvalOrchestrator:
         
         # Convert AUROC to percentage, FPR95 is already in correct decimal form
         return auroc * 100, fpr95
+    
+    def _compute_sa_mcm_scores(self, model, loader, args):
+        """
+        Compute SA-MCM (Structure-Aware MCM) scores using local_classifier.
+        """
+        to_np = lambda x: x.data.cpu().numpy()
+        _score = []
+        
+        # Get num_select from config
+        num_select = model.cfg.get('num_select', 49) if hasattr(model, 'cfg') else 49
+        
+        with torch.no_grad():
+            for images, labels, *id_flag in tqdm(loader, total=len(loader)):
+                bz = images.size(0)
+                images = images.to(self.device)
+                
+                # Forward pass with autocast to handle dtype mismatch
+                with autocast():
+                    output_dict = model(images, labels=None)
+                    
+                    # Get features
+                    global_features = output_dict['global_features']  # (B, D)
+                    selected_feats = output_dict['selected_feats']  # (B, N, D)
+                    
+                    # Normalize features (add epsilon to avoid division by zero)
+                    global_features = global_features / (global_features.norm(dim=-1, keepdim=True) + 1e-8)
+                    selected_feats = selected_feats / (selected_feats.norm(dim=-1, keepdim=True) + 1e-8)
+                    
+                    # Get text features from model
+                    text_features = model.text_features  # (C, D)
+                    
+                    # 1. Compute Global Score
+                    output_global = global_features @ text_features.T  # (B, C)
+                    smax_global = to_np(F.softmax(output_global / args.T, dim=1))  # (B, C)
+                    pred_labels = np.argmax(smax_global, axis=1)  # (B,)
+                    mcm_global_score = -np.max(smax_global, axis=1)  # (B,)
+                    
+                    # 2. Compute Local Score using local_classifier
+                    patch_logits = model.local_classifier(selected_feats)  # (B, N, C)
+                    patch_probs = to_np(F.softmax(patch_logits / args.T, dim=-1))  # (B, N, C)
+                    
+                    # Extract confidence for predicted class
+                    B, N, C = patch_probs.shape
+                    patch_confs = patch_probs[np.arange(B)[:, None], np.arange(N)[None, :], pred_labels[:, None]]  # (B, N)
+                    
+                    # 3. Top-K Filter (ignore background tokens)
+                    # Sort patch confidences and take Top-K most confident
+                    topk_confs = np.sort(patch_confs, axis=1)[:, -num_select:]  # (B, num_select)
+                    
+                    # 4. Compute local score using Min (bucket effect)
+                    mcm_local_score = -np.min(topk_confs, axis=1)  # (B,)
+                    
+                    # 5. Final Score: Global + lambda * Local
+                    score = mcm_global_score + args.lambda_local * mcm_local_score
+                    _score.append(score)
+        
+        return np.concatenate(_score, axis=0)
     
 
     
@@ -575,7 +635,7 @@ class TrainEvalOrchestrator:
             self.logger.debug(f'\n[Epoch {epoch+1}/{self.epochs}]')
             self.logger.debug(f'  Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%')
 
-            if (epoch+1) % 10 == 0 and epoch+1 > 20:
+            if (epoch+1) % 10 == 0 and epoch+1 > 0:
                 # Evaluate (reduced frequency from 5 to 10 epochs)
                 eval_results = self.evaluate_epoch(epoch)
                 self.logger.debug(f'  ID Accuracy: {eval_results["id_accuracy"]:.2f}%')

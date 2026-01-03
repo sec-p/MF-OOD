@@ -1,0 +1,32 @@
+2026-01-03 23:37:33,686 : #########eval_ood############
+2026-01-03 23:37:42,711 : Loaded model checkpoint from /data/ICML2026/GL_MCM_FA/logs/GL_MCM_FA_mlp_42_20260103_225131/checkpoints/epoch_999.pt
+2026-01-03 23:39:21,493 : Evaluting OOD dataset iNaturalist
+2026-01-03 23:39:45,822 : in scores: DescribeResult(nobs=50000, minmax=(np.float32(-0.0017859493), np.float32(-0.0015073062)), mean=np.float32(-0.0016304329), variance=np.float64(1.0225792669853717e-09), skewness=np.float64(0.012223118916153908), kurtosis=np.float32(-0.029576063))
+2026-01-03 23:39:45,823 : out scores: DescribeResult(nobs=10000, minmax=(np.float32(-0.0016660335), np.float32(-0.0014938025)), mean=np.float32(-0.0015508194), variance=np.float64(5.095057067297175e-10), skewness=np.float64(-1.085623860359192), kurtosis=np.float32(1.8616967))
+2026-01-03 23:39:46,423 : 			GL-MCM
+2026-01-03 23:39:46,423 :   FPR95 AUROC AUPR
+2026-01-03 23:39:46,423 : & 11.62 & 97.34 & 99.39
+2026-01-03 23:39:46,423 : Evaluting OOD dataset SUN
+2026-01-03 23:40:16,515 : in scores: DescribeResult(nobs=50000, minmax=(np.float32(-0.0017859493), np.float32(-0.0015073062)), mean=np.float32(-0.0016304329), variance=np.float64(1.0225792669853717e-09), skewness=np.float64(0.012223118916153908), kurtosis=np.float32(-0.029576063))
+2026-01-03 23:40:16,516 : out scores: DescribeResult(nobs=10000, minmax=(np.float32(-0.0017097316), np.float32(-0.0014923849)), mean=np.float32(-0.0015649452), variance=np.float64(6.989174271391102e-10), skewness=np.float64(-0.7909727692604065), kurtosis=np.float32(1.3144455))
+2026-01-03 23:40:17,087 : 			GL-MCM
+2026-01-03 23:40:17,087 :   FPR95 AUROC AUPR
+2026-01-03 23:40:17,087 : & 27.50 & 93.82 & 98.46
+2026-01-03 23:40:17,087 : Evaluting OOD dataset places365
+2026-01-03 23:40:39,003 : in scores: DescribeResult(nobs=50000, minmax=(np.float32(-0.0017859493), np.float32(-0.0015073062)), mean=np.float32(-0.0016304329), variance=np.float64(1.0225792669853717e-09), skewness=np.float64(0.012223118916153908), kurtosis=np.float32(-0.029576063))
+2026-01-03 23:40:39,004 : out scores: DescribeResult(nobs=10000, minmax=(np.float32(-0.0017014684), np.float32(-0.0014942635)), mean=np.float32(-0.0015693469), variance=np.float64(8.544153816635197e-10), skewness=np.float64(-0.6971932649612427), kurtosis=np.float32(0.5884204))
+2026-01-03 23:40:39,533 : 			GL-MCM
+2026-01-03 23:40:39,533 :   FPR95 AUROC AUPR
+2026-01-03 23:40:39,533 : & 34.30 & 91.56 & 97.84
+2026-01-03 23:40:39,533 : Evaluting OOD dataset Texture
+2026-01-03 23:40:53,459 : in scores: DescribeResult(nobs=50000, minmax=(np.float32(-0.0017859493), np.float32(-0.0015073062)), mean=np.float32(-0.0016304329), variance=np.float64(1.0225792669853717e-09), skewness=np.float64(0.012223118916153908), kurtosis=np.float32(-0.029576063))
+2026-01-03 23:40:53,460 : out scores: DescribeResult(nobs=5640, minmax=(np.float32(-0.00170742), np.float32(-0.0015002321)), mean=np.float32(-0.0015768172), variance=np.float64(9.849087012649172e-10), skewness=np.float64(-0.4869212210178375), kurtosis=np.float32(0.09879804))
+2026-01-03 23:40:53,996 : 			GL-MCM
+2026-01-03 23:40:53,996 :   FPR95 AUROC AUPR
+2026-01-03 23:40:53,996 : & 46.40 & 88.10 & 98.20
+2026-01-03 23:40:53,996 : 
+
+Mean Test Results
+2026-01-03 23:40:53,996 : 			GL-MCM
+2026-01-03 23:40:53,996 :   FPR95 AUROC AUPR
+2026-01-03 23:40:53,996 : & 29.96 & 92.71 & 98.47

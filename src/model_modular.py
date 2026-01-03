@@ -513,6 +513,7 @@ class ModularCustomCLIP(nn.Module):
         self._build_components()
         self._cache_text_features()
         self._cache_negative_text_features()
+        self._init_local_classifier()
         print(f"✓ ModularCustomCLIP initialized. Dtype: {self.dtype}")
 
     def _build_components(self):
@@ -603,6 +604,22 @@ class ModularCustomCLIP(nn.Module):
                 self.label_to_neg_features[label] = feats
         
         print(f"✓ Cached negative text features for {len(self.negative_text_features)} classes")
+    
+    def _init_local_classifier(self):
+        """
+        Initialize local classifier for auxiliary local alignment task.
+        Uses cached text features as warm-start initialization.
+        """
+        self.local_classifier = nn.Linear(self.feat_dim, self.num_classes, bias=False)
+        
+        # Initialize with text features (warm-start)
+        # text_features shape: (num_classes, feat_dim)
+        # local_classifier.weight shape: (num_classes, feat_dim)
+        with torch.no_grad():
+            # Convert text_features to float32 for initialization
+            self.local_classifier.weight.copy_(self.text_features.float())
+        
+        print(f"✓ Local classifier initialized with text features (warm-start)")
 
     def set_ood_classmap(self, ood_map: Dict[str, list], templates: Optional[list] = None):
         # ... (Same as before, skipped for brevity)
@@ -654,7 +671,7 @@ class ModularCustomCLIP(nn.Module):
         global_features=image_features+final_feats
         # final_feats = F.normalize(global_features, dim=-1)
         # final_feats = F.normalize(final_feats, dim=-1)
-        final_feats = global_features / global_features.norm(dim=-1, keepdim=True)
+        final_feats = global_features / (global_features.norm(dim=-1, keepdim=True) + 1e-8)
         # final_feats = F.normalize(final_feats, dim=-1)
 
         # 5. Logits
@@ -663,6 +680,33 @@ class ModularCustomCLIP(nn.Module):
         
         # 6. Losses
         aux_losses = sel_aux_loss.copy()
+        
+        # E. Local Alignment (Auxiliary Local Discriminator)
+        if self.training and labels is not None:
+            # Get selected features and background mask
+            # selected_feats: (B, N, D), bg_mask: (B, N, 1)
+            B, N, D = selected_feats.shape
+            
+            # Flatten features and mask
+            flat_feats = selected_feats.reshape(B * N, D)  # (B*N, D)
+            flat_mask = bg_mask.reshape(B * N)  # (B*N)
+            
+            # Filter: only keep foreground tokens (mask > 0.5)
+            valid_mask = flat_mask.squeeze() > 0.5
+            if valid_mask.sum() > 0:  # Skip if no foreground tokens
+                valid_feats = flat_feats[valid_mask]  # (num_valid, D)
+                
+                # Align labels: expand to (B, N), flatten, and filter
+                expanded_labels = labels.unsqueeze(1).expand(B, N)  # (B, N)
+                flat_labels = expanded_labels.reshape(B * N)  # (B*N)
+                valid_labels = flat_labels[valid_mask]  # (num_valid)
+                
+                # Compute logits for valid features
+                valid_logits = self.local_classifier(valid_feats)  # (num_valid, num_classes)
+                
+                # Compute cross-entropy loss
+                loss_local_cls = F.cross_entropy(valid_logits, valid_labels)
+                aux_losses['local_alignment'] = loss_local_cls
         
         # A. Redundancy
         if self.cfg.get('use_redundancy_loss', False):

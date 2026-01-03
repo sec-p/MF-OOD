@@ -100,11 +100,12 @@ def get_ood_scores_clip(args, net, loader, test_labels):
     _score = []
     
     # Use cached text features from model (already computed during initialization)
-    # No need to recompute - this avoids redundant computation
+    # This ensures consistency with training: both use the same templates
     if hasattr(net, 'text_features') and net.text_features is not None:
         text_features = net.text_features
     else:
         # Fallback: compute text features if not cached
+        # Use the same template as training: 'a photo of a {}'
         tokenizer = clip.tokenize
         with torch.no_grad():
             text_inputs = tokenizer([f"a photo of a {c}" for c in test_labels])
@@ -129,9 +130,9 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                 # local_features = local_features.float()
                 # selected_feats = selected_feats.float()
 
-                global_features /= global_features.norm(dim=-1, keepdim=True)
-                local_features /= local_features.norm(dim=-1, keepdim=True)
-                selected_feats /= selected_feats.norm(dim=-1, keepdim=True)+1e-8
+                global_features /= (global_features.norm(dim=-1, keepdim=True) + 1e-8)
+                local_features /= (local_features.norm(dim=-1, keepdim=True) + 1e-8)
+                selected_feats /= (selected_feats.norm(dim=-1, keepdim=True) + 1e-8)
 
                 # Use cached text features from model (no recomputation needed)
                 output_global = global_features @ text_features.T
@@ -172,41 +173,40 @@ def get_ood_scores_clip(args, net, loader, test_labels):
 
                     _score.append(mcm_global_score+args.lambda_local*mcm_local_score+args.lambda_local*mcm_selected_score)
 
-                elif args.score == 'SA-MCM': # 推荐使用这个新名字：Structure-Aware MCM
-                    # 1. 确定目标类别 (基于最准的 Global 分数)
+                elif args.score == 'SA-MCM': # Structure-Aware MCM with Local Classifier
+                    # 1. Determine target class (based on most accurate Global score)
                     # smax_global: (B, C)
                     pred_labels = np.argmax(smax_global, axis=1) # (B,)
                     
-                    # 2. 计算 Global Score
-                    mcm_global_score = -np.max(smax_global, axis=1) # 负号表示分数越高越ID(或越OOD，看你定义)
+                    # 2. Compute Global Score
+                    mcm_global_score = -np.max(smax_global, axis=1) # Negative: higher score = more ID-like
                     
-                    # 3. 计算 Local Score (Selected Slots) - 修正部分
-                    # smax_selected: (B, K, C) -> 我们只关心 pred_labels 那一列
-                    B, K, C = smax_selected.shape
+                    # 3. Compute Local Score using local_classifier
+                    # Get patch logits from local_classifier
+                    patch_logits = net.local_classifier(selected_feats)  # (B, N, C)
+                    patch_probs = to_np(F.softmax(patch_logits / args.T, dim=-1))  # (B, N, C)
                     
-                    # 使用花式索引提取：每个样本、所有Slot、对应的预测类
-                    # 结果形状: (B, K) -> 每个 Slot 对"预测类"的信心
-                    slot_confs = smax_selected[np.arange(B)[:, None], np.arange(K)[None, :], pred_labels[:, None]]
+                    # Extract confidence for predicted class
+                    B, N, C = patch_probs.shape
+                    patch_confs = patch_probs[np.arange(B)[:, None], np.arange(N)[None, :], pred_labels[:, None]]  # (B, N)
                     
-                    # 4. 体现支撑集思想
-                    # 思想：木桶效应。如果是一个完整的 ID 物体，它的所有 Slot (头、腿、身) 都应该支持这个类。
-                    # 如果有一个 Slot 支持度极低 (比如腿不对)，说明结构不完整 -> OOD。
-                    min_slot_conf = np.min(slot_confs, axis=1) # (B,)
+                    # 4. Top-K Filter (ignore background tokens)
+                    # Get num_select from config (default to 49 if not available)
+                    num_select = getattr(net, 'num_select', 49)
+                    if hasattr(net, 'cfg') and net.cfg is not None:
+                        num_select = net.cfg.get('num_select', 49)
                     
-                    mcm_selected_score = -min_slot_conf
+                    # For each sample, sort patch confidences and take Top-K
+                    # Top-K represents the most confident foreground patches
+                    topk_confs = np.sort(patch_confs, axis=1)[:, -num_select:]  # (B, num_select)
                     
-                    # 5. 计算原始 Local (Patch) Score - 修正部分
-                    # smax_local: (B, N, C)
-                    # 同样，我们只看预测类别的信心，而不是全局最大
-                    patch_confs = smax_local[np.arange(B)[:, None], np.arange(smax_local.shape[1])[None, :], pred_labels[:, None]]
-                    # 选最强的 Top-K Patch 平均 (排除背景)
-                    # topk_patch_conf = np.sort(patch_confs, axis=1)[:, -16:].mean(axis=1)
-                    # 或者简单点，用 Max
-                    mcm_local_score = -np.max(patch_confs, axis=1)
-
-                    # 6. 融合
-                    # 这里你可以调权重，min_slot_score 现在非常有意义了
-                    _score.append(mcm_global_score + args.lambda_local * mcm_selected_score)
+                    # 5. Compute local score using Min (bucket effect)
+                    # If all top-K patches support the predicted class -> ID
+                    # If any patch has low support -> OOD (incomplete structure)
+                    mcm_local_score = -np.min(topk_confs, axis=1)  # (B,)
+                    
+                    # 6. Final Score: Global + lambda * Local
+                    _score.append(mcm_global_score + args.lambda_local * mcm_local_score)
 
                 else:
                     raise NotImplementedError
