@@ -6,7 +6,7 @@ Now supports Automatic Mixed Precision (AMP) for stability and speed.
 """
 
 imagenet_templates = [
-    'a photo of the {}.'
+    'a photo of a {}.'
 ]
 
 import os
