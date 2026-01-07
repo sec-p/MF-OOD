@@ -101,15 +101,15 @@ def get_ood_scores_clip(args, net, loader, test_labels):
     
     # Use cached text features from model (already computed during initialization)
     # No need to recompute - this avoids redundant computation
-    if hasattr(net, 'text_features') and net.text_features is not None:
-        text_features = net.text_features
-    else:
+    # if hasattr(net, 'text_features') and net.text_features is not None:
+    #     text_features = net.text_features
+    # else:
         # Fallback: compute text features if not cached
-        tokenizer = clip.tokenize
-        with torch.no_grad():
-            text_inputs = tokenizer([f"a photo of a {c}" for c in test_labels])
-            text_features = net.encode_text(text_inputs.cuda()).float()
-            text_features /= text_features.norm(dim=-1, keepdim=True)
+    tokenizer = clip.tokenize
+    with torch.no_grad():
+        text_inputs = tokenizer([f"a photo of a {c}" for c in test_labels])
+        text_features = net.encode_text(text_inputs.cuda()).float()
+        text_features /= text_features.norm(dim=-1, keepdim=True)
     
     tqdm_object = tqdm(loader, total=len(loader))
     with torch.no_grad():
@@ -120,6 +120,8 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                 images = images.cuda()
                 # global_features, local_features = net.encode_image(images)  # .float()
                 res=net(images)
+
+                final_feats = res['final_feats']
                 global_features = res['global_features']  # .float()
                 local_features = res['local_features']  # .float()
                 selected_feats = res['selected_feats']
@@ -130,6 +132,7 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                 # selected_feats = selected_feats.float()
 
                 global_features /= global_features.norm(dim=-1, keepdim=True)
+                final_feats /= final_feats.norm(dim=-1, keepdim=True)
                 local_features /= local_features.norm(dim=-1, keepdim=True)
                 selected_feats /= selected_feats.norm(dim=-1, keepdim=True)+1e-8
 
@@ -137,12 +140,25 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                 output_global = global_features @ text_features.T
                 output_local = local_features @ text_features.T
                 output_selected = selected_feats @ text_features.T
+                output_final = final_feats @ text_features.T
+
+                # output_global = net.logit_scale * global_features @ text_features.T
+                # output_local = net.logit_scale * local_features @ text_features.T
+                # output_selected = net.logit_scale * selected_feats @ text_features.T
+                # output_final = net.logit_scale * final_feats @ text_features.T
+
                 # import pdb
                 # pdb.set_trace()
 
                 smax_global = to_np(F.softmax(output_global/ args.T, dim=1))
                 smax_local = to_np(F.softmax(output_local/ args.T, dim=-1))  # batch, grid, grid, class
                 smax_selected = to_np(F.softmax(output_selected/ args.T, dim=-1))
+                smax_final = to_np(F.softmax(output_final/ args.T, dim=1))
+
+                bg_mask = to_np(res['bg_mask'])  # (B, N, 1)
+                bg_mask_flat = bg_mask.squeeze()  # (B, N)
+
+                selected_scores = res['selected_scores']
 
                 if args.score == 'MCM':
                     _score.append(-np.max(smax_global, axis=1)) 
@@ -156,8 +172,7 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                     mcm_local_score = -np.max(smax_local, axis=(1, 2))
                     _score.append(mcm_global_score+args.lambda_local*mcm_local_score)
                 elif args.score == 'GL-MCM-L':
-                    # import pdb
-                    # pdb.set_trace()
+                    
                     mcm_global_score = -np.max(smax_global, axis=1)
 
                     #解法一：先在 Patch 维度取 Max，再在 Batch 维度取 Mean
@@ -168,45 +183,67 @@ def get_ood_scores_clip(args, net, loader, test_labels):
 
                     mcm_selected_score= -np.min(np.max(smax_selected,axis=2), axis=(1))
                     
+                    avg_score = selected_scores.mean(dim=-1) # (B, N)
+                    # 计算熵
+                    probs = F.softmax(avg_score / args.T, dim=-1)
+                    entropy = -(probs * torch.log(probs + 1e-8)).sum(dim=-1) # (B,)
 
+                    _score.append(mcm_global_score+args.lambda_local*mcm_local_score+args.lambda_local*mcm_selected_score- 0.1 * entropy.cpu().numpy())
 
-                    _score.append(mcm_global_score+args.lambda_local*mcm_local_score+args.lambda_local*mcm_selected_score)
-
-                elif args.score == 'SA-MCM': # 推荐使用这个新名字：Structure-Aware MCM
-                    # 1. 确定目标类别 (基于最准的 Global 分数)
+                elif args.score == 'SA-MCM': # Structure-Aware MCM with Local Classifier
+                    # 1. Determine target class (based on most accurate Global score)
                     # smax_global: (B, C)
+                    
+
                     pred_labels = np.argmax(smax_global, axis=1) # (B,)
                     
-                    # 2. 计算 Global Score
-                    mcm_global_score = -np.max(smax_global, axis=1) # 负号表示分数越高越ID(或越OOD，看你定义)
-                    
-                    # 3. 计算 Local Score (Selected Slots) - 修正部分
-                    # smax_selected: (B, K, C) -> 我们只关心 pred_labels 那一列
-                    B, K, C = smax_selected.shape
-                    
-                    # 使用花式索引提取：每个样本、所有Slot、对应的预测类
-                    # 结果形状: (B, K) -> 每个 Slot 对"预测类"的信心
-                    slot_confs = smax_selected[np.arange(B)[:, None], np.arange(K)[None, :], pred_labels[:, None]]
-                    
-                    # 4. 体现支撑集思想
-                    # 思想：木桶效应。如果是一个完整的 ID 物体，它的所有 Slot (头、腿、身) 都应该支持这个类。
-                    # 如果有一个 Slot 支持度极低 (比如腿不对)，说明结构不完整 -> OOD。
-                    min_slot_conf = np.min(slot_confs, axis=1) # (B,)
-                    
-                    mcm_selected_score = -min_slot_conf
-                    
-                    # 5. 计算原始 Local (Patch) Score - 修正部分
-                    # smax_local: (B, N, C)
-                    # 同样，我们只看预测类别的信心，而不是全局最大
-                    patch_confs = smax_local[np.arange(B)[:, None], np.arange(smax_local.shape[1])[None, :], pred_labels[:, None]]
-                    # 选最强的 Top-K Patch 平均 (排除背景)
-                    # topk_patch_conf = np.sort(patch_confs, axis=1)[:, -16:].mean(axis=1)
-                    # 或者简单点，用 Max
-                    mcm_local_score = -np.max(patch_confs, axis=1)
+                    # 2. Compute Global Score
+                    mcm_global_score = -np.max(smax_global, axis=1) # Negative: higher score = more ID-like
 
-                    # 6. 融合
-                    # 这里你可以调权重，min_slot_score 现在非常有意义了
-                    _score.append(mcm_global_score + args.lambda_local * mcm_selected_score)
+                    mcm_local_score = -np.max(smax_local, axis=(1, 2))
+
+                    mcm_selected_score= -np.min(np.max(smax_selected,axis=2), axis=(1))
+                    
+                    # 3. Compute Local Score for each sample individually
+                    # Process each sample separately to avoid masked feature noise
+                    B = selected_feats.shape[0]
+                    mcm_local_score_list = []
+                    
+                    for i in range(B):
+                        # a. Get mask for this sample
+                        valid_mask_i = bg_mask_flat[i] > 0.5  # (N,)
+                        num_valid = valid_mask_i.sum()
+                        
+                        if num_valid > 0:
+                            # b. Get valid features for this sample
+                            valid_feats_i = selected_feats[i][valid_mask_i]  # (num_valid, D)
+                            
+                            # c. Normalize valid features
+                            valid_feats_i = valid_feats_i / valid_feats_i.norm(dim=-1, keepdim=True)
+                            
+                            # d. Compute scores for valid features
+                            output_selected_i = valid_feats_i @ text_features.T  # (num_valid, C)
+                            
+                            # e. Apply temperature and softmax
+                            smax_selected_i = to_np(F.softmax(output_selected_i / args.T, dim=-1))  # (num_valid, C)
+                            
+                            # f. Extract confidence for predicted class
+                            patch_confs_i = smax_selected_i[:, pred_labels[i]]  # (num_valid,)
+                            
+                            # g. Compute local score (using Max for now, can be adjusted to min/mean)
+                            mcm_local_score_i = -np.mean(patch_confs_i)
+                        else:
+                            # If no valid features, use a default score
+                            mcm_local_score_i = 0.0
+                        
+                        mcm_local_score_list.append(mcm_local_score_i)
+                    
+                    mcm_selected_score = np.array(mcm_local_score_list)  # (B,)
+                    import pdb
+                    pdb.set_trace()
+                    # 4. Final Score: Global + lambda * Local
+                    _score.append(mcm_global_score + args.lambda_local*mcm_local_score + args.lambda_local * mcm_selected_score)
+
 
                 else:
                     raise NotImplementedError

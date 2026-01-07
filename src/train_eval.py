@@ -288,7 +288,7 @@ class TrainEvalOrchestrator:
             'use_mixup_invariance': True if self.lambda_mixup > 0 else False,
             
             # Loss weights
-            'lambda_redundancy': 0.1,
+            'lambda_redundancy': 1.0,
         }
         
         self.logger.debug(f'Config: {json.dumps(cfg, default=str, indent=2)}')
@@ -575,7 +575,7 @@ class TrainEvalOrchestrator:
             self.logger.debug(f'\n[Epoch {epoch+1}/{self.epochs}]')
             self.logger.debug(f'  Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%')
 
-            if (epoch+1) % 10 == 0 and epoch+1 > 20:
+            if (epoch+1) % 10 == 0 and epoch+1 > 1:
                 # Evaluate (reduced frequency from 5 to 10 epochs)
                 eval_results = self.evaluate_epoch(epoch)
                 self.logger.debug(f'  ID Accuracy: {eval_results["id_accuracy"]:.2f}%')

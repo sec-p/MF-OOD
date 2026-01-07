@@ -93,7 +93,8 @@ class MultiHeadMLPSelector(BaseSelector):
         B, N, D = local_feats.shape
         dtype = local_feats.dtype
         device = local_feats.device
-        
+        # import pdb
+        # pdb.set_trace()
         # 1. Scorer can run in FP16 (faster)
         head_scores_list = [scorer(local_feats) for scorer in self.scorers]
         scores = torch.cat(head_scores_list, dim=-1)  # (B, N, H)
@@ -129,7 +130,7 @@ class MultiHeadMLPSelector(BaseSelector):
         ste_mask = ste_mask.to(dtype)
         selected_feats = local_feats * ste_mask
         
-        return selected_feats, {'diversity': diversity_loss.to(dtype)}, ste_mask
+        return selected_feats, {'diversity': diversity_loss.to(dtype)}, ste_mask, scores_fp32
     
     @staticmethod
     def _compute_diversity_loss_fp32(head_scores: torch.Tensor) -> torch.Tensor:
@@ -142,7 +143,6 @@ class MultiHeadMLPSelector(BaseSelector):
         # Identity
         I = torch.eye(num_heads, device=head_scores.device).unsqueeze(0).expand(B, -1, -1)
         return (gram_matrix - I).abs().mean()
-
 
 class SparseSlotAttentionSelector(BaseSelector):
     """
@@ -321,7 +321,7 @@ class SelfAttentionFuser(BaseFuser):
         super().__init__(input_dim, cfg)
         
         # 允许配置层数，建议 2 层
-        num_layers = cfg.get('fuser_layers', 2) if cfg else 2
+        num_layers = cfg.get('fuser_layers', 1) if cfg else 2
         
         # 【修改点 1】删掉了 self.cls_token = nn.Parameter(...)
         # 我们直接用外部传入的特征
@@ -640,7 +640,7 @@ class ModularCustomCLIP(nn.Module):
         # local_features = F.normalize(local_features, dim=-1)
         
         # 2. Select Features (Mixed Precision managed internally)
-        selected_feats, sel_aux_loss, bg_mask = self.selector(local_features)
+        selected_feats, sel_aux_loss, bg_mask, scores = self.selector(local_features)
 
         # 3. Text Features
         text_feats = self._text_features.type(self.dtype)
@@ -755,9 +755,11 @@ class ModularCustomCLIP(nn.Module):
             'logits': logits,
             'aux_losses': aux_losses,
             'selected_feats': selected_feats,
+            'bg_mask': bg_mask,
             'final_feats': final_feats,
             'global_features': global_features,
-            'local_features': local_features
+            'local_features': local_features,
+            'selected_scores': scores
         }
 
 
