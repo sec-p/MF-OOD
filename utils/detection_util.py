@@ -101,15 +101,15 @@ def get_ood_scores_clip(args, net, loader, test_labels):
     
     # Use cached text features from model (already computed during initialization)
     # No need to recompute - this avoids redundant computation
-    # if hasattr(net, 'text_features') and net.text_features is not None:
-    #     text_features = net.text_features
-    # else:
+    if hasattr(net, 'text_features') and net.text_features is not None:
+        text_features = net.text_features
+    else:
         # Fallback: compute text features if not cached
-    tokenizer = clip.tokenize
-    with torch.no_grad():
-        text_inputs = tokenizer([f"a photo of a {c}" for c in test_labels])
-        text_features = net.encode_text(text_inputs.cuda()).float()
-        text_features /= text_features.norm(dim=-1, keepdim=True)
+        tokenizer = clip.tokenize
+        with torch.no_grad():
+            text_inputs = tokenizer([f"a photo of a {c}" for c in test_labels])
+            text_features = net.encode_text(text_inputs.cuda()).float()
+            text_features /= text_features.norm(dim=-1, keepdim=True)
     
     tqdm_object = tqdm(loader, total=len(loader))
     with torch.no_grad():
