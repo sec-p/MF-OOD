@@ -244,6 +244,32 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                     # 4. Final Score: Global + lambda * Local
                     _score.append(mcm_global_score + args.lambda_local*mcm_local_score + args.lambda_local * mcm_selected_score)
 
+                elif args.score == 'AL-MCM': # Attribute-Local MCM
+                    # 1. Compute Global Score (standard MCM)
+                    mcm_global_score = -np.max(smax_global, axis=1)
+                    
+                    # 2. Compute Local Attribute Score
+                    # Retrieve cached attribute features from model
+                    if hasattr(net, 'attribute_features'):
+                        attribute_features = net.attribute_features  # [1000, D]
+                    else:
+                        # Fallback to text features if attribute features not available
+                        attribute_features = text_features
+                    
+                    # Compute Similarity: selected_feats [B, N, D] @ attribute_features.T [D, 1000] -> [B, N, 1000]
+                    sim = selected_feats @ attribute_features.T
+                    
+                    # Max-Pooling: Find best matching patch for each class attribute
+                    val, _ = sim.max(dim=1)  # [B, 1000]
+                    
+                    # Apply temperature and softmax
+                    s_attr = to_np(F.softmax(val / args.T, dim=1))
+                    
+                    # MCM score for attributes
+                    mcm_attr_score = -np.max(s_attr, axis=1)
+                    
+                    # 3. Fusion: Global + lambda * Local Attribute
+                    _score.append(mcm_global_score + args.lambda_local * mcm_attr_score)
 
                 else:
                     raise NotImplementedError

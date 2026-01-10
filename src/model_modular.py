@@ -513,6 +513,7 @@ class ModularCustomCLIP(nn.Module):
         self._build_components()
         self._cache_text_features()
         self._cache_negative_text_features()
+        self._cache_attribute_features()
         print(f"✓ ModularCustomCLIP initialized. Dtype: {self.dtype}")
 
     def _build_components(self):
@@ -603,6 +604,94 @@ class ModularCustomCLIP(nn.Module):
                 self.label_to_neg_features[label] = feats
         
         print(f"✓ Cached negative text features for {len(self.negative_text_features)} classes")
+
+    def _cache_attribute_features(self):
+        """
+        Cache attribute features for all classes using LLM-generated visual attributes.
+        Loads JSON from data/imagenet_attributes_top5_clean.json.
+        """
+        import os
+        
+        # Try to load attributes file from multiple possible locations
+        attr_file_paths = [
+            os.path.join(os.path.dirname(__file__), '..', 'data', 'imagenet_attributes_top5_clean.json'),
+            os.path.join(os.path.dirname(__file__), '..', 'data', 'imagenet_attributes_raw_overkill.json'),
+            '/root/MF-OOD/data/imagenet_attributes_top5_clean.json',
+            '/root/MF-OOD/data/imagenet_attributes_raw_overkill.json',
+        ]
+        
+        attributes_dict = None
+        for attr_file_path in attr_file_paths:
+            if os.path.exists(attr_file_path):
+                try:
+                    with open(attr_file_path, 'r') as f:
+                        attributes_dict = json.load(f)
+                    print(f"✓ Loaded attributes from {attr_file_path}")
+                    break
+                except Exception as e:
+                    print(f"Warning: Failed to load attributes from {attr_file_path}: {e}")
+                    continue
+        
+        if attributes_dict is None:
+            print("Warning: Attributes file not found. Using base text features as fallback.")
+            self.attribute_features = self.text_features
+            self.register_buffer('_attribute_features', self.attribute_features)
+            return
+        
+        # Attribute templates for local verification
+        attr_templates = [
+            "a close-up photo of the {attr} of a {classname}.",
+            "the {attr} of a {classname}."
+        ]
+        
+        attribute_features_list = []
+        
+        with torch.no_grad():
+            for class_idx, classname in enumerate(self.classnames):
+                class_key = str(class_idx)
+                
+                # Check if this class has attributes
+                if class_key in attributes_dict and attributes_dict[class_key]:
+                    attrs = attributes_dict[class_key][:5]  # Top-5 attributes
+                    class_attr_feats = []
+                    
+                    for attr in attrs:
+                        # Generate prompts for this attribute using both templates
+                        attr_prompts = []
+                        for template in attr_templates:
+                            attr_prompts.append(template.format(attr=attr, classname=classname.replace('_', ' ')))
+                        
+                        # Tokenize and encode
+                        tokens = clip.tokenize(attr_prompts).to(self.device)
+                        text_embeddings = self.text_encoder.encode_text(tokens)
+                        
+                        # Normalize
+                        text_embeddings = text_embeddings / text_embeddings.norm(dim=-1, keepdim=True)
+                        
+                        # Mean pooling across templates
+                        mean_attr_feat = text_embeddings.mean(dim=0)
+                        mean_attr_feat = mean_attr_feat / mean_attr_feat.norm()
+                        
+                        class_attr_feats.append(mean_attr_feat)
+                    
+                    # Ensure we have 5 attributes (pad if necessary)
+                    while len(class_attr_feats) < 5:
+                        class_attr_feats.append(self.text_features[class_idx])
+                    
+                    # Stack and mean pool across attributes for this class
+                    class_attr_feats_stacked = torch.stack(class_attr_feats, dim=0)  # [5, D]
+                    class_attr_feat = class_attr_feats_stacked.mean(dim=0)  # [D]
+                    class_attr_feat = class_attr_feat / class_attr_feat.norm()
+                    
+                    attribute_features_list.append(class_attr_feat)
+                else:
+                    # Fallback: Use base text feature if no attributes available
+                    attribute_features_list.append(self.text_features[class_idx])
+        
+        # Stack all class attribute features
+        self.attribute_features = torch.stack(attribute_features_list, dim=0).to(self.device).type(self.dtype)
+        self.register_buffer('_attribute_features', self.attribute_features)
+        print(f"✓ Cached attribute features for {len(attribute_features_list)} classes")
 
     def set_ood_classmap(self, ood_map: Dict[str, list], templates: Optional[list] = None):
         # ... (Same as before, skipped for brevity)

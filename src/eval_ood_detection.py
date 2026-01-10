@@ -39,7 +39,7 @@ def process_args():
     parser.add_argument('--model', default='modular', type=str, choices=['CLIP', 'modular'], help='model architecture')
     parser.add_argument('--CLIP_ckpt', type=str, default='ViT-B/16',
                         choices=['ViT-B/16', 'RN50', 'RN101'], help='which pretrained img encoder to use')
-    parser.add_argument('--score', default='MCM', type=str, choices=['MCM', 'L-MCM', 'GL-MCM','GL-MCM-L','GPT','SA-MCM'], help='score options')
+    parser.add_argument('--score', default='MCM', type=str, choices=['MCM', 'L-MCM', 'GL-MCM','GL-MCM-L','GPT','SA-MCM','AL-MCM'], help='score options')
     parser.add_argument('--num_ood_sumple', default=-1, type=int, help="numbers of ood_sumples")
     parser.add_argument('--lambda_local', default=0.5, type=float, help='weight for local score')
     
