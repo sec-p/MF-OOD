@@ -1,0 +1,7002 @@
+{
+  "0": [
+    "pelvic fins",
+    "head",
+    "tapered tail region",
+    "tail fin",
+    "dorsal fin"
+  ],
+  "1": [
+    "pelvic fins",
+    "head",
+    "fan-shaped tail fin",
+    "tail fin",
+    "dorsal fin"
+  ],
+  "2": [
+    "tapering body towards tail",
+    "robust fusiform body",
+    "gill slits",
+    "pelvic fins",
+    "head"
+  ],
+  "3": [
+    "caudal fin",
+    "gill slits",
+    "pelvic fins",
+    "tapering tail region",
+    "head"
+  ],
+  "4": [
+    "caudal fin",
+    "narrow body compared to head",
+    "gill slits",
+    "flattened hammer-like head",
+    "pelvic fins"
+  ],
+  "5": [
+    "tapering tail",
+    "pelvic fins",
+    "paired dorsal fins",
+    "caudal fin at tail tip",
+    "mouth on underside"
+  ],
+  "6": [
+    "gill slits on underside",
+    "pelvic fins",
+    "caudal fin folds along tail",
+    "mouth on underside",
+    "broad body span"
+  ],
+  "7": [
+    "relatively small head compared to body",
+    "fan-shaped tail outline",
+    "upright, vertically oriented body",
+    "scaly legs",
+    "long sickle-shaped tail feathers"
+  ],
+  "8": [
+    "low-slung body shape",
+    "small head relative to body",
+    "rounded, plump body",
+    "scaly legs",
+    "breast"
+  ],
+  "9": [
+    "large feathered body",
+    "two-toed feet with claws",
+    "small head",
+    "large eyes",
+    "large rounded torso"
+  ],
+  "10": [
+    "slightly notched tail",
+    "rounded head",
+    "tail",
+    "short conical beak",
+    "breast"
+  ],
+  "11": [
+    "rounded head",
+    "small rounded body",
+    "tail",
+    "slightly forked tail",
+    "breast"
+  ],
+  "12": [
+    "medium-length notched tail",
+    "rounded head",
+    "small elongated body",
+    "tail",
+    "breast"
+  ],
+  "13": [
+    "relatively long tail",
+    "rounded head",
+    "tail",
+    "short conical beak",
+    "breast"
+  ],
+  "14": [
+    "short slightly notched tail",
+    "lower mandible",
+    "rounded head",
+    "upper mandible",
+    "tail"
+  ],
+  "15": [
+    "straight, narrow bill",
+    "medium-length tail",
+    "head",
+    "tail",
+    "smoothly curved back"
+  ],
+  "16": [
+    "head",
+    "slightly elongated tail",
+    "tapering bill",
+    "medium-length legs",
+    "breast"
+  ],
+  "17": [
+    "strong, slightly hooked bill",
+    "medium-length tail",
+    "head",
+    "tail",
+    "broad wings"
+  ],
+  "18": [
+    "head",
+    "relatively short legs",
+    "primary feathers",
+    "very long tail",
+    "long tail feathers"
+  ],
+  "19": [
+    "head",
+    "tail",
+    "short tail",
+    "short, conical bill",
+    "compact, rounded body"
+  ],
+  "20": [
+    "head",
+    "tail",
+    "short tail",
+    "rounded body profile",
+    "compact body"
+  ],
+  "21": [
+    "head",
+    "long, narrow tail",
+    "tail",
+    "streamlined outline",
+    "hooked beak"
+  ],
+  "22": [
+    "head",
+    "large, robust body",
+    "tail",
+    "broad wings",
+    "moderately long, fan-shaped tail"
+  ],
+  "23": [
+    "large, bulky body",
+    "head",
+    "small head relative to body",
+    "short, rounded tail",
+    "very broad wings with pronounced fingered tips"
+  ],
+  "24": [
+    "large, rounded body",
+    "head",
+    "very large round head",
+    "relatively long tail",
+    "tail"
+  ],
+  "25": [
+    "tail gradually tapering to a point",
+    "head",
+    "broad head",
+    "tail",
+    "forelimbs"
+  ],
+  "26": [
+    "tail with narrow fin edge",
+    "head",
+    "laterally compressed tail",
+    "small, narrow head",
+    "forelimbs"
+  ],
+  "27": [
+    "head",
+    "tail tapering smoothly from body",
+    "moderate body depth",
+    "tail",
+    "forelimbs"
+  ],
+  "28": [
+    "broad, rounded head",
+    "moderately long, tapering tail",
+    "head",
+    "forelimbs",
+    "thick, robust body"
+  ],
+  "29": [
+    "relatively large head compared to body",
+    "broad, flattened head",
+    "external gill stalks on sides of head",
+    "wide head",
+    "laterally compressed tail"
+  ],
+  "30": [
+    "wide mouth",
+    "head",
+    "broad head",
+    "slightly flattened body",
+    "rounded snout"
+  ],
+  "31": [
+    "head",
+    "slightly flattened head",
+    "forelegs",
+    "mouth",
+    "elongated limbs"
+  ],
+  "32": [
+    "stocky body",
+    "tail-like extension",
+    "head",
+    "triangular head",
+    "slightly raised back"
+  ],
+  "33": [
+    "head",
+    "broad fore flippers",
+    "fore flippers",
+    "large head",
+    "tail"
+  ],
+  "34": [
+    "tapered tail",
+    "head",
+    "fore flippers",
+    "long fore flippers",
+    "strongly streamlined form"
+  ],
+  "35": [
+    "head",
+    "oval shell outline",
+    "tail",
+    "low domed shell",
+    "flattened body"
+  ],
+  "36": [
+    "head",
+    "slightly flattened underside",
+    "oval body outline",
+    "moderately domed shell",
+    "carapace"
+  ],
+  "37": [
+    "head",
+    "short tail",
+    "high domed shell",
+    "compact body",
+    "rounded shell profile"
+  ],
+  "38": [
+    "head",
+    "tail",
+    "forelimbs",
+    "elongated tail",
+    "low-set body"
+  ],
+  "39": [
+    "head",
+    "laterally compressed tail",
+    "tail",
+    "forelimbs",
+    "arched back with crest"
+  ],
+  "40": [
+    "head",
+    "tail",
+    "elongated tail",
+    "tapered snout",
+    "mouth"
+  ],
+  "41": [
+    "head",
+    "cylindrical body",
+    "tail",
+    "dorsal stripes",
+    "narrow head"
+  ],
+  "42": [
+    "head",
+    "slightly flattened body",
+    "tail",
+    "triangular head",
+    "robust body"
+  ],
+  "43": [
+    "relatively small head compared to body",
+    "head",
+    "tail",
+    "long tail",
+    "elongated body"
+  ],
+  "44": [
+    "head",
+    "cylindrical body",
+    "tail",
+    "elongated body",
+    "very long tail"
+  ],
+  "45": [
+    "stocky body",
+    "tapered tail",
+    "head",
+    "broad head",
+    "rounded snout"
+  ],
+  "46": [
+    "head",
+    "slightly flattened body",
+    "forelimbs",
+    "triangular head",
+    "long tail"
+  ],
+  "47": [
+    "head",
+    "tail",
+    "laterally compressed body",
+    "casque on head",
+    "mouth"
+  ],
+  "48": [
+    "tapered tail",
+    "broad, flat head",
+    "head",
+    "massive, elongated body",
+    "low-slung body profile"
+  ],
+  "49": [
+    "low, flattened profile",
+    "head",
+    "laterally flattened tail",
+    "jaw",
+    "streamlined body"
+  ],
+  "50": [
+    "tapered tail",
+    "low-slung profile",
+    "broad snout",
+    "flattened head",
+    "lower jaw"
+  ],
+  "51": [
+    "large head relative to body",
+    "massive barrel-shaped body",
+    "tail",
+    "forelimbs",
+    "nose horn"
+  ],
+  "52": [
+    "slender cylindrical body",
+    "head",
+    "tapered tail tip",
+    "short tail",
+    "uniform thickness along most of body"
+  ],
+  "53": [
+    "tapered tail",
+    "slender cylindrical body",
+    "head",
+    "tail",
+    "belly scales"
+  ],
+  "54": [
+    "short tapered tail",
+    "head",
+    "broad head",
+    "tail",
+    "neck region"
+  ],
+  "55": [
+    "gradually tapering tail",
+    "slender cylindrical body",
+    "head",
+    "tapered tail tip",
+    "uniform, narrow body thickness"
+  ],
+  "56": [
+    "gradually tapering tail",
+    "head",
+    "moderately thick cylindrical body",
+    "ringed pattern around body",
+    "tail"
+  ],
+  "57": [
+    "long tapering tail",
+    "head",
+    "tail",
+    "ventral belly scales",
+    "longitudinal body stripes"
+  ],
+  "58": [
+    "tapering tail with subtle lateral flattening",
+    "thick heavy-bodied form",
+    "head",
+    "broad snout",
+    "tail"
+  ],
+  "59": [
+    "long tapering tail",
+    "head",
+    "very long gradually tapering tail",
+    "elongated narrow head",
+    "ventral belly scales"
+  ],
+  "60": [
+    "gradually tapering tail",
+    "head",
+    "tail",
+    "slightly flattened head",
+    "elongated slender body"
+  ],
+  "61": [
+    "broad triangular head",
+    "head",
+    "relatively short tail",
+    "tail",
+    "bulky thickset body"
+  ],
+  "62": [
+    "large triangular head",
+    "head",
+    "short tapering tail",
+    "tail",
+    "massive robust form"
+  ],
+  "63": [
+    "tapering tail",
+    "head",
+    "tail",
+    "slightly flattened head",
+    "elongated slender body"
+  ],
+  "64": [
+    "long tapering tail",
+    "head",
+    "tail",
+    "narrow cylindrical form",
+    "neck region"
+  ],
+  "65": [
+    "paddle-shaped tail tip",
+    "tapering tail",
+    "head",
+    "laterally compressed tail",
+    "cylindrical body"
+  ],
+  "66": [
+    "head",
+    "slightly flattened body",
+    "tail",
+    "short tail",
+    "triangular head"
+  ],
+  "67": [
+    "tapering tail",
+    "head",
+    "cylindrical body",
+    "rattle segments at tail tip",
+    "tail"
+  ],
+  "68": [
+    "tapering tail",
+    "head",
+    "broad head",
+    "slightly flattened body",
+    "rattle segments at tail tip"
+  ],
+  "69": [
+    "oval body outline",
+    "arched dorsal surface",
+    "flattened body",
+    "thorax",
+    "segmented body"
+  ],
+  "70": [
+    "cephalothorax",
+    "small rounded body",
+    "low flat body profile",
+    "bilaterally symmetrical form",
+    "fused body disc"
+  ],
+  "71": [
+    "arched tail",
+    "flattened cephalothorax",
+    "cephalothorax",
+    "segmented tail",
+    "bilaterally symmetrical form"
+  ],
+  "72": [
+    "cephalothorax",
+    "compact cephalothorax",
+    "oval abdomen",
+    "bilaterally symmetrical form",
+    "abdominal markings"
+  ],
+  "73": [
+    "cephalothorax",
+    "bulbous abdomen",
+    "bilaterally symmetrical form",
+    "rounded abdomen",
+    "compact body"
+  ],
+  "74": [
+    "oval body",
+    "cross-shaped dorsal marking",
+    "cephalothorax",
+    "bilaterally symmetrical form",
+    "prominent rounded abdomen"
+  ],
+  "75": [
+    "cephalothorax",
+    "pedicel",
+    "relatively small cephalothorax",
+    "rounded abdomen",
+    "narrow waist between cephalothorax and abdomen"
+  ],
+  "76": [
+    "flattened cephalothorax",
+    "cephalothorax",
+    "rounded abdomen",
+    "robust body",
+    "bilaterally symmetrical body"
+  ],
+  "77": [
+    "large front eyes",
+    "low flattened cephalothorax",
+    "cephalothorax",
+    "oval abdomen",
+    "elongated body"
+  ],
+  "78": [
+    "oval body",
+    "capitulum",
+    "flattened body",
+    "compact overall form",
+    "barbed proboscis"
+  ],
+  "79": [
+    "head",
+    "flattened body",
+    "ocelli",
+    "mandibles",
+    "elongated body"
+  ],
+  "80": [
+    "arched tail shape",
+    "head",
+    "tail",
+    "tail fan",
+    "compact body"
+  ],
+  "81": [
+    "head",
+    "tail",
+    "short tail",
+    "rounded body",
+    "beak"
+  ],
+  "82": [
+    "head",
+    "medium-sized body",
+    "fan-shaped tail",
+    "tail",
+    "slightly elongated body"
+  ],
+  "83": [
+    "medium-length tail",
+    "head",
+    "tail",
+    "compact body form",
+    "beak"
+  ],
+  "84": [
+    "head",
+    "fan-shaped tail",
+    "tail",
+    "streamlined body",
+    "symmetrical tail pattern"
+  ],
+  "85": [
+    "head",
+    "head plume",
+    "tail",
+    "short tail",
+    "low-set body"
+  ],
+  "86": [
+    "head",
+    "tail",
+    "short tail",
+    "breast",
+    "beak"
+  ],
+  "87": [
+    "head",
+    "rounded head",
+    "medium-sized body",
+    "tail",
+    "slightly elongated body"
+  ],
+  "88": [
+    "head",
+    "large hooked beak",
+    "broad wings",
+    "prominent head",
+    "streamlined profile"
+  ],
+  "89": [
+    "stocky body",
+    "head",
+    "tail",
+    "short tail",
+    "prominent crest outline"
+  ],
+  "90": [
+    "head",
+    "rounded head",
+    "primary feathers",
+    "secondary feathers",
+    "compact body"
+  ],
+  "91": [
+    "head",
+    "long broad tail",
+    "elongated hind claw",
+    "dagger-like hind claw shape",
+    "primary feathers"
+  ],
+  "92": [
+    "long tapering tail",
+    "head",
+    "smooth tapering body outline",
+    "slender slightly decurved bill",
+    "primary feathers"
+  ],
+  "93": [
+    "very large deep bill",
+    "head",
+    "large bulky body",
+    "lower mandible",
+    "upper mandible"
+  ],
+  "94": [
+    "head",
+    "short slightly forked tail",
+    "rounded tapering body outline",
+    "needle-like bill",
+    "extendable tongue"
+  ],
+  "95": [
+    "tapered tail",
+    "head",
+    "lower mandible",
+    "upper mandible",
+    "tail"
+  ],
+  "96": [
+    "large bill",
+    "head",
+    "lower mandible",
+    "upper mandible",
+    "tail"
+  ],
+  "97": [
+    "broad bill",
+    "head",
+    "flattened body profile",
+    "tail",
+    "short tail"
+  ],
+  "98": [
+    "tapered tail",
+    "narrow bill",
+    "low-profile head",
+    "head",
+    "tail"
+  ],
+  "99": [
+    "large body",
+    "head",
+    "tail",
+    "short tail",
+    "rounded belly"
+  ],
+  "100": [
+    "slightly tapered tail",
+    "oval, rounded body",
+    "head",
+    "broad wings with wide span",
+    "primary flight feathers"
+  ],
+  "101": [
+    "head",
+    "large, heavyset body",
+    "tail",
+    "trunk or elongated snout",
+    "forelegs"
+  ],
+  "102": [
+    "head",
+    "small head relative to body",
+    "short tail",
+    "compact, rounded body",
+    "hind limbs with claws"
+  ],
+  "103": [
+    "flattened, paddle-shaped tail",
+    "broad bill",
+    "broad, paddle-like forefeet",
+    "head",
+    "flattened, spatula-shaped bill"
+  ],
+  "104": [
+    "relatively small head",
+    "head",
+    "short forelimbs",
+    "narrow snout",
+    "long tail"
+  ],
+  "105": [
+    "stocky body",
+    "head",
+    "rounded head",
+    "large nose",
+    "forelimbs"
+  ],
+  "106": [
+    "low-slung profile",
+    "head",
+    "barrel-shaped body",
+    "broad head",
+    "compact overall form"
+  ],
+  "107": [
+    "oral arms",
+    "ring canal",
+    "flattened disc outline",
+    "central disc",
+    "bell margin"
+  ],
+  "108": [
+    "base margin",
+    "oral disc",
+    "slightly domed oral disc",
+    "mouth opening",
+    "radially symmetrical body"
+  ],
+  "109": [
+    "rounded overall form",
+    "mound base",
+    "ridge crests",
+    "surface grooves",
+    "colony mass"
+  ],
+  "110": [
+    "tail region",
+    "head region",
+    "flattened body",
+    "dorsal surface",
+    "elongated oval profile"
+  ],
+  "111": [
+    "head end",
+    "tail end",
+    "smooth unsegmented outline",
+    "elongated thread-like body",
+    "lips region"
+  ],
+  "112": [
+    "expanded outer lip",
+    "outer lip",
+    "columella",
+    "conical overall profile",
+    "apex"
+  ],
+  "113": [
+    "broad flattened foot",
+    "head",
+    "bilaterally symmetrical soft body",
+    "columella region",
+    "rounded dome-like shell"
+  ],
+  "114": [
+    "low flattened profile",
+    "head",
+    "tapered tail region",
+    "smooth continuous outline",
+    "body tubercles or bumps"
+  ],
+  "115": [
+    "gill plume",
+    "tapered tail",
+    "head",
+    "tail",
+    "mantle edge"
+  ],
+  "116": [
+    "gill rows",
+    "tail region",
+    "head",
+    "arched dorsal surface",
+    "dorsal plates"
+  ],
+  "117": [
+    "bilaterally symmetrical soft body around opening",
+    "mouth",
+    "siphon",
+    "beak",
+    "rounded cross-section"
+  ],
+  "118": [
+    "arched dorsal surface",
+    "broad oval carapace",
+    "flattened body",
+    "laterally extended legs",
+    "carapace"
+  ],
+  "119": [
+    "flattened body",
+    "rounded carapace",
+    "laterally extended legs",
+    "compact proportions",
+    "carapace"
+  ],
+  "120": [
+    "minor claw",
+    "gill chamber openings",
+    "flattened body",
+    "compact overall form",
+    "asymmetrical claw size"
+  ],
+  "121": [
+    "gill openings",
+    "broad body",
+    "rostrum",
+    "triangular carapace outline",
+    "carapace"
+  ],
+  "122": [
+    "tapered tail",
+    "pincher claw",
+    "uropods",
+    "cephalothorax",
+    "crusher claw"
+  ],
+  "123": [
+    "narrow tapered tail",
+    "elongated cylindrical body",
+    "streamlined profile",
+    "tail fan",
+    "rostrum"
+  ],
+  "124": [
+    "tapered tail",
+    "small elongated body",
+    "front claws",
+    "bilaterally symmetrical shape",
+    "tail fan"
+  ],
+  "125": [
+    "elongated abdomen shape",
+    "asymmetrical claw size",
+    "carapace",
+    "curved shell outline",
+    "large chela"
+  ],
+  "126": [
+    "oval dorsal outline",
+    "pleotelson",
+    "flattened body profile",
+    "head segment",
+    "uropods"
+  ],
+  "127": [
+    "long bill",
+    "head",
+    "lower mandible",
+    "upper mandible",
+    "tail"
+  ],
+  "128": [
+    "straight narrow bill",
+    "broad wing shape",
+    "head",
+    "lower mandible",
+    "upper mandible"
+  ],
+  "129": [
+    "broad wing shape",
+    "long straight bill",
+    "long bill",
+    "head",
+    "lower mandible"
+  ],
+  "130": [
+    "head",
+    "lower mandible",
+    "strongly down-curved bill",
+    "upper mandible",
+    "very long S-shaped neck"
+  ],
+  "131": [
+    "head",
+    "lower mandible",
+    "upper mandible",
+    "tail",
+    "straight pointed bill"
+  ],
+  "132": [
+    "head",
+    "long straight dagger-like bill",
+    "lower mandible",
+    "large elongated body",
+    "upper mandible"
+  ],
+  "133": [
+    "stout spear-shaped bill",
+    "stocky compact body",
+    "head",
+    "tail",
+    "breast"
+  ],
+  "134": [
+    "head",
+    "tail",
+    "broad long wings",
+    "tall upright body",
+    "bill"
+  ],
+  "135": [
+    "head",
+    "lower mandible",
+    "drooping bill",
+    "upper mandible",
+    "narrow head"
+  ],
+  "136": [
+    "head",
+    "rounded head",
+    "tail",
+    "frontal shield",
+    "short tail"
+  ],
+  "137": [
+    "head",
+    "tail",
+    "frontal shield",
+    "short tail",
+    "compact form"
+  ],
+  "138": [
+    "head",
+    "tail",
+    "broad wings",
+    "bulky body",
+    "breast"
+  ],
+  "139": [
+    "wedge-shaped bill",
+    "head",
+    "tail",
+    "breast",
+    "compact body"
+  ],
+  "140": [
+    "medium-length, gently downcurved bill",
+    "head",
+    "tail",
+    "narrow, tapered wings",
+    "small, compact body"
+  ],
+  "141": [
+    "small, rounded head",
+    "straight, medium-length bill",
+    "head",
+    "tail",
+    "long, upright legs"
+  ],
+  "142": [
+    "stocky, elongated body",
+    "head",
+    "tail",
+    "very long, straight bill",
+    "small head on short neck"
+  ],
+  "143": [
+    "thick, chisel-shaped bill",
+    "large head on thick neck",
+    "head",
+    "long, straight, thick bill",
+    "broad breast"
+  ],
+  "144": [
+    "very long, flat bill with enlarged lower section",
+    "large, bulky body",
+    "short, wedge-shaped tail",
+    "long, flat bill",
+    "head"
+  ],
+  "145": [
+    "head",
+    "tail",
+    "short tail",
+    "flippers",
+    "streamlined body"
+  ],
+  "146": [
+    "head",
+    "tail",
+    "streamlined body",
+    "elongated body",
+    "long narrow wings"
+  ],
+  "147": [
+    "broad tail flukes",
+    "tapered tail stock",
+    "tail flukes",
+    "head",
+    "dorsal ridge"
+  ],
+  "148": [
+    "tapered tail",
+    "robust torpedo-shaped body",
+    "tail flukes",
+    "head",
+    "dorsal ridge"
+  ],
+  "149": [
+    "tail fluke",
+    "bilobed tail",
+    "head",
+    "flippers",
+    "paddle-like flippers"
+  ],
+  "150": [
+    "head",
+    "rounded head",
+    "fore flippers",
+    "streamlined body",
+    "external ear flaps"
+  ],
+  "151": [
+    "head",
+    "tail",
+    "small body",
+    "forelegs",
+    "compact torso"
+  ],
+  "152": [
+    "high-set tail",
+    "head",
+    "domed head",
+    "ears with feathering",
+    "feathered tail"
+  ],
+  "153": [
+    "head",
+    "rectangular body outline",
+    "tail",
+    "small body",
+    "muzzle"
+  ],
+  "154": [
+    "head",
+    "broad head",
+    "flat face",
+    "tail",
+    "low-slung body"
+  ],
+  "155": [
+    "tail",
+    "long, dense coat",
+    "compact body",
+    "broad, rounded skull",
+    "short muzzle"
+  ],
+  "156": [
+    "tail",
+    "short, blunt muzzle",
+    "compact body",
+    "medium-length, silky coat",
+    "domed skull"
+  ],
+  "157": [
+    "head",
+    "large, erect ears",
+    "tail",
+    "plumed, arched tail",
+    "narrow muzzle"
+  ],
+  "158": [
+    "relatively small head",
+    "head",
+    "narrow, tapering muzzle",
+    "tail",
+    "muzzle"
+  ],
+  "159": [
+    "head",
+    "tail",
+    "muzzle",
+    "ridge of hair along spine",
+    "ears"
+  ],
+  "160": [
+    "narrow elongated head",
+    "rectangular body outline",
+    "long feathered tail",
+    "thick flowing body coat",
+    "narrow head"
+  ],
+  "161": [
+    "large domed head",
+    "short-legged heavy-boned structure",
+    "long low-slung body",
+    "long drooping ears",
+    "thick tail with slight curve"
+  ],
+  "162": [
+    "high-set upright tail",
+    "medium-sized head",
+    "moderate leg length relative to body",
+    "compact slightly rectangular body",
+    "short dense coat"
+  ],
+  "163": [
+    "large heavy-boned body",
+    "large narrow head",
+    "long tapering tail",
+    "long deep muzzle",
+    "rectangular body outline"
+  ],
+  "164": [
+    "broad slightly domed head",
+    "medium-large well-muscled body",
+    "long tail with slight curve",
+    "strong slightly arched neck",
+    "low-set hanging ears"
+  ],
+  "165": [
+    "head",
+    "tail",
+    "long drooping ears",
+    "long muscular body",
+    "strong straight legs"
+  ],
+  "166": [
+    "head",
+    "tail",
+    "medium-length legs",
+    "lean narrow body",
+    "slightly tapered muzzle"
+  ],
+  "167": [
+    "head",
+    "medium-length well-boned legs",
+    "tail",
+    "sturdy rectangular body",
+    "slightly domed skull"
+  ],
+  "168": [
+    "head",
+    "tail",
+    "well-proportioned body",
+    "smooth short coat",
+    "straight firm back"
+  ],
+  "169": [
+    "head",
+    "narrow elongated head",
+    "tail",
+    "deep chest with tucked-up abdomen",
+    "slightly arched back"
+  ],
+  "170": [
+    "head",
+    "narrow waist",
+    "long muzzle",
+    "slightly arched back",
+    "very tall body"
+  ],
+  "171": [
+    "narrow streamlined outline",
+    "small head",
+    "large eyes",
+    "deep chest with tucked-up abdomen",
+    "short smooth coat"
+  ],
+  "172": [
+    "head",
+    "long thin tail",
+    "narrow abdomen",
+    "arched loin",
+    "streamlined body"
+  ],
+  "173": [
+    "rectangular body outline",
+    "long narrow head",
+    "thin whip-like tail",
+    "large upright ears",
+    "long straight limbs"
+  ],
+  "174": [
+    "broad head",
+    "moderate leg length with sturdy build",
+    "wedge-shaped muzzle",
+    "thick double coat",
+    "erect triangular ears"
+  ],
+  "175": [
+    "head",
+    "long tail",
+    "large, sturdy body",
+    "rectangular overall outline",
+    "pendulous ears"
+  ],
+  "176": [
+    "head",
+    "narrow, elongated body",
+    "long dropped ears with feathering",
+    "long-limbed proportions",
+    "long narrow muzzle"
+  ],
+  "177": [
+    "long tapering tail",
+    "head",
+    "slightly arched loin",
+    "narrow waistline",
+    "long muzzle"
+  ],
+  "178": [
+    "head",
+    "long-limbed outline",
+    "medium-large, well-proportioned frame",
+    "straight tail",
+    "slim, elongated body"
+  ],
+  "179": [
+    "thick tapering tail",
+    "compact, stocky body",
+    "head",
+    "broad skull",
+    "broad, muscular shoulders"
+  ],
+  "180": [
+    "medium-length, tapering tail",
+    "compact, stocky body",
+    "head",
+    "tail",
+    "broad, blocky head"
+  ],
+  "181": [
+    "narrow, pear-shaped head",
+    "tail",
+    "long, tapering legs",
+    "narrow head",
+    "slim, lightly built body"
+  ],
+  "182": [
+    "medium-length, straight tail",
+    "head",
+    "tail",
+    "otter-shaped head",
+    "small, compact body"
+  ],
+  "183": [
+    "head",
+    "rectangular body outline",
+    "tail",
+    "long, narrow head",
+    "medium, well-proportioned height"
+  ],
+  "184": [
+    "head",
+    "straight, upright tail",
+    "tail",
+    "long, flat skull",
+    "medium, well-balanced body"
+  ],
+  "185": [
+    "head",
+    "tail",
+    "small body",
+    "forelegs",
+    "short-legged"
+  ],
+  "186": [
+    "head",
+    "small body",
+    "erect ears",
+    "erect triangular ears",
+    "forelegs"
+  ],
+  "187": [
+    "small, rounded head",
+    "head",
+    "long, flowing body coat",
+    "very small body",
+    "fine-boned frame"
+  ],
+  "188": [
+    "head",
+    "rectangular body outline",
+    "narrow, elongated head",
+    "medium-small body",
+    "tail"
+  ],
+  "189": [
+    "head",
+    "medium-small body",
+    "tail",
+    "sturdy, compact frame",
+    "slightly arched back"
+  ],
+  "190": [
+    "head",
+    "tail",
+    "long, low body",
+    "rectangular overall outline",
+    "slightly arched neck"
+  ],
+  "191": [
+    "rectangular head",
+    "rectangular body shape",
+    "tail",
+    "proportionate head-to-body ratio",
+    "straight forelegs"
+  ],
+  "192": [
+    "broad head",
+    "tail",
+    "compact, short-backed body",
+    "low-set body",
+    "erect ears"
+  ],
+  "193": [
+    "long, low-set body",
+    "moderate head length",
+    "tail",
+    "distinct rectangular outline",
+    "erect ears"
+  ],
+  "194": [
+    "large head relative to body",
+    "large head",
+    "long body",
+    "curved tail",
+    "large eyes"
+  ],
+  "195": [
+    "head",
+    "tail",
+    "short-nosed head",
+    "compact body",
+    "short-backed torso"
+  ],
+  "196": [
+    "head",
+    "medium-length neck",
+    "rectangular outline",
+    "compact body",
+    "muzzle"
+  ],
+  "197": [
+    "large rectangular body",
+    "head",
+    "tail",
+    "long head",
+    "muzzle"
+  ],
+  "198": [
+    "head",
+    "medium-sized rectangular body",
+    "tail",
+    "moderate-length neck",
+    "muzzle"
+  ],
+  "199": [
+    "head",
+    "long-bodied shape",
+    "tail",
+    "rectangular outline",
+    "upright ears"
+  ],
+  "200": [
+    "rectangular body",
+    "head",
+    "tail curved over the back",
+    "feathered tail",
+    "slightly domed skull"
+  ],
+  "201": [
+    "head",
+    "narrow refined head",
+    "tail",
+    "low-set frame",
+    "erect v-shaped ears"
+  ],
+  "202": [
+    "head",
+    "slightly rectangular body",
+    "soft abundant coat",
+    "tail",
+    "full rounded head appearance from coat"
+  ],
+  "203": [
+    "head",
+    "tail carried upright",
+    "dense outer coat",
+    "broad skull",
+    "proportionate head to body ratio"
+  ],
+  "204": [
+    "head",
+    "long low-set outline",
+    "tail arched over the back",
+    "small elongated body",
+    "straight flowing coat"
+  ],
+  "205": [
+    "head",
+    "medium-length body",
+    "forelegs",
+    "feathered tail",
+    "slightly elongated outline"
+  ],
+  "206": [
+    "head",
+    "tail",
+    "slightly elongated body",
+    "forelegs",
+    "tight curly coat"
+  ],
+  "207": [
+    "head",
+    "broad muzzle",
+    "slightly elongated body",
+    "feathered tail",
+    "level back"
+  ],
+  "208": [
+    "head",
+    "broad muzzle",
+    "slightly elongated body",
+    "short dense coat",
+    "thick tail"
+  ],
+  "209": [
+    "head",
+    "tail",
+    "moderately long body",
+    "strong forelegs",
+    "slightly arched back"
+  ],
+  "210": [
+    "head",
+    "tail",
+    "short dense coat",
+    "elongated head",
+    "muzzle"
+  ],
+  "211": [
+    "head",
+    "tail",
+    "short smooth coat",
+    "muzzle",
+    "slender body"
+  ],
+  "212": [
+    "head",
+    "slightly arched neck",
+    "ears with feathering",
+    "plumed tail",
+    "muzzle"
+  ],
+  "213": [
+    "head",
+    "narrow head",
+    "plumed tail",
+    "muzzle",
+    "slender body"
+  ],
+  "214": [
+    "head",
+    "broad head",
+    "broad skull",
+    "long dense coat",
+    "plumed tail"
+  ],
+  "215": [
+    "head",
+    "short tail set high",
+    "medium-sized, compact body",
+    "forelegs",
+    "slightly tapered muzzle"
+  ],
+  "216": [
+    "head",
+    "massive head",
+    "long, low body",
+    "broad skull",
+    "rectangular frame"
+  ],
+  "217": [
+    "head",
+    "tail",
+    "medium-sized, evenly proportioned body",
+    "slightly longer body than height",
+    "muzzle"
+  ],
+  "218": [
+    "head",
+    "tail",
+    "compact, slightly elongated frame",
+    "gently arched neck",
+    "muzzle"
+  ],
+  "219": [
+    "head",
+    "slightly domed head",
+    "large eyes",
+    "small, compact body",
+    "shorter muzzle"
+  ],
+  "220": [
+    "head",
+    "compact overall outline",
+    "low-set body",
+    "long drooping ears",
+    "sturdy, low-to-ground build"
+  ],
+  "221": [
+    "head",
+    "tapered, smooth tail",
+    "muzzle",
+    "slightly arched neck line",
+    "dense, curly overall silhouette"
+  ],
+  "222": [
+    "head",
+    "well-proportioned limb length",
+    "large, well-proportioned body",
+    "dense double coat",
+    "wedge-shaped muzzle"
+  ],
+  "223": [
+    "short-backed outline",
+    "fox-like head",
+    "short tail",
+    "small, compact body",
+    "upright ear silhouette"
+  ],
+  "224": [
+    "full, flowing coat outline",
+    "long, well-arched neck",
+    "long, dense coat",
+    "long head",
+    "square-proportioned body"
+  ],
+  "225": [
+    "rectangular body",
+    "head",
+    "erect triangular ears",
+    "long muzzle",
+    "short smooth coat"
+  ],
+  "226": [
+    "rectangular body",
+    "broad head",
+    "long feathered tail",
+    "substantial sturdy build",
+    "high-set ears"
+  ],
+  "227": [
+    "wedge-shaped head",
+    "long tapering tail",
+    "slightly elongated body",
+    "moderate-length neck",
+    "medium-sized frame"
+  ],
+  "228": [
+    "rectangular body",
+    "broad muzzle",
+    "large head",
+    "long tail",
+    "massive sturdy frame"
+  ],
+  "229": [
+    "rectangular body",
+    "broad head",
+    "short tail",
+    "square muzzle",
+    "heavily rounded outline"
+  ],
+  "230": [
+    "head",
+    "small well-proportioned frame",
+    "semi-erect ears",
+    "wedge-shaped skull",
+    "feathered tail"
+  ],
+  "231": [
+    "large graceful frame",
+    "long plumed tail",
+    "long dense outer coat",
+    "long narrow head",
+    "long pointed muzzle"
+  ],
+  "232": [
+    "moderate-sized head",
+    "semi-erect ears",
+    "slightly longer than tall body",
+    "medium-length muzzle",
+    "bushy tail"
+  ],
+  "233": [
+    "thick rough double coat",
+    "short docked tail",
+    "large broad head",
+    "strong square muzzle",
+    "straight strong forelegs"
+  ],
+  "234": [
+    "broad head",
+    "large robust frame",
+    "short docked tail",
+    "compact slightly elongated body",
+    "well-developed cheeks"
+  ],
+  "235": [
+    "head",
+    "withers",
+    "rectangular outline",
+    "sloping back",
+    "erect ears"
+  ],
+  "236": [
+    "head",
+    "tail",
+    "wedge-shaped muzzle",
+    "straight limbs",
+    "straight back"
+  ],
+  "237": [
+    "tail",
+    "small head",
+    "tapered muzzle",
+    "narrow head",
+    "square outline"
+  ],
+  "238": [
+    "rectangular body",
+    "broad head",
+    "large, heavy frame",
+    "tail",
+    "broad skull"
+  ],
+  "239": [
+    "broad head",
+    "rectangular outline",
+    "large, sturdy body",
+    "slightly arched neck",
+    "moderate muzzle"
+  ],
+  "240": [
+    "head",
+    "medium-sized, compact body",
+    "tail",
+    "tail curved in an arc over the back",
+    "muzzle"
+  ],
+  "241": [
+    "head",
+    "compact overall outline",
+    "relatively short legs",
+    "small to medium, sturdy body",
+    "muzzle"
+  ],
+  "242": [
+    "medium-sized, stocky body",
+    "head",
+    "square-shaped head",
+    "square muzzle",
+    "jowls"
+  ],
+  "243": [
+    "large, heavy, muscular body",
+    "broad, square head",
+    "head",
+    "tail",
+    "broad skull"
+  ],
+  "244": [
+    "broad, massive head",
+    "head",
+    "slightly rectangular body outline",
+    "very large, powerful body",
+    "bushy tail"
+  ],
+  "245": [
+    "stocky build",
+    "short-bodied",
+    "broad-fronted",
+    "short tail",
+    "low stature"
+  ],
+  "246": [
+    "deep-bodied frame",
+    "long-limbed body",
+    "long narrow head",
+    "long tail",
+    "long muzzle"
+  ],
+  "247": [
+    "heavy-bodied frame",
+    "broad-shouldered",
+    "short wide muzzle",
+    "large broad head",
+    "drooping ears"
+  ],
+  "248": [
+    "medium-sized head",
+    "plume-shaped tail",
+    "bushy curved tail",
+    "erect triangular ears",
+    "balanced outline"
+  ],
+  "249": [
+    "high-set tail",
+    "broad head",
+    "wide frame",
+    "heavily furred tail",
+    "erect ears"
+  ],
+  "250": [
+    "curved plumed tail",
+    "moderately elongated body",
+    "thick double coat",
+    "medium-length muzzle",
+    "erect triangular ears"
+  ],
+  "251": [
+    "long narrow muzzle",
+    "long slender tail",
+    "rounded nose",
+    "elongated body",
+    "narrow waist"
+  ],
+  "252": [
+    "small erect ears",
+    "round head",
+    "short tail",
+    "short-backed structure",
+    "prominent chin"
+  ],
+  "253": [
+    "high tail set",
+    "slightly elongated body",
+    "tucked-up abdomen",
+    "narrow waist",
+    "short smooth coat"
+  ],
+  "254": [
+    "short stocky frame",
+    "round head",
+    "large prominent eyes",
+    "cobby compact build",
+    "broad rounded skull"
+  ],
+  "255": [
+    "broad head",
+    "rectangular body outline",
+    "giant body size",
+    "large nose",
+    "moderately long body"
+  ],
+  "256": [
+    "rectangular body shape",
+    "massive head",
+    "dense double coat",
+    "short square muzzle",
+    "broad skull"
+  ],
+  "257": [
+    "wedge-shaped head",
+    "strong jaws",
+    "thick plumed tail",
+    "slightly elongated body",
+    "dense double coat"
+  ],
+  "258": [
+    "wedge-shaped head",
+    "sickle-shaped tail",
+    "characteristic upturned mouth corners",
+    "medium, well-proportioned body",
+    "dense outer coat"
+  ],
+  "259": [
+    "high tail set",
+    "small erect ears",
+    "dense outer coat",
+    "very compact body shape",
+    "narrow pointed muzzle"
+  ],
+  "260": [
+    "stocky build",
+    "broad head",
+    "thick double coat",
+    "short muzzle",
+    "small triangular ears"
+  ],
+  "261": [
+    "wedge-shaped head",
+    "thick double coat",
+    "square outline",
+    "plumed tail curve",
+    "compact body"
+  ],
+  "262": [
+    "rounded head",
+    "large round eyes",
+    "short-faced profile",
+    "small high-set ears",
+    "slightly undershot jaw"
+  ],
+  "263": [
+    "low-set, elongated body",
+    "wedge-shaped head",
+    "large erect ears",
+    "short or docked tail",
+    "long body"
+  ],
+  "264": [
+    "elongated, low-set body",
+    "broad head",
+    "long body",
+    "large rounded ears",
+    "slightly curved front leg alignment"
+  ],
+  "265": [
+    "tail",
+    "very small body",
+    "slightly arched neck",
+    "forelegs",
+    "compact frame"
+  ],
+  "266": [
+    "tail",
+    "small body",
+    "narrow muzzle",
+    "slightly arched neck",
+    "forelegs"
+  ],
+  "267": [
+    "medium-sized body",
+    "tail",
+    "long forelegs",
+    "relatively narrow waist",
+    "muzzle"
+  ],
+  "268": [
+    "small to medium body",
+    "tail",
+    "tapered muzzle",
+    "erect ears",
+    "forelegs"
+  ],
+  "269": [
+    "narrow wedge-shaped head",
+    "tail",
+    "medium to large body",
+    "erect ears",
+    "forelegs"
+  ],
+  "270": [
+    "bushy tapering tail",
+    "head",
+    "tail",
+    "triangular erect ears",
+    "large muscular body"
+  ],
+  "271": [
+    "head",
+    "tail",
+    "slim muzzle",
+    "muzzle",
+    "tall slender body"
+  ],
+  "272": [
+    "head",
+    "tail",
+    "narrow pointed muzzle",
+    "bushy tail",
+    "large pointed ears"
+  ],
+  "273": [
+    "head",
+    "tail",
+    "medium well-proportioned body",
+    "triangular head",
+    "erect ears"
+  ],
+  "274": [
+    "head",
+    "short broad muzzle",
+    "tail",
+    "compact body",
+    "bushy tail"
+  ],
+  "275": [
+    "medium-length, bushy tail with tufted tip",
+    "head",
+    "large, rounded ears",
+    "tail",
+    "lean, elongated body"
+  ],
+  "276": [
+    "head",
+    "tail",
+    "thick, barrel-shaped torso",
+    "moderately short, blunt muzzle",
+    "forelegs"
+  ],
+  "277": [
+    "head",
+    "large, upright triangular ears",
+    "narrow, pointed muzzle",
+    "long, full tail",
+    "slender, elongated body"
+  ],
+  "278": [
+    "head",
+    "long, narrow tail",
+    "small, slender body",
+    "tail",
+    "narrow, pointed muzzle"
+  ],
+  "279": [
+    "head",
+    "tail",
+    "short, stocky legs",
+    "compact, rounded body",
+    "small, rounded ears"
+  ],
+  "280": [
+    "head",
+    "tail",
+    "bushy tail",
+    "elongated muzzle",
+    "upright pointed ears"
+  ],
+  "281": [
+    "medium-length tail",
+    "head",
+    "tail",
+    "rounded face",
+    "forelegs"
+  ],
+  "282": [
+    "head",
+    "rounded head",
+    "medium-length limbs",
+    "tail",
+    "lean medium-sized body"
+  ],
+  "283": [
+    "stocky compact body",
+    "head",
+    "flat face",
+    "tail",
+    "round head"
+  ],
+  "284": [
+    "wedge-shaped head",
+    "long tapering tail",
+    "head",
+    "wedge-shaped face",
+    "long tail"
+  ],
+  "285": [
+    "long tapering tail",
+    "head",
+    "tail",
+    "triangular head",
+    "medium-length torso"
+  ],
+  "286": [
+    "cylindrical tail",
+    "broad head",
+    "broad muzzle",
+    "low-slung torso",
+    "long tail"
+  ],
+  "287": [
+    "head",
+    "short tail",
+    "short stubby tail",
+    "compact body",
+    "long-limbed build"
+  ],
+  "288": [
+    "stocky body",
+    "cylindrical tail",
+    "head",
+    "broad muzzle",
+    "long tail"
+  ],
+  "289": [
+    "compact stocky body",
+    "head",
+    "short broad muzzle",
+    "long thick tail",
+    "muscular forelimbs"
+  ],
+  "290": [
+    "thick, medium-length tail",
+    "broad, rounded head",
+    "compact, stocky body",
+    "head",
+    "tail"
+  ],
+  "291": [
+    "long tail with a tufted tip",
+    "head",
+    "large head with surrounding mane",
+    "elongated, muscular body",
+    "relatively short, sturdy legs"
+  ],
+  "292": [
+    "head",
+    "long, thick tail",
+    "large, broad head",
+    "tail",
+    "stripe markings"
+  ],
+  "293": [
+    "long, tapering tail",
+    "small, rounded head",
+    "head",
+    "nonretractile claws",
+    "tail"
+  ],
+  "294": [
+    "large, bulky body",
+    "head",
+    "prominent shoulder hump",
+    "broad head",
+    "short tail"
+  ],
+  "295": [
+    "stocky body",
+    "head",
+    "broad head",
+    "forelegs",
+    "barrel-shaped torso"
+  ],
+  "296": [
+    "large body",
+    "head",
+    "long tapered snout",
+    "forelegs",
+    "snout"
+  ],
+  "297": [
+    "relatively small head compared to body",
+    "head",
+    "long narrow snout",
+    "forelegs",
+    "snout"
+  ],
+  "298": [
+    "long cylindrical tail",
+    "head",
+    "tail",
+    "low-slung torso",
+    "tapered muzzle"
+  ],
+  "299": [
+    "head",
+    "relatively large eyes compared to head",
+    "long thin tail",
+    "tail",
+    "small tapered muzzle"
+  ],
+  "300": [
+    "head",
+    "pronotum",
+    "narrow thorax",
+    "thorax",
+    "mandibles"
+  ],
+  "301": [
+    "head",
+    "pronotum",
+    "oval outline",
+    "almost hemispherical body",
+    "compact shape"
+  ],
+  "302": [
+    "head",
+    "flattened profile",
+    "pronotum",
+    "prominent mandibles",
+    "thorax"
+  ],
+  "303": [
+    "head",
+    "pronotum",
+    "elongated cylindrical body",
+    "narrow profile",
+    "thorax"
+  ],
+  "304": [
+    "head",
+    "oval body",
+    "pronotum",
+    "thorax",
+    "segmented body"
+  ],
+  "305": [
+    "head",
+    "pronotum",
+    "slightly flattened underside",
+    "compact, low-profile form",
+    "domed dorsal surface"
+  ],
+  "306": [
+    "large, bulky body",
+    "head",
+    "pronotum",
+    "arched dorsal surface",
+    "head horn"
+  ],
+  "307": [
+    "head",
+    "oval body",
+    "pronotum",
+    "thorax",
+    "tarsi"
+  ],
+  "308": [
+    "head",
+    "short, rounded head",
+    "narrow thorax",
+    "thorax",
+    "proboscis"
+  ],
+  "309": [
+    "head",
+    "robust, oval body",
+    "rounded thorax",
+    "thorax",
+    "proboscis"
+  ],
+  "310": [
+    "head",
+    "elongated oval abdomen",
+    "thorax",
+    "slightly arched body profile",
+    "mandibles"
+  ],
+  "311": [
+    "head",
+    "elongated cylindrical body",
+    "bilaterally symmetrical form",
+    "thorax",
+    "forelegs"
+  ],
+  "312": [
+    "head",
+    "rounded head",
+    "somewhat flattened body",
+    "cylindrical abdomen",
+    "thorax"
+  ],
+  "313": [
+    "head",
+    "elongated sticklike body",
+    "thorax",
+    "cylindrical body sections",
+    "tarsi"
+  ],
+  "314": [
+    "flattened oval body",
+    "broad thorax",
+    "head",
+    "rounded head",
+    "pronotum shield"
+  ],
+  "315": [
+    "head",
+    "pronotum",
+    "triangular head",
+    "elongated prothorax",
+    "middle legs"
+  ],
+  "316": [
+    "head",
+    "broad head",
+    "oval abdomen",
+    "tent-shaped wing profile",
+    "thorax"
+  ],
+  "317": [
+    "wedge-shaped body",
+    "head",
+    "pronotum",
+    "flattened dorsal profile",
+    "thorax"
+  ],
+  "318": [
+    "head",
+    "thorax",
+    "oval wings",
+    "hindwings",
+    "elongated abdomen"
+  ],
+  "319": [
+    "head",
+    "pterostigma patches",
+    "robust thorax",
+    "cross-shaped body outline",
+    "thorax"
+  ],
+  "320": [
+    "head",
+    "cylindrical thorax",
+    "thorax",
+    "hindwings",
+    "elongated abdomen"
+  ],
+  "321": [
+    "head",
+    "broad wings",
+    "flattened body",
+    "rounded hindwings",
+    "thorax"
+  ],
+  "322": [
+    "head",
+    "thorax",
+    "proboscis",
+    "slightly arched wing edges",
+    "antennae with clubs"
+  ],
+  "323": [
+    "head",
+    "rounded hindwings",
+    "thorax",
+    "proboscis",
+    "antennae with clubs"
+  ],
+  "324": [
+    "head",
+    "broad forewings",
+    "relatively small wings",
+    "thorax",
+    "proboscis"
+  ],
+  "325": [
+    "head",
+    "thorax",
+    "proboscis",
+    "flat wing surface",
+    "hindwings"
+  ],
+  "326": [
+    "head",
+    "small body size",
+    "hindwing tails",
+    "thorax",
+    "proboscis"
+  ],
+  "327": [
+    "broad central region",
+    "tapered arms",
+    "flattened body",
+    "mouth",
+    "arm tips"
+  ],
+  "328": [
+    "compact form",
+    "ambulacral plates",
+    "test",
+    "interambulacral plates",
+    "pedicellariae"
+  ],
+  "329": [
+    "cloaca",
+    "cylindrical form",
+    "body segments",
+    "papillae",
+    "elongated body"
+  ],
+  "330": [
+    "rounded head",
+    "tail",
+    "forelegs",
+    "compact body",
+    "incisors"
+  ],
+  "331": [
+    "short tail",
+    "narrow head",
+    "forelegs",
+    "elongated body",
+    "incisors"
+  ],
+  "332": [
+    "tail",
+    "small head",
+    "rounded body",
+    "forelegs",
+    "incisors"
+  ],
+  "333": [
+    "stocky build",
+    "short tail",
+    "small head",
+    "rounded form",
+    "compact body"
+  ],
+  "334": [
+    "tail",
+    "bulky form",
+    "rounded body",
+    "small ears",
+    "claws"
+  ],
+  "335": [
+    "head",
+    "long tail",
+    "forelegs",
+    "elongated body",
+    "bushy tail"
+  ],
+  "336": [
+    "head",
+    "short tail",
+    "forelegs",
+    "stout body",
+    "snout"
+  ],
+  "337": [
+    "broad flattened tail",
+    "low-slung profile",
+    "head",
+    "flat tail",
+    "streamlined body"
+  ],
+  "338": [
+    "head",
+    "rounded body",
+    "slightly domed back",
+    "compact body",
+    "mouth"
+  ],
+  "339": [
+    "large body",
+    "head",
+    "tail",
+    "forelegs",
+    "slightly arched back"
+  ],
+  "340": [
+    "head",
+    "tail",
+    "barrel-shaped torso",
+    "elongated head",
+    "arched neck"
+  ],
+  "341": [
+    "head",
+    "broad head",
+    "rounded body",
+    "snout",
+    "jowls"
+  ],
+  "342": [
+    "short tail",
+    "low-slung torso",
+    "sloping back",
+    "coarse coat",
+    "stout body"
+  ],
+  "343": [
+    "large head relative to body",
+    "head",
+    "thin tail with tuft",
+    "narrow waist area",
+    "slightly arched back"
+  ],
+  "344": [
+    "massive barrel-shaped body",
+    "wide mouth",
+    "short stocky legs",
+    "large head",
+    "very broad head"
+  ],
+  "345": [
+    "stocky body",
+    "head",
+    "rectangular side profile",
+    "tail",
+    "barrel-shaped torso"
+  ],
+  "346": [
+    "narrow head relative to body",
+    "head",
+    "broad muzzle",
+    "tail",
+    "low-slung torso"
+  ],
+  "347": [
+    "short curved horns",
+    "large head",
+    "tail",
+    "sloping back line",
+    "thickset body"
+  ],
+  "348": [
+    "head",
+    "tail",
+    "compact body",
+    "curved horn structure",
+    "arched neck"
+  ],
+  "349": [
+    "head",
+    "tail",
+    "large curved horn silhouette",
+    "narrow face",
+    "evenly proportioned body"
+  ],
+  "350": [
+    "stocky body",
+    "large recurved horns",
+    "short tail",
+    "sloping rump",
+    "high shoulder line"
+  ],
+  "351": [
+    "tail with tufted tip",
+    "angular head shape",
+    "narrow midsection",
+    "sloping back",
+    "narrow muzzle"
+  ],
+  "352": [
+    "rump patch above tail",
+    "tail with tufted tip",
+    "smooth head-neck junction",
+    "facial stripe markings",
+    "narrow head"
+  ],
+  "353": [
+    "flank stripe",
+    "small head shape",
+    "small-framed body",
+    "short tail with tuft",
+    "slender ringed horns"
+  ],
+  "354": [
+    "broad two-toed feet with pads",
+    "single dorsal hump",
+    "sloping back from hump to tail",
+    "prominent hump profile",
+    "large muzzle"
+  ],
+  "355": [
+    "head",
+    "tail",
+    "upper lip",
+    "overall tall, slender build",
+    "rectangular torso"
+  ],
+  "356": [
+    "low-to-the-ground profile",
+    "head",
+    "elongated, tube-like body",
+    "tail",
+    "narrow head"
+  ],
+  "357": [
+    "head",
+    "low, elongated profile",
+    "partially webbed feet",
+    "tail",
+    "cylindrical body shape"
+  ],
+  "358": [
+    "stocky, elongated body",
+    "rounded head with tapered muzzle",
+    "head",
+    "tail",
+    "low-slung torso"
+  ],
+  "359": [
+    "head",
+    "tail",
+    "long, slender body",
+    "narrow head with mask-like facial pattern",
+    "rounded ears"
+  ],
+  "360": [
+    "cylindrical tail",
+    "low-slung profile",
+    "head",
+    "rounded head",
+    "tail"
+  ],
+  "361": [
+    "head",
+    "tail",
+    "compact body",
+    "bushy tail",
+    "snout"
+  ],
+  "362": [
+    "stocky body",
+    "wedge-shaped head",
+    "low-slung profile",
+    "head",
+    "tail"
+  ],
+  "363": [
+    "tapered tail",
+    "head",
+    "tail",
+    "domed shell",
+    "elongated body"
+  ],
+  "364": [
+    "head",
+    "rounded head",
+    "forelimbs",
+    "curved claws",
+    "hind limbs"
+  ],
+  "365": [
+    "large, heavy-set body",
+    "broad, flat face",
+    "rounded upper back and shoulders",
+    "rounded abdomen",
+    "relatively short legs"
+  ],
+  "366": [
+    "wide, flat nose with large nostrils",
+    "stocky, robust build",
+    "large head",
+    "pronounced brow ridge above eyes",
+    "barrel-shaped torso"
+  ],
+  "367": [
+    "flat, broad nose",
+    "prominent, rounded ears",
+    "elongated limbs compared to body",
+    "medium, lightweight frame",
+    "moderate brow ridge"
+  ],
+  "368": [
+    "small, rounded head",
+    "reduced snout and flat face",
+    "small, oval ears",
+    "long-limbed proportions",
+    "extremely elongated forelimbs"
+  ],
+  "369": [
+    "partially webbed second and third toes",
+    "elongated, muscular forelimbs",
+    "large, rounded throat sac",
+    "rounded throat bulge",
+    "small head"
+  ],
+  "370": [
+    "head",
+    "tail",
+    "forelimbs",
+    "long tail",
+    "narrow face"
+  ],
+  "371": [
+    "head",
+    "forelimbs",
+    "low-slung torso",
+    "long tail",
+    "long-limbed"
+  ],
+  "372": [
+    "head",
+    "tail",
+    "forelimbs",
+    "short tail",
+    "brow ridge"
+  ],
+  "373": [
+    "head",
+    "medium-length limbs",
+    "tail",
+    "forelimbs",
+    "short tail"
+  ],
+  "374": [
+    "head",
+    "tail",
+    "forelimbs",
+    "small head",
+    "long tail"
+  ],
+  "375": [
+    "head",
+    "long flowing fur",
+    "forelimbs",
+    "elongated tail",
+    "narrow limbs"
+  ],
+  "376": [
+    "head",
+    "relatively long tail",
+    "large nose",
+    "drooping bulbous nose",
+    "long tail"
+  ],
+  "377": [
+    "head",
+    "rounded head",
+    "forelimbs",
+    "elongated tail",
+    "long tail"
+  ],
+  "378": [
+    "head",
+    "rounded head",
+    "medium-sized body",
+    "forelimbs",
+    "curved prehensile tail"
+  ],
+  "379": [
+    "robust stocky body",
+    "head",
+    "prominent throat bulge",
+    "strong forelimbs",
+    "prehensile tail"
+  ],
+  "380": [
+    "head",
+    "rounded head",
+    "forelimbs",
+    "elongated tail",
+    "hind limbs"
+  ],
+  "381": [
+    "face with pronounced brow ridge",
+    "small narrow head",
+    "long slender forelimbs",
+    "hook-like hands with long fingers",
+    "tail longer than body"
+  ],
+  "382": [
+    "rounded head",
+    "large forward-facing eyes",
+    "slender forelimbs",
+    "elongated tail",
+    "long tail"
+  ],
+  "383": [
+    "wedge-shaped head",
+    "long banded tail",
+    "large round eyes",
+    "slender forelimbs",
+    "tail with distinct ring pattern"
+  ],
+  "384": [
+    "robust stocky body",
+    "short broad muzzle",
+    "rounded head",
+    "large tufted ears",
+    "short tail"
+  ],
+  "385": [
+    "tapering tail",
+    "tail",
+    "massive, barrel-shaped torso",
+    "elongated head",
+    "tusks"
+  ],
+  "386": [
+    "broad, angular head",
+    "tail",
+    "massive, high-shouldered body",
+    "very wide, fan-shaped ears",
+    "thick, columnar legs"
+  ],
+  "387": [
+    "bushy, cylindrical tail",
+    "head",
+    "rounded head",
+    "tail",
+    "elongated, low-slung body"
+  ],
+  "388": [
+    "stocky, rounded body",
+    "head",
+    "large, broad head",
+    "short, stubby tail",
+    "forelegs"
+  ],
+  "389": [
+    "narrow tail base",
+    "head",
+    "deeply forked tail fin",
+    "tail fin",
+    "dorsal fin"
+  ],
+  "390": [
+    "gill openings",
+    "tail region",
+    "head",
+    "continuous fin fringe along back",
+    "continuous fin fringe along underside"
+  ],
+  "391": [
+    "pelvic fins",
+    "head",
+    "tapered head and tail",
+    "adipose fin",
+    "dorsal fin"
+  ],
+  "392": [
+    "small mouth",
+    "rounded tail fin",
+    "pelvic fins",
+    "head",
+    "deep-bodied form"
+  ],
+  "393": [
+    "short oval body",
+    "pelvic fins",
+    "head",
+    "tail fin",
+    "dorsal fin"
+  ],
+  "394": [
+    "small mouth on underside",
+    "barbels under snout",
+    "tail with uneven upper and lower lobes",
+    "head",
+    "heterocercal tail fin"
+  ],
+  "395": [
+    "caudal fin",
+    "head",
+    "streamlined form",
+    "dorsal fin",
+    "narrow profile"
+  ],
+  "396": [
+    "caudal fin",
+    "pelvic fins",
+    "head",
+    "radiating fin arrangement",
+    "pectoral fins"
+  ],
+  "397": [
+    "caudal fin",
+    "short tail region",
+    "head",
+    "dorsal fin",
+    "pectoral fins"
+  ],
+  "398": [
+    "flat profile",
+    "bottom bar",
+    "central divider bar",
+    "side posts",
+    "outer frame"
+  ],
+  "399": [
+    "ankle-length outline",
+    "straight cut body",
+    "front opening",
+    "hem",
+    "cuffs"
+  ],
+  "400": [
+    "wide-sleeved profile",
+    "ankle-length outline",
+    "yoke",
+    "vertical hanging shape",
+    "inner lining"
+  ],
+  "401": [
+    "box-shaped body",
+    "bellows folds",
+    "pleated middle section",
+    "bellows corners",
+    "reed blocks"
+  ],
+  "402": [
+    "flat front surface",
+    "rounded lower bout",
+    "curved sides",
+    "body",
+    "elongated neck"
+  ],
+  "403": [
+    "hull",
+    "flat-topped hull",
+    "elongated narrow form",
+    "rectangular overall outline",
+    "long flat deck"
+  ],
+  "404": [
+    "tapered tail",
+    "tail section",
+    "symmetrical front view",
+    "streamlined nose",
+    "swept-back wings"
+  ],
+  "405": [
+    "rudder",
+    "streamlined profile",
+    "elongated body",
+    "cylindrical envelope",
+    "nose section"
+  ],
+  "406": [
+    "main slab",
+    "symmetrical form",
+    "rectangular block",
+    "decorative edge",
+    "supporting base"
+  ],
+  "407": [
+    "flat sides",
+    "boxy body",
+    "rectangular profile",
+    "grille",
+    "side mirrors"
+  ],
+  "408": [
+    "flat-bottomed body",
+    "flat hull",
+    "raised body",
+    "propeller housing",
+    "front bumper"
+  ],
+  "409": [
+    "flat face",
+    "outer frame",
+    "hour hand",
+    "central axle",
+    "round outline"
+  ],
+  "410": [
+    "rectangular shed",
+    "supporting posts",
+    "side walls",
+    "box-like structure",
+    "back wall"
+  ],
+  "411": [
+    "rectangular outline",
+    "flat panel",
+    "tapered waist",
+    "waistband",
+    "pockets"
+  ],
+  "412": [
+    "cylindrical body",
+    "axle",
+    "inner liner",
+    "domed lid",
+    "base"
+  ],
+  "413": [
+    "receiver",
+    "narrow body",
+    "linear barrel",
+    "stock",
+    "angular frame"
+  ],
+  "414": [
+    "rectangular body",
+    "soft-sided structure",
+    "buckles",
+    "bulging profile",
+    "front pocket"
+  ],
+  "415": [
+    "awning",
+    "linear display arrangement",
+    "display window",
+    "boxlike building form",
+    "entrance door"
+  ],
+  "416": [
+    "stabilizing crossbar",
+    "base feet",
+    "straight horizontal form",
+    "beam body",
+    "long narrow beam"
+  ],
+  "417": [
+    "inflated oval shape",
+    "bulbous form",
+    "inflation valve",
+    "rounded body",
+    "mouth rim"
+  ],
+  "418": [
+    "slender cylindrical body",
+    "tip housing",
+    "cap",
+    "clip",
+    "tapered tip end"
+  ],
+  "419": [
+    "release liner",
+    "rounded outline at ends",
+    "elongated rectangular outline",
+    "central pad area",
+    "edge margin"
+  ],
+  "420": [
+    "tailpiece",
+    "flat front surface",
+    "circular body",
+    "overall symmetrical outline",
+    "slender elongated neck"
+  ],
+  "421": [
+    "mounting brackets",
+    "bottom rail",
+    "linear arrangement",
+    "support posts",
+    "top rail"
+  ],
+  "422": [
+    "disc-shaped ends",
+    "long cylindrical form",
+    "central bar",
+    "inner shoulders",
+    "straight central axis"
+  ],
+  "423": [
+    "overall bulky form",
+    "pedestal base",
+    "wide stable base",
+    "backrest",
+    "seat cushion"
+  ],
+  "424": [
+    "wash basins",
+    "countertop",
+    "mirrors",
+    "linear row of stations",
+    "shelves"
+  ],
+  "425": [
+    "rectangular footprint",
+    "ridge line",
+    "walls",
+    "eaves",
+    "hayloft opening"
+  ],
+  "426": [
+    "suspension hook",
+    "flat front surface",
+    "mounting ring",
+    "disc-like profile",
+    "outer casing"
+  ],
+  "427": [
+    "bottom head",
+    "bulging middle section",
+    "cylindrical body",
+    "flat circular ends",
+    "top head"
+  ],
+  "428": [
+    "triangular side profile",
+    "axle",
+    "shallow basin",
+    "cross braces",
+    "sloping tray"
+  ],
+  "429": [
+    "compact form",
+    "uniformly rounded",
+    "raised seam lines",
+    "smooth curved surface",
+    "symmetrical shape"
+  ],
+  "430": [
+    "inflation valve",
+    "outer shell",
+    "surface dimples",
+    "evenly rounded surface",
+    "symmetrical form"
+  ],
+  "431": [
+    "oval footprint",
+    "deep basket-like cavity",
+    "base frame",
+    "gently curved hood",
+    "inner lining"
+  ],
+  "432": [
+    "tapering bell end",
+    "folded U-shaped lower section",
+    "bocal",
+    "elongated body",
+    "bell"
+  ],
+  "433": [
+    "lower edge hem",
+    "thin flexible shell",
+    "dome-shaped",
+    "seam lines",
+    "elastic band area"
+  ],
+  "434": [
+    "flat sheet-like form",
+    "rectangular outline",
+    "fold creases",
+    "long edges",
+    "short edges"
+  ],
+  "435": [
+    "deep concave form",
+    "overflow opening",
+    "rectangular outline",
+    "base floor",
+    "elongated body"
+  ],
+  "436": [
+    "rectangular side silhouette",
+    "elongated body",
+    "low profile",
+    "hood panel",
+    "boxy rear section"
+  ],
+  "437": [
+    "tapered vertical profile",
+    "foundation base",
+    "railing",
+    "lantern glass enclosure",
+    "narrow vertical structure"
+  ],
+  "438": [
+    "flat bottom",
+    "cylindrical body",
+    "stacking lip",
+    "cylindrical",
+    "thickened base ring"
+  ],
+  "439": [
+    "narrow brim",
+    "tall cylindrical form",
+    "slightly tapered body",
+    "plume holder",
+    "plume"
+  ],
+  "440": [
+    "narrow tapered neck",
+    "tall cylindrical body",
+    "punt indentation",
+    "flat circular base",
+    "base"
+  ],
+  "441": [
+    "wide base disc",
+    "straight-sided profile",
+    "flared upper opening",
+    "lip edge",
+    "thickened bottom section"
+  ],
+  "442": [
+    "rectangular footprint",
+    "belfry openings",
+    "walls",
+    "bells",
+    "pitched roof shape"
+  ],
+  "443": [
+    "snap or hook closure",
+    "flat sheet-like form",
+    "gently curved lower edge",
+    "lower pocket",
+    "fastening tab"
+  ],
+  "444": [
+    "two-wheel inline layout",
+    "low narrow side silhouette",
+    "front wheel",
+    "elongated frame profile",
+    "frame"
+  ],
+  "445": [
+    "low-rise bottom",
+    "side ties",
+    "curved contours",
+    "triangular top sections",
+    "back strap"
+  ],
+  "446": [
+    "rectangular covers",
+    "front cover",
+    "book-like form",
+    "flat surfaces",
+    "thick spine"
+  ],
+  "447": [
+    "compact form",
+    "central hinge",
+    "elongated body",
+    "protective outer casing",
+    "prism housings"
+  ],
+  "448": [
+    "perch",
+    "mounting bracket or hook",
+    "box-like body",
+    "front-facing opening",
+    "drainage holes"
+  ],
+  "449": [
+    "support posts",
+    "foundation or platform",
+    "elongated footprint",
+    "side walls",
+    "sloped ramp for boats"
+  ],
+  "450": [
+    "low-profile shape",
+    "narrow profile",
+    "elongated body",
+    "rounded front section",
+    "tapered rear section"
+  ],
+  "451": [
+    "backing plate",
+    "linear vertical form",
+    "central ornamental piece",
+    "neck loop shape",
+    "adjustment channel"
+  ],
+  "452": [
+    "rounded crown shape",
+    "projecting brim",
+    "projecting tunnel-like brim",
+    "brim edge band",
+    "outer shell"
+  ],
+  "453": [
+    "tall upright form",
+    "flat frontal plane",
+    "top panel",
+    "base panel",
+    "rectangular overall frame"
+  ],
+  "454": [
+    "floor surface",
+    "checkout counter",
+    "signage panels",
+    "display tables",
+    "aisles"
+  ],
+  "455": [
+    "flat upper surface",
+    "shallow cylindrical body",
+    "low-profile form",
+    "sealing liner",
+    "embossed markings"
+  ],
+  "456": [
+    "bowstring",
+    "tapered limbs",
+    "slender form",
+    "riser",
+    "elongated body"
+  ],
+  "457": [
+    "fastening hook",
+    "bow-shaped front",
+    "right bow wing",
+    "left bow wing",
+    "narrow strap"
+  ],
+  "458": [
+    "flat front face",
+    "flat rectangular slab",
+    "thin plate",
+    "main plate",
+    "low-relief surface"
+  ],
+  "459": [
+    "underwire channel",
+    "hook-and-eye closure",
+    "gently arched upper edge",
+    "contoured front",
+    "side wings"
+  ],
+  "460": [
+    "irregular blocky outline",
+    "stepped profile",
+    "crest",
+    "outer slope",
+    "inner slope"
+  ],
+  "461": [
+    "slightly flared lower edge",
+    "waist flange",
+    "central ridge",
+    "neck opening",
+    "side edges"
+  ],
+  "462": [
+    "long slender handle",
+    "tapered bristle ends",
+    "fan-shaped bristle area",
+    "bristle tips",
+    "ferrule"
+  ],
+  "463": [
+    "roughly cylindrical body",
+    "base",
+    "attachment lugs",
+    "rounded bottom edges",
+    "bottom ridge"
+  ],
+  "464": [
+    "flat low-profile form",
+    "rectangular frame outline",
+    "hinge point",
+    "central bar",
+    "outer edge"
+  ],
+  "465": [
+    "armholes",
+    "slightly curved shoulder line",
+    "outer fabric shell",
+    "attachment webbing",
+    "neck guard"
+  ],
+  "466": [
+    "streamlined side surfaces",
+    "symmetrical longitudinal form",
+    "bogies",
+    "pointed front profile",
+    "aerodynamic nose section"
+  ],
+  "467": [
+    "hanging rail",
+    "meat hooks",
+    "row-based display sections",
+    "linear counter arrangement",
+    "chopping block"
+  ],
+  "468": [
+    "elongated cabin shape",
+    "side mirrors",
+    "windshield",
+    "four-wheel stance",
+    "bumpers"
+  ],
+  "469": [
+    "main pot body",
+    "wide circular opening",
+    "wide rim",
+    "deep bowl-like form",
+    "lid"
+  ],
+  "470": [
+    "tapering upper section",
+    "bottom end",
+    "cylindrical body",
+    "molded base ridge",
+    "elongated stick shape"
+  ],
+  "471": [
+    "barrel bore",
+    "long tubular barrel",
+    "recoil housing",
+    "linear arrangement along barrel axis",
+    "sighting rail or bracket"
+  ],
+  "472": [
+    "hull",
+    "gunwales",
+    "narrow body",
+    "bow",
+    "keel"
+  ],
+  "473": [
+    "flat profile when closed",
+    "hanging hole at handle end",
+    "clamp jaws",
+    "compact head section",
+    "elongated handle pair"
+  ],
+  "474": [
+    "roughly rectangular outline when spread flat",
+    "torso-length profile",
+    "hem at bottom edge",
+    "front opening",
+    "patch pockets or side pockets"
+  ],
+  "475": [
+    "mounting arm",
+    "base attachment",
+    "rectangular surface",
+    "thin profile",
+    "adjustment mechanism"
+  ],
+  "476": [
+    "central pole",
+    "animal figures",
+    "railing",
+    "support poles",
+    "radial layout"
+  ],
+  "477": [
+    "flat base",
+    "rectangular case",
+    "box-like body",
+    "hammer",
+    "latches"
+  ],
+  "478": [
+    "box-like form",
+    "bottom flaps",
+    "top flaps",
+    "flat surfaces",
+    "straight edges"
+  ],
+  "479": [
+    "rounded profile",
+    "rim",
+    "hub",
+    "sidewall",
+    "hubcap"
+  ],
+  "480": [
+    "angular edges and corners",
+    "flat front-facing panel",
+    "vertical column shape",
+    "display screen",
+    "enclosure cabinet"
+  ],
+  "481": [
+    "flat rectangular body",
+    "symmetrical front face",
+    "outer plastic shell",
+    "top edge notches",
+    "thin compact form"
+  ],
+  "482": [
+    "rectangular box-shaped body",
+    "housing body",
+    "horizontal layout",
+    "slightly rounded edges",
+    "play button"
+  ],
+  "483": [
+    "arrow slits",
+    "irregular multi-block massing",
+    "outer curtain walls",
+    "walled enclosure layout",
+    "gatehouse"
+  ],
+  "484": [
+    "jib sail",
+    "twin parallel hulls",
+    "open central span between hulls",
+    "rudders",
+    "wide lateral stance"
+  ],
+  "485": [
+    "flat front surface",
+    "low-profile box shape",
+    "straight side edges",
+    "symmetrical front layout",
+    "display screen"
+  ],
+  "486": [
+    "tailpiece",
+    "arched top plate",
+    "rounded lower bout",
+    "endpin",
+    "symmetrical outline"
+  ],
+  "487": [
+    "thin rectangular slab",
+    "flat front surface",
+    "side frame",
+    "slightly curved edges",
+    "elongated vertical shape"
+  ],
+  "488": [
+    "hook",
+    "strand-like form",
+    "link segments",
+    "middle span",
+    "swivel"
+  ],
+  "489": [
+    "wire mesh",
+    "bottom tension wire",
+    "top rail",
+    "linear boundary line",
+    "grid-like appearance"
+  ],
+  "490": [
+    "sheet-like mesh surface",
+    "neck opening",
+    "hem edge",
+    "shoulder sections",
+    "metal links"
+  ],
+  "491": [
+    "front handle",
+    "guide bar",
+    "elongated overall form",
+    "trigger",
+    "projecting linear bar"
+  ],
+  "492": [
+    "long horizontal body",
+    "base",
+    "lid",
+    "rectangular box form",
+    "lock or latch"
+  ],
+  "493": [
+    "top surface",
+    "upper cornice or trim",
+    "tall vertical form",
+    "rectangular cabinet body",
+    "narrow footprint"
+  ],
+  "494": [
+    "lower sail or paddle",
+    "clapper or striker",
+    "elongated cylindrical elements",
+    "individual chime rods",
+    "suspension ring or loop"
+  ],
+  "495": [
+    "box-like body",
+    "top panel",
+    "rectangular profile",
+    "base panel",
+    "tall"
+  ],
+  "496": [
+    "main sock body",
+    "rounded toe end",
+    "curved foot section",
+    "flat profile when empty",
+    "tapered leg opening"
+  ],
+  "497": [
+    "bell",
+    "columns or pillars",
+    "pews",
+    "nave",
+    "stained-glass panels"
+  ],
+  "498": [
+    "large flat screen surface",
+    "side walls",
+    "curtains around screen",
+    "armrests",
+    "stage or front platform"
+  ],
+  "499": [
+    "tang",
+    "overall elongated profile",
+    "hanging hole near blade corner",
+    "bolster",
+    "flat blade surface"
+  ],
+  "500": [
+    "cliff ledge platforms",
+    "adobe walls",
+    "irregular layout",
+    "stone walls",
+    "support beams"
+  ],
+  "501": [
+    "flared bottom",
+    "long vertical profile",
+    "shoulder section",
+    "front opening",
+    "collar area"
+  ],
+  "502": [
+    "blocky sole",
+    "compact overall form",
+    "wooden sole",
+    "buckle",
+    "closed toe front"
+  ],
+  "503": [
+    "tapered cylindrical body",
+    "base",
+    "lid",
+    "rim",
+    "narrow neck"
+  ],
+  "504": [
+    "cylindrical body",
+    "bottom surface",
+    "lip edge",
+    "rounded base",
+    "base"
+  ],
+  "505": [
+    "cylindrical body",
+    "base",
+    "lid",
+    "water reservoir",
+    "sturdy base"
+  ],
+  "506": [
+    "trailing end",
+    "central axis",
+    "leading end",
+    "inner coils",
+    "outer edge"
+  ],
+  "507": [
+    "flat back surface",
+    "compact oval body",
+    "lock body",
+    "shackle",
+    "rounded edges"
+  ],
+  "508": [
+    "flat profile",
+    "elongated shape",
+    "slightly inclined surface",
+    "frame",
+    "rectangular layout"
+  ],
+  "509": [
+    "display window",
+    "checkout register",
+    "boxy building shape",
+    "sales counter",
+    "glass jars"
+  ],
+  "510": [
+    "hull",
+    "flat upper deck",
+    "bow",
+    "stacked rectangular outline",
+    "high vertical sides"
+  ],
+  "511": [
+    "rounded front end",
+    "smoothly curved body",
+    "low-profile body",
+    "side mirrors",
+    "windshield"
+  ],
+  "512": [
+    "elongated central body",
+    "narrow pointed end",
+    "fulcrum plate",
+    "collar around shaft",
+    "pointed tip"
+  ],
+  "513": [
+    "compact overall form",
+    "brace tubes",
+    "bell",
+    "water key",
+    "rounded tubing bends"
+  ],
+  "514": [
+    "heel cap",
+    "tall narrow shaft",
+    "curved instep",
+    "elongated toe",
+    "heel"
+  ],
+  "515": [
+    "wide extended brim",
+    "brim edge",
+    "curved upturned brim",
+    "brim",
+    "tall rounded crown"
+  ],
+  "516": [
+    "low elongated body",
+    "open slatted enclosure",
+    "base board",
+    "horizontal crossbars",
+    "slatted sides"
+  ],
+  "517": [
+    "hook block",
+    "long horizontal boom",
+    "counter-jib",
+    "T-shaped overall profile",
+    "boom jib"
+  ],
+  "518": [
+    "enclosed head form",
+    "streamlined overall profile",
+    "inner impact liner",
+    "projecting chin section",
+    "outer hard shell"
+  ],
+  "519": [
+    "rectangular box shape",
+    "base board",
+    "top lid",
+    "boxy angular form",
+    "open slatted sides"
+  ],
+  "520": [
+    "base legs",
+    "box-like enclosure",
+    "rectangular frame",
+    "footboard",
+    "headboard"
+  ],
+  "521": [
+    "cylindrical body",
+    "lid",
+    "heating base",
+    "rim",
+    "outer housing"
+  ],
+  "522": [
+    "uniformly round",
+    "compact solid form",
+    "equatorial seam line",
+    "contact areas",
+    "spherical body"
+  ],
+  "523": [
+    "upper shaft",
+    "top crossbar",
+    "lower shaft",
+    "T-shaped upper section",
+    "tapered lower section"
+  ],
+  "524": [
+    "waist flange",
+    "curved torso-shaped shell",
+    "rigid front-and-back pair",
+    "central ridge",
+    "neck opening"
+  ],
+  "525": [
+    "sloping downstream face",
+    "thick base tapering upward",
+    "spillway channel",
+    "embankment section",
+    "long horizontal barrier"
+  ],
+  "526": [
+    "flat horizontal surface",
+    "angular frame",
+    "cable grommet",
+    "modesty panel",
+    "boxy storage section"
+  ],
+  "527": [
+    "rectangular monitor",
+    "monitor screen",
+    "flat display surface",
+    "mouse",
+    "compact peripheral arrangement"
+  ],
+  "528": [
+    "hook switch",
+    "rectangular base",
+    "base housing",
+    "symmetrical front layout",
+    "mouthpiece"
+  ],
+  "529": [
+    "wraparound form",
+    "flexible folded shape",
+    "fastening tabs",
+    "padded central section",
+    "outer layer"
+  ],
+  "530": [
+    "rectangular body",
+    "flat front surface",
+    "box-like form",
+    "bezel",
+    "elongated shape"
+  ],
+  "531": [
+    "rectangular face",
+    "bezel",
+    "circular face",
+    "curved strap",
+    "clasp"
+  ],
+  "532": [
+    "flat horizontal surface",
+    "elongated form",
+    "four-legged structure",
+    "table surface",
+    "extension leaves"
+  ],
+  "533": [
+    "flat sheet-like form",
+    "square sheet",
+    "thin layer",
+    "foldable shape",
+    "hanging loop"
+  ],
+  "534": [
+    "box-like body",
+    "flat door surface",
+    "upper rack",
+    "display screen",
+    "lower rack"
+  ],
+  "535": [
+    "flat, plate-like body",
+    "mounting bracket",
+    "caliper body",
+    "circular disc",
+    "pad backing plates"
+  ],
+  "536": [
+    "flat horizontal surface",
+    "narrow elongated layout",
+    "decking boards on the surface",
+    "linear alignment along its length",
+    "mooring cleats on the surface"
+  ],
+  "537": [
+    "brush bow or curved front guard",
+    "narrow base",
+    "low-profile body",
+    "pair of runners",
+    "brake bar or claw near the rear"
+  ],
+  "538": [
+    "raised ribs or ridges on the exterior surface",
+    "centrally symmetrical shape",
+    "hemispherical form",
+    "curved segments or panels",
+    "curved surface"
+  ],
+  "539": [
+    "base sheet or mat body",
+    "flat sheet-like form",
+    "rectangular outline",
+    "straight-edged perimeter",
+    "backing layer"
+  ],
+  "540": [
+    "flare stack boom",
+    "substructure base frame",
+    "multi\u2011level flat deck",
+    "crane booms",
+    "platform raised on legs"
+  ],
+  "541": [
+    "cylindrical body",
+    "mounting bracket",
+    "drum shell",
+    "tension rods",
+    "metal rim or hoop"
+  ],
+  "542": [
+    "tapered rod shape",
+    "elongated cylindrical form",
+    "slender stick profile",
+    "rounded tip and end",
+    "rounded butt edge"
+  ],
+  "543": [
+    "right end weight",
+    "left end weight",
+    "short straight central bar",
+    "collars near weights",
+    "outer weight surfaces"
+  ],
+  "544": [
+    "front\u2011opening cavity",
+    "main box body",
+    "rectangular box shape",
+    "bottom panel",
+    "top panel"
+  ],
+  "545": [
+    "flat base",
+    "slender vertical profile",
+    "pedestal base",
+    "motor housing",
+    "cylindrical motor housing"
+  ],
+  "546": [
+    "solid flat body",
+    "contoured body outline",
+    "body",
+    "elongated neck",
+    "neck"
+  ],
+  "547": [
+    "elongated rectangular body",
+    "low horizontal profile",
+    "buffers",
+    "couplers",
+    "bogies"
+  ],
+  "548": [
+    "top surface",
+    "flat front surfaces",
+    "outer frame",
+    "tall rectangular structure",
+    "back panel"
+  ],
+  "549": [
+    "flat rectangular form",
+    "bottom seam",
+    "closing flap",
+    "inner lining",
+    "thin profile"
+  ],
+  "550": [
+    "group head",
+    "box-like main body",
+    "rectangular base",
+    "flat top surface",
+    "filter basket"
+  ],
+  "551": [
+    "thin disc-shaped profile",
+    "powder pan",
+    "application puff",
+    "clasp or latch",
+    "hinged lid"
+  ],
+  "552": [
+    "long rope-like form",
+    "feather barbs",
+    "seam line",
+    "flexible tubular shape",
+    "individual feathers"
+  ],
+  "553": [
+    "base feet",
+    "top surface",
+    "outer frame",
+    "straight edges and right angles",
+    "side panels"
+  ],
+  "554": [
+    "hull",
+    "bow",
+    "pointed bow profile",
+    "stern",
+    "elongated boat-shaped hull"
+  ],
+  "555": [
+    "rectangular body",
+    "flat vertical sides",
+    "water tank housing",
+    "cab",
+    "pump panel"
+  ],
+  "556": [
+    "arched upper edge",
+    "rectangular outline",
+    "side posts",
+    "outer frame",
+    "top rail"
+  ],
+  "557": [
+    "pole shaft",
+    "base plate",
+    "pulley",
+    "slender vertical form",
+    "smooth continuous surface"
+  ],
+  "558": [
+    "lip plate",
+    "headjoint",
+    "body tube",
+    "elongated tubular body",
+    "straight linear form"
+  ],
+  "559": [
+    "front legs",
+    "rear legs",
+    "X-shaped leg configuration",
+    "cross braces",
+    "slender overall profile"
+  ],
+  "560": [
+    "jaw pads",
+    "outer shell",
+    "crown padding",
+    "inner padding",
+    "projecting facial cage"
+  ],
+  "561": [
+    "rectangular base",
+    "compact body",
+    "overhead guard",
+    "counterweight block",
+    "front wheels"
+  ],
+  "562": [
+    "basin",
+    "rim",
+    "pedestal base",
+    "circular base",
+    "radial arrangement"
+  ],
+  "563": [
+    "slender cylindrical body",
+    "ink reservoir",
+    "cap",
+    "rounded cap",
+    "elongated form"
+  ],
+  "564": [
+    "rectangular sleeping platform",
+    "footboard",
+    "elevated frame",
+    "headboard",
+    "side rails"
+  ],
+  "565": [
+    "symmetrical lengthwise form",
+    "rectangular box-like body",
+    "buffers",
+    "couplers",
+    "bogies"
+  ],
+  "566": [
+    "finger hooks",
+    "circular coiled body",
+    "bell",
+    "water key",
+    "flared bell opening"
+  ],
+  "567": [
+    "flat disc-shaped base",
+    "flat base",
+    "spout edge",
+    "shallow circular profile",
+    "lid"
+  ],
+  "568": [
+    "slightly flared lower portion",
+    "front opening",
+    "straight body cut",
+    "cuffs",
+    "bulky outer volume"
+  ],
+  "569": [
+    "flat vertical rear surface",
+    "cab",
+    "side mirrors",
+    "front bumper",
+    "windshield"
+  ],
+  "570": [
+    "head straps",
+    "facepiece shell",
+    "rounded front profile",
+    "protruding filter section",
+    "exhalation valve"
+  ],
+  "571": [
+    "flat front face",
+    "boxy outer shell",
+    "base pedestal",
+    "vertical elongated form",
+    "symmetrical front arrangement"
+  ],
+  "572": [
+    "lip edge",
+    "cup-shaped upper portion",
+    "circular flat base",
+    "base",
+    "bowl"
+  ],
+  "573": [
+    "compact overall form",
+    "low-profile frame",
+    "front wheels",
+    "open-frame structure",
+    "rectangular wheelbase layout"
+  ],
+  "574": [
+    "pole regions",
+    "nearly spherical body",
+    "outer shell",
+    "equator seam line",
+    "surface dimples"
+  ],
+  "575": [
+    "open-sided body",
+    "rectangular footprint",
+    "backrest",
+    "windshield",
+    "rear cargo platform"
+  ],
+  "576": [
+    "single oar",
+    "oarlock",
+    "hull",
+    "gunwales",
+    "prow"
+  ],
+  "577": [
+    "central boss",
+    "crossbar",
+    "flat disc form",
+    "circular plate",
+    "rim"
+  ],
+  "578": [
+    "inner lining",
+    "fitted upper portion",
+    "full-length garment",
+    "back closure",
+    "flared skirt shape"
+  ],
+  "579": [
+    "tapered tail",
+    "harp-shaped body",
+    "curved side",
+    "lid",
+    "cast-iron frame"
+  ],
+  "580": [
+    "ridge bar",
+    "rectangular footprint",
+    "foundation base",
+    "side walls",
+    "symmetrical frame"
+  ],
+  "581": [
+    "central emblem mount",
+    "rectangular outline",
+    "outer frame",
+    "mounting brackets",
+    "slightly curved surface"
+  ],
+  "582": [
+    "boxy exterior shape",
+    "checkout counters",
+    "display windows",
+    "basket racks",
+    "shelves"
+  ],
+  "583": [
+    "guide rails",
+    "tall rectangular frame",
+    "crossbeam",
+    "triangular blade",
+    "vertical posts"
+  ],
+  "584": [
+    "lower arm",
+    "claw-like outline",
+    "curved profile",
+    "hinge pin",
+    "upper arm"
+  ],
+  "585": [
+    "tall cylindrical body",
+    "flat base",
+    "metal canister body",
+    "flat circular base",
+    "crimped top edge"
+  ],
+  "586": [
+    "elongated rectangular body",
+    "symmetrical along lengthwise axis",
+    "front wheels",
+    "front fenders",
+    "front bumper"
+  ],
+  "587": [
+    "T-shaped profile",
+    "compact rectangular head",
+    "neck of head",
+    "wedge securing head",
+    "hammer head"
+  ],
+  "588": [
+    "rectangular box-like form",
+    "base",
+    "lid",
+    "rim",
+    "rounded top edges"
+  ],
+  "589": [
+    "bulbous main body",
+    "main body housing",
+    "filter cover",
+    "hanging loop",
+    "trigger or button"
+  ],
+  "590": [
+    "rectangular body",
+    "flat front face",
+    "thin slab profile",
+    "symmetrical front layout",
+    "display screen"
+  ],
+  "591": [
+    "flat sheet form",
+    "central area",
+    "thin flexible layer",
+    "square outline",
+    "symmetrical shape"
+  ],
+  "592": [
+    "low-profile form",
+    "base plate",
+    "flat box shape",
+    "top cover plate",
+    "outer casing"
+  ],
+  "593": [
+    "reed plates",
+    "elongated rectangular block",
+    "bar-like shape",
+    "comb body",
+    "reeds row"
+  ],
+  "594": [
+    "base foot",
+    "curved upper neck",
+    "triangular frame",
+    "neck-to-pillar joint",
+    "curved neck"
+  ],
+  "595": [
+    "projecting front header",
+    "box-like main body",
+    "reel",
+    "cutter bar",
+    "feeder house"
+  ],
+  "596": [
+    "wedge-shaped head",
+    "slightly curved profile",
+    "short overall length",
+    "cheeks of the head",
+    "hanging hole"
+  ],
+  "597": [
+    "flat outer face",
+    "main pouch",
+    "curved inner face",
+    "retention strap",
+    "tapered muzzle end"
+  ],
+  "598": [
+    "media receiver",
+    "symmetrical front arrangement",
+    "television screen",
+    "right speaker",
+    "display panel"
+  ],
+  "599": [
+    "flat slab-like overall shape",
+    "flat backing sheet",
+    "sheet-like formation",
+    "interlocking cell corners",
+    "perforated surface"
+  ],
+  "600": [
+    "hook-shaped",
+    "base plate",
+    "notch",
+    "mounting hole",
+    "barb"
+  ],
+  "601": [
+    "rounded outline",
+    "bell-shaped",
+    "inner lining",
+    "flared",
+    "hem"
+  ],
+  "602": [
+    "mounting plates",
+    "horizontal bar",
+    "adjustment mechanisms",
+    "horizontal orientation",
+    "rectangular frame"
+  ],
+  "603": [
+    "yoke attachment",
+    "box-like body",
+    "cargo bed",
+    "longitudinal frame",
+    "shafts"
+  ],
+  "604": [
+    "upper bulb",
+    "base",
+    "double-bulb shape",
+    "bottom cap",
+    "narrow neck"
+  ],
+  "605": [
+    "rectangular body",
+    "flat front face",
+    "thin slab-like profile",
+    "top edge strip",
+    "side edges"
+  ],
+  "606": [
+    "wedge-shaped body",
+    "body housing",
+    "flat base surface",
+    "water reservoir",
+    "triangular soleplate outline"
+  ],
+  "607": [
+    "flat base contact area",
+    "slightly flattened top and bottom",
+    "thick curved shell",
+    "outer shell",
+    "lid or top cut section"
+  ],
+  "608": [
+    "back pockets",
+    "folded seams along sides",
+    "two tubular pant legs",
+    "coin pocket",
+    "front pockets"
+  ],
+  "609": [
+    "large circular wheel openings",
+    "rectangular front profile",
+    "fenders",
+    "side mirrors",
+    "front bumper"
+  ],
+  "610": [
+    "flat when laid out",
+    "T-shaped outline",
+    "symmetrical overall shape",
+    "inner tag label",
+    "bottom hem"
+  ],
+  "611": [
+    "printed image layer",
+    "rectangular overall outline",
+    "flat assembled surface",
+    "piece edges",
+    "interlocking slots"
+  ],
+  "612": [
+    "pulling shafts",
+    "narrow body",
+    "side rails",
+    "backrest",
+    "seat cushion"
+  ],
+  "613": [
+    "broad flat base",
+    "mounting feet or suction cups",
+    "vertical cylindrical stick",
+    "central pivot point",
+    "compact overall form"
+  ],
+  "614": [
+    "straight long body",
+    "wide rectangular sleeves",
+    "left front panel",
+    "right front panel",
+    "T-shaped garment outline"
+  ],
+  "615": [
+    "semi-cylindrical form",
+    "outer shell",
+    "impact plate",
+    "inner lining",
+    "padding core"
+  ],
+  "616": [
+    "central bight",
+    "central opening",
+    "irregular rounded mass",
+    "interwoven segments",
+    "tightened core"
+  ],
+  "617": [
+    "T-shaped outline",
+    "knee-length profile",
+    "front opening",
+    "straight cut silhouette",
+    "cuffs"
+  ],
+  "618": [
+    "concave bowl shape",
+    "roughly circular bowl",
+    "bowl",
+    "rim",
+    "hanging hole"
+  ],
+  "619": [
+    "tapered form",
+    "bottom opening",
+    "conical outline",
+    "flared bottom",
+    "seam line"
+  ],
+  "620": [
+    "thin flat body",
+    "base",
+    "lid",
+    "bezel",
+    "screen"
+  ],
+  "621": [
+    "discharge chute",
+    "fuel tank",
+    "arched handle shape",
+    "cutting deck",
+    "handlebar"
+  ],
+  "622": [
+    "shallow disc shape",
+    "flat front face",
+    "circular outline",
+    "symmetrical form",
+    "pinch grips"
+  ],
+  "623": [
+    "flat narrow profile",
+    "elongated blade shape",
+    "hanging hole",
+    "symmetrical outline",
+    "guard"
+  ],
+  "624": [
+    "exterior walls",
+    "box-like volume",
+    "support columns",
+    "front steps",
+    "decorative cornice"
+  ],
+  "625": [
+    "gunwale",
+    "raised bow",
+    "curved bottom",
+    "hull",
+    "keel line"
+  ],
+  "626": [
+    "rectangular body",
+    "base",
+    "compact form",
+    "flint chamber",
+    "rounded edges"
+  ],
+  "627": [
+    "low-slung profile",
+    "elongated body",
+    "rear bumper",
+    "front bumper",
+    "windshield"
+  ],
+  "628": [
+    "streamlined bow",
+    "hull",
+    "bow",
+    "stern",
+    "tall superstructure"
+  ],
+  "629": [
+    "cylindrical body",
+    "twist-up base",
+    "rounded ends",
+    "slender form",
+    "cap"
+  ],
+  "630": [
+    "upper",
+    "low-cut profile",
+    "slightly curved sole",
+    "bilaterally symmetrical form",
+    "sole"
+  ],
+  "631": [
+    "pump head",
+    "base",
+    "flattened tube",
+    "cap",
+    "tapered body"
+  ],
+  "632": [
+    "boxy overall form",
+    "bass reflex port",
+    "rectangular box enclosure",
+    "surround ring",
+    "dust cap"
+  ],
+  "633": [
+    "short cylindrical body",
+    "mounting ring",
+    "compact barrel shape",
+    "folding hinge",
+    "symmetrical form"
+  ],
+  "634": [
+    "outfeed table",
+    "motor housing",
+    "log deck",
+    "infeed table",
+    "elongated mill layout"
+  ],
+  "635": [
+    "disk-shaped housing",
+    "flat profile",
+    "base plate",
+    "circular body",
+    "outer casing"
+  ],
+  "636": [
+    "rectangular body",
+    "flat-sided profile",
+    "box-like form",
+    "elongated horizontal shape",
+    "bottom panel"
+  ],
+  "637": [
+    "box-shaped body",
+    "rectangular profile",
+    "mounting post or bracket",
+    "box body",
+    "elongated horizontal form"
+  ],
+  "638": [
+    "tapered lower legs",
+    "leg sections",
+    "outer seams",
+    "gusset",
+    "symmetrical left and right sides"
+  ],
+  "639": [
+    "armholes",
+    "inner lining",
+    "seam lines",
+    "shoulder straps",
+    "symmetrical front and back"
+  ],
+  "640": [
+    "edge lip around perimeter",
+    "central iron plate",
+    "circular outline",
+    "flat disk-shaped body",
+    "bolt or locking holes"
+  ],
+  "641": [
+    "pear-shaped head",
+    "narrow neck section",
+    "smooth continuous contours",
+    "surface seam line",
+    "hollow outer shell"
+  ],
+  "642": [
+    "stabilizing feet or casters",
+    "long rectangular footprint",
+    "bar mounting posts or cords",
+    "gradually stepped bar lengths from one end to the other",
+    "crossbars joining the frame"
+  ],
+  "643": [
+    "face-shaped outline",
+    "strap holes or anchor points",
+    "thin plate-like structure",
+    "curved shell conforming to facial contours",
+    "cheek sections"
+  ],
+  "644": [
+    "thin rod-like form",
+    "small enlarged tip at one end",
+    "small manufacturing seam or ridge",
+    "narrow neck below head",
+    "elongated wooden shaft"
+  ],
+  "645": [
+    "base collar around the pole",
+    "symmetrical around a central axis",
+    "central pole",
+    "top finial",
+    "cylindrical shaft"
+  ],
+  "646": [
+    "rectangular footprint",
+    "planar layout",
+    "wall corners",
+    "outer boundary wall",
+    "complex branching pattern"
+  ],
+  "647": [
+    "cylindrical body",
+    "flat base",
+    "upper rim",
+    "spout",
+    "numeric measurement markings"
+  ],
+  "648": [
+    "flat front surface",
+    "shallow depth",
+    "latch or magnetic catch",
+    "rectangular box",
+    "side walls"
+  ],
+  "649": [
+    "top surface",
+    "base surface",
+    "main stone body",
+    "upright slab",
+    "pillar-like profile"
+  ],
+  "650": [
+    "rounded head",
+    "cylindrical body",
+    "base",
+    "stand mount",
+    "elongated form"
+  ],
+  "651": [
+    "boxy form",
+    "flat front face",
+    "outer casing",
+    "rectangular box",
+    "recessed cavity"
+  ],
+  "652": [
+    "symmetrical front closure",
+    "fitted torso shape",
+    "trousers",
+    "tapered waist",
+    "cuffs"
+  ],
+  "653": [
+    "cylindrical body",
+    "flared base",
+    "base",
+    "reinforcing ribs",
+    "rim"
+  ],
+  "654": [
+    "rectangular body",
+    "rear bumper",
+    "side mirrors",
+    "front bumper",
+    "windshield"
+  ],
+  "655": [
+    "flared hem",
+    "short length",
+    "straight cut",
+    "pleats",
+    "waistband"
+  ],
+  "656": [
+    "rounded front end",
+    "boxy body",
+    "sliding door",
+    "side mirrors",
+    "windshield"
+  ],
+  "657": [
+    "tapered tail",
+    "stabilizing fins",
+    "cylindrical body",
+    "tail section",
+    "pointed tip"
+  ],
+  "658": [
+    "outer shell",
+    "soft flexible form",
+    "rounded finger area",
+    "inner lining",
+    "symmetrical outline"
+  ],
+  "659": [
+    "flat bottom",
+    "base",
+    "round opening",
+    "rim",
+    "radially symmetrical form"
+  ],
+  "660": [
+    "trailer hitch",
+    "low height",
+    "elongated body",
+    "rectangular profile",
+    "axles"
+  ],
+  "661": [
+    "boxy body",
+    "rounded fenders",
+    "fenders",
+    "narrow chassis",
+    "windshield"
+  ],
+  "662": [
+    "bottom panel",
+    "top panel",
+    "rounded edges",
+    "flat top surface",
+    "outer casing"
+  ],
+  "663": [
+    "walled enclosure",
+    "stone walls",
+    "towering vertical element",
+    "repeating arches",
+    "dormitory wing"
+  ],
+  "664": [
+    "flat front surface",
+    "base plate",
+    "tilt hinge",
+    "bezel",
+    "narrow frame"
+  ],
+  "665": [
+    "narrow profile",
+    "fuel tank",
+    "front wheel",
+    "elongated frame",
+    "seat"
+  ],
+  "666": [
+    "base",
+    "rounded bottom",
+    "rim",
+    "bowl-shaped vessel",
+    "pestle head"
+  ],
+  "667": [
+    "edges of the board",
+    "low cylindrical cap",
+    "inner lining",
+    "square board",
+    "flat square top"
+  ],
+  "668": [
+    "rectangular base",
+    "arched openings",
+    "tall slender tower",
+    "secondary domes",
+    "domed roofline"
+  ],
+  "669": [
+    "bottom edge",
+    "overlapping flaps",
+    "entry opening",
+    "upper frame ring",
+    "hanging loop"
+  ],
+  "670": [
+    "compact overall profile",
+    "front fender",
+    "front wheel",
+    "rounded front section",
+    "step-through frame"
+  ],
+  "671": [
+    "front wheel",
+    "triangular main frame",
+    "frame triangle",
+    "saddle seat",
+    "rear wheel"
+  ],
+  "672": [
+    "stake loops",
+    "pole sleeves",
+    "mesh ventilation panels",
+    "support poles",
+    "symmetrical footprint"
+  ],
+  "673": [
+    "central body shell",
+    "top surface seam",
+    "gently curved sides",
+    "elongated oval outline",
+    "low-profile body"
+  ],
+  "674": [
+    "flat rectangular base",
+    "rectangular base board",
+    "bait pedal",
+    "tension rod",
+    "holding bar"
+  ],
+  "675": [
+    "rectangular side profile",
+    "elongated body",
+    "cargo box",
+    "boxy rear section",
+    "rear bumper"
+  ],
+  "676": [
+    "curved form to fit snout",
+    "adjustment sliders",
+    "buckle",
+    "padding lining",
+    "wraparound band"
+  ],
+  "677": [
+    "slender cylindrical body",
+    "flat head surface",
+    "axial body",
+    "transition neck below head",
+    "flat circular head"
+  ],
+  "678": [
+    "lower edge padding",
+    "thick band around neck",
+    "open cylindrical form",
+    "upper edge padding",
+    "curved contoured profile"
+  ],
+  "679": [
+    "fastening hook",
+    "circular outline",
+    "curved draping line",
+    "extension chain",
+    "clasp"
+  ],
+  "680": [
+    "disc-shaped shield",
+    "anchoring post",
+    "short central stem",
+    "guard disc",
+    "stem"
+  ],
+  "681": [
+    "thin clamshell body",
+    "low-profile base",
+    "lid",
+    "base housing",
+    "hinge"
+  ],
+  "682": [
+    "tapering shaft",
+    "base",
+    "plinth",
+    "top point",
+    "pyramidal top"
+  ],
+  "683": [
+    "upper joint",
+    "tapering body",
+    "key rods",
+    "lower joint",
+    "reed staple"
+  ],
+  "684": [
+    "egg-shaped body",
+    "compact oval outline",
+    "slightly flattened profile",
+    "labium edge",
+    "mouthpiece"
+  ],
+  "685": [
+    "mounting bracket",
+    "compact box-like body",
+    "outer housing",
+    "protective front cover",
+    "inner axle for number wheels"
+  ],
+  "686": [
+    "short barrel-like form",
+    "cylindrical body",
+    "base plate",
+    "outer metal canister",
+    "pleated filter media"
+  ],
+  "687": [
+    "symmetrical frontal layout",
+    "decorative outer case",
+    "individual pipes",
+    "pipe mouths",
+    "stop knobs"
+  ],
+  "688": [
+    "rectangular box-like body",
+    "flat front surface",
+    "outer casing",
+    "depthwise elongated housing",
+    "top handle"
+  ],
+  "689": [
+    "fastening closure",
+    "front opening",
+    "outer fabric layer",
+    "asymmetrical front opening",
+    "pleated sections"
+  ],
+  "690": [
+    "tailboard",
+    "front board",
+    "axle beam",
+    "central pole",
+    "side rails"
+  ],
+  "691": [
+    "reservoir bag",
+    "cup-shaped front",
+    "inlet connector",
+    "tapered lower section",
+    "head straps"
+  ],
+  "692": [
+    "thin slab-like form",
+    "outer wrapper",
+    "bottom edge",
+    "inner lining",
+    "sealed seams"
+  ],
+  "693": [
+    "symmetrical along length",
+    "flat broad blade",
+    "shaft collar",
+    "reinforcing rib",
+    "narrow cylindrical handle"
+  ],
+  "694": [
+    "projecting rectangular paddles",
+    "axle connection",
+    "paddle blades",
+    "cross braces",
+    "mounting brackets"
+  ],
+  "695": [
+    "rectangular body",
+    "bottom edge of body",
+    "shackle tips",
+    "lock body",
+    "shackle"
+  ],
+  "696": [
+    "bristle tip",
+    "fan-shaped bristle spread",
+    "flat brush head",
+    "ferrule",
+    "crimped ferrule edge"
+  ],
+  "697": [
+    "drawstring",
+    "flat collar fold",
+    "rectangular front panels",
+    "trousers",
+    "waistband"
+  ],
+  "698": [
+    "rectangular footprint",
+    "columns",
+    "doors",
+    "arches",
+    "roofline"
+  ],
+  "699": [
+    "graduated pipe lengths",
+    "outer pipe surface",
+    "curved or straight overall alignment",
+    "supporting frame strip",
+    "blowing edge"
+  ],
+  "700": [
+    "edge border",
+    "thin flexible layer",
+    "cylindrical roll",
+    "central opening",
+    "rolled outer surface"
+  ],
+  "701": [
+    "concave upper surface",
+    "slider",
+    "circular outline",
+    "risers",
+    "pilot chute"
+  ],
+  "702": [
+    "base frame",
+    "cross braces",
+    "right bar",
+    "rectangular frame footprint",
+    "left bar"
+  ],
+  "703": [
+    "upright backrest",
+    "backrest frame",
+    "armrests",
+    "backrest slats",
+    "fastening bolts"
+  ],
+  "704": [
+    "narrow elongated body",
+    "base mounting plate",
+    "meter head",
+    "housing body",
+    "rounded meter head"
+  ],
+  "705": [
+    "couplers",
+    "elongated body",
+    "bogies",
+    "rectangular prism",
+    "rounded corners"
+  ],
+  "706": [
+    "low wall",
+    "irregular outline",
+    "low, planar platform",
+    "flat surface",
+    "railing"
+  ],
+  "707": [
+    "symmetrical front layout",
+    "mouthpiece",
+    "box-like housing",
+    "main housing",
+    "coin slot"
+  ],
+  "708": [
+    "base plinth",
+    "tapering profile",
+    "top platform",
+    "base step",
+    "pedestal foot"
+  ],
+  "709": [
+    "rectangular box body",
+    "cylindrical body",
+    "bottom panel",
+    "rounded edges",
+    "elongated form"
+  ],
+  "710": [
+    "box-shaped body",
+    "mounting base",
+    "compact form",
+    "outer casing",
+    "tightening clamp"
+  ],
+  "711": [
+    "base",
+    "tall and slender form",
+    "cap",
+    "atomizer pump head",
+    "dip tube"
+  ],
+  "712": [
+    "base dish",
+    "flat bottom surface",
+    "shallow dish form",
+    "flat-bottomed",
+    "stacking lip"
+  ],
+  "713": [
+    "boxy form",
+    "document feeder",
+    "flat top surface",
+    "display screen",
+    "upright standing body"
+  ],
+  "714": [
+    "rounded end",
+    "flat and thin",
+    "flat faces",
+    "tear-drop profile",
+    "beveled edge"
+  ],
+  "715": [
+    "flared brim",
+    "spike base plate",
+    "brim edge trim",
+    "tapering spike",
+    "rear neck guard"
+  ],
+  "716": [
+    "fence posts",
+    "rectangular boards",
+    "bottom rail",
+    "linear arrangement",
+    "top rail"
+  ],
+  "717": [
+    "cargo bed",
+    "elongated body",
+    "cab",
+    "box-shaped cargo bed",
+    "grille"
+  ],
+  "718": [
+    "cutwater nose",
+    "symmetrical upstream and downstream faces",
+    "massive block-like appearance",
+    "fender piles",
+    "pier cap"
+  ],
+  "719": [
+    "slightly flattened underside",
+    "tail",
+    "main body",
+    "compact oval form",
+    "rounded body"
+  ],
+  "720": [
+    "cylindrical body",
+    "flat-bottomed",
+    "base",
+    "cylindrical",
+    "cap"
+  ],
+  "721": [
+    "rectangular",
+    "surface panel",
+    "square",
+    "plump profile",
+    "piping trim"
+  ],
+  "722": [
+    "upper hemisphere",
+    "uniformly rounded",
+    "outer shell",
+    "seam line",
+    "lower hemisphere"
+  ],
+  "723": [
+    "axle",
+    "handle rod",
+    "fastening cap",
+    "central hub",
+    "flat wheel"
+  ],
+  "724": [
+    "rudder",
+    "hull",
+    "bow",
+    "curved underside",
+    "pointed front"
+  ],
+  "725": [
+    "base",
+    "lid",
+    "rounded body",
+    "rim",
+    "spout"
+  ],
+  "726": [
+    "rectangular body",
+    "flat bottom",
+    "low-profile form",
+    "sole plate",
+    "lever cap"
+  ],
+  "727": [
+    "viewing area",
+    "centralized arrangement",
+    "support columns",
+    "hemispherical dome",
+    "inner projection dome"
+  ],
+  "728": [
+    "flattened rectangular outline",
+    "bottom seam",
+    "bag opening",
+    "flexible form",
+    "thin plastic walls"
+  ],
+  "729": [
+    "base",
+    "rectangular frame",
+    "crossbars",
+    "side rails",
+    "parallel slot arrangement"
+  ],
+  "730": [
+    "coulter disc",
+    "moldboard",
+    "main frame",
+    "plowshare",
+    "plow point"
+  ],
+  "731": [
+    "straight rod-like handle",
+    "cup-shaped base",
+    "reinforcement disc",
+    "neck connector",
+    "axially symmetric outline"
+  ],
+  "732": [
+    "boxy main body",
+    "rectangular prism form",
+    "flash unit",
+    "stepped front surface",
+    "strap lugs"
+  ],
+  "733": [
+    "slender rod-like shape",
+    "elongated cylindrical form",
+    "mounting bracket",
+    "base end",
+    "ground sleeve"
+  ],
+  "734": [
+    "rectangular side profile",
+    "symmetrical left-right shape",
+    "rear bumper",
+    "front bumper",
+    "side door"
+  ],
+  "735": [
+    "head opening",
+    "side opening",
+    "loose hanging form",
+    "hem",
+    "edge trim"
+  ],
+  "736": [
+    "flat horizontal surface",
+    "cushion rails",
+    "pocket nets",
+    "box-like body",
+    "playing surface"
+  ],
+  "737": [
+    "narrow mouth",
+    "base",
+    "cap",
+    "label",
+    "tapered neck"
+  ],
+  "738": [
+    "cylindrical body",
+    "base",
+    "rim",
+    "widened rim",
+    "stacking ridge"
+  ],
+  "739": [
+    "central spindle",
+    "base frame",
+    "flat circular platform",
+    "splash pan",
+    "motor housing"
+  ],
+  "740": [
+    "L-shaped profile",
+    "main body housing",
+    "chuck",
+    "compact body",
+    "cylindrical front section"
+  ],
+  "741": [
+    "rectangular",
+    "edge binding",
+    "thin layer",
+    "flat surface",
+    "border band"
+  ],
+  "742": [
+    "symmetrical front face",
+    "flat top surface",
+    "outer casing",
+    "low-profile body",
+    "rectangular box"
+  ],
+  "743": [
+    "metal bars",
+    "perimeter wall",
+    "tall vertical walls",
+    "rectangular layout",
+    "enclosed compound"
+  ],
+  "744": [
+    "tail cap",
+    "symmetrical along length",
+    "cylindrical form",
+    "attachment ridge",
+    "pointed tip"
+  ],
+  "745": [
+    "low, flat profile",
+    "box-like body",
+    "top panel",
+    "lens bezel",
+    "front-facing lens arrangement"
+  ],
+  "746": [
+    "disc-shaped body",
+    "low-profile shape",
+    "flat cylindrical form",
+    "central bottom area",
+    "bottom surface"
+  ],
+  "747": [
+    "cylindrical body",
+    "inflation valve",
+    "rounded bottom",
+    "outer shell",
+    "bottom panel"
+  ],
+  "748": [
+    "outer pocket",
+    "soft-sided body",
+    "flap",
+    "compact bag shape",
+    "rectangular pouch"
+  ],
+  "749": [
+    "upper plume section",
+    "tapered form",
+    "barbs",
+    "quill base",
+    "curved feather body"
+  ],
+  "750": [
+    "rectangular outline",
+    "flat padded surface",
+    "inner batting layer",
+    "binding edge",
+    "flexible sheet form"
+  ],
+  "751": [
+    "low-slung body",
+    "streamlined profile",
+    "side pods",
+    "roll hoop",
+    "open-wheel layout"
+  ],
+  "752": [
+    "oval head",
+    "head frame",
+    "butt cap",
+    "bumper guard",
+    "thin profile"
+  ],
+  "753": [
+    "inlet tank",
+    "filler neck",
+    "grid-like fin surface",
+    "cooling fins",
+    "thin depth"
+  ],
+  "754": [
+    "rectangular body",
+    "box-like form",
+    "rounded edges",
+    "antenna",
+    "carrying handle"
+  ],
+  "755": [
+    "concave dish-shaped",
+    "reflector surface",
+    "feed horn",
+    "central receiver housing",
+    "rim of dish"
+  ],
+  "756": [
+    "flat bottom base",
+    "barrel body",
+    "rounded sides",
+    "cylindrical",
+    "spigot"
+  ],
+  "757": [
+    "boxy main body",
+    "flat vertical sides",
+    "slightly rounded front end",
+    "side mirrors",
+    "windshield"
+  ],
+  "758": [
+    "reel foot",
+    "cylindrical spool",
+    "spool",
+    "rounded frame",
+    "crank arm"
+  ],
+  "759": [
+    "rectangular body",
+    "raised top housing",
+    "prism housing",
+    "symmetrical front layout",
+    "protruding lens barrel"
+  ],
+  "760": [
+    "flat front surface",
+    "blocky shape",
+    "upright rectangular body",
+    "tall box-like form",
+    "hinges"
+  ],
+  "761": [
+    "flat front face",
+    "elongated body",
+    "slightly curved back",
+    "directional pad",
+    "channel control buttons"
+  ],
+  "762": [
+    "box-like exterior volume",
+    "flat or gently sloped roofline",
+    "multiple aligned window openings",
+    "signboard",
+    "booths"
+  ],
+  "763": [
+    "asymmetric side outline",
+    "prominent cylindrical chamber",
+    "ejector rod",
+    "rounded grip",
+    "compact frame"
+  ],
+  "764": [
+    "shoulder-length form",
+    "receiver",
+    "linear overall shape",
+    "stock",
+    "symmetrical along barrel axis"
+  ],
+  "765": [
+    "front legs",
+    "upright back",
+    "rear legs",
+    "curved base",
+    "back slats"
+  ],
+  "766": [
+    "central spit rod",
+    "cylindrical spit",
+    "box-shaped body",
+    "compact form",
+    "motor housing"
+  ],
+  "767": [
+    "wedge-shaped end",
+    "bottom surface",
+    "top surface",
+    "solid compact form",
+    "rectangular block body"
+  ],
+  "768": [
+    "central midsection",
+    "elongated oval body",
+    "longitudinal seam",
+    "symmetrical along long axis",
+    "surface dimples"
+  ],
+  "769": [
+    "central hanging hole",
+    "flat rectangular profile",
+    "scale markings",
+    "end markings",
+    "straight linear form"
+  ],
+  "770": [
+    "upper",
+    "low-cut profile",
+    "slightly curved sole",
+    "rounded toe front",
+    "symmetrical left-right shape"
+  ],
+  "771": [
+    "flat front face",
+    "block-like form",
+    "main body",
+    "thick door slab",
+    "rectangular box"
+  ],
+  "772": [
+    "latch catch",
+    "rounded head",
+    "hinge bend",
+    "straight shaft",
+    "curved body section"
+  ],
+  "773": [
+    "cylindrical body",
+    "main body",
+    "base",
+    "tapered upper section",
+    "shoulder area"
+  ],
+  "774": [
+    "flat sole profile",
+    "low-profile silhouette",
+    "sole",
+    "buckle",
+    "open upper structure"
+  ],
+  "775": [
+    "rectangular sheet when laid flat",
+    "straight hanging lower edge",
+    "wraparound tubular form when worn",
+    "wrap overlap section",
+    "waistband area"
+  ],
+  "776": [
+    "reed",
+    "elongated S-shaped profile",
+    "main body tube",
+    "tapered body",
+    "neck tube"
+  ],
+  "777": [
+    "sheath body",
+    "narrow rectangular profile",
+    "inner lining",
+    "side seam",
+    "mouth opening"
+  ],
+  "778": [
+    "low-profile box-like body",
+    "flat upper platform surface",
+    "rectangular base footprint",
+    "weighing platform",
+    "base housing"
+  ],
+  "779": [
+    "elongated rectangular body",
+    "flat vertical sides",
+    "body shell",
+    "symmetrical left-right profile",
+    "front windshield"
+  ],
+  "780": [
+    "rudder",
+    "hull",
+    "narrow overall profile",
+    "bow",
+    "symmetrical hull shape"
+  ],
+  "781": [
+    "flat front surface",
+    "mounting brackets",
+    "logo or title header panel",
+    "rectangular board",
+    "vertically oriented panel"
+  ],
+  "782": [
+    "deep rear extension",
+    "outer casing",
+    "stand base",
+    "wide stable base",
+    "indicator light"
+  ],
+  "783": [
+    "head",
+    "elongated cylindrical body",
+    "underside of head",
+    "shank",
+    "head perimeter edge"
+  ],
+  "784": [
+    "elongated tool body",
+    "shank",
+    "straight narrow shaft",
+    "cylindrical handle",
+    "ferrule"
+  ],
+  "785": [
+    "latch plate tongue",
+    "anchorage bracket",
+    "flat flexible band",
+    "buckle housing",
+    "narrow linear profile"
+  ],
+  "786": [
+    "flat rectangular base",
+    "L-shaped profile",
+    "boxy main body",
+    "bobbin case",
+    "compact overall form"
+  ],
+  "787": [
+    "central boss",
+    "oval outline",
+    "reinforcing ribs",
+    "inner padding layer",
+    "tapered lower end"
+  ],
+  "788": [
+    "full-length mirror",
+    "checkout counter",
+    "longitudinal interior layout",
+    "signage board",
+    "symmetrical display arrangement"
+  ],
+  "789": [
+    "thin flat profile",
+    "outer wooden frame",
+    "bottom rail",
+    "linear vertical orientation",
+    "top rail"
+  ],
+  "790": [
+    "upper rim",
+    "bottom feet",
+    "deep cavity",
+    "ventilation slots or mesh openings",
+    "symmetrical outline"
+  ],
+  "791": [
+    "tall rectangular frame",
+    "main basket",
+    "rear swinging gate",
+    "lower shelf",
+    "handlebar"
+  ],
+  "792": [
+    "D-shaped grip",
+    "slightly curved scoop",
+    "flat blade surface",
+    "blade sides",
+    "widened blade end"
+  ],
+  "793": [
+    "outer shell",
+    "crown section",
+    "inner lining",
+    "seam lines",
+    "dome-shaped top"
+  ],
+  "794": [
+    "attachment rings or hooks",
+    "pleated surface when gathered",
+    "gently wavy lower edge",
+    "tall rectangular sheet",
+    "bottom hem"
+  ],
+  "795": [
+    "top sheet",
+    "flat underside",
+    "tail",
+    "base",
+    "slightly curved tip"
+  ],
+  "796": [
+    "head section",
+    "face opening border",
+    "extended neck portion",
+    "rounded crown",
+    "seam lines"
+  ],
+  "797": [
+    "rectangular outline",
+    "outer shell",
+    "baffles",
+    "inner lining",
+    "tapered body"
+  ],
+  "798": [
+    "flat profile",
+    "main body",
+    "sliding central strip",
+    "guide rails",
+    "linear arrangement"
+  ],
+  "799": [
+    "surrounding frame",
+    "flat surface",
+    "bottom rail",
+    "straight vertical edges",
+    "top rail"
+  ],
+  "800": [
+    "spinning reels",
+    "flat front face",
+    "upright box-like body",
+    "reel window",
+    "curved top section"
+  ],
+  "801": [
+    "narrow cylindrical body",
+    "bite tabs",
+    "retaining clip",
+    "J-shaped profile",
+    "upper tube section"
+  ],
+  "802": [
+    "streamlined overall profile",
+    "narrow front end",
+    "front skis",
+    "chassis body",
+    "windshield"
+  ],
+  "803": [
+    "wide curved blade front",
+    "mounting brackets",
+    "plow blade",
+    "front bumper",
+    "plow frame"
+  ],
+  "804": [
+    "main reservoir body",
+    "narrow cylindrical body",
+    "base plate",
+    "mounting bracket",
+    "rounded top section"
+  ],
+  "805": [
+    "round overall form",
+    "outer casing",
+    "panel edges",
+    "polygonal panel pattern",
+    "inner bladder"
+  ],
+  "806": [
+    "seam",
+    "form-fitting foot shape",
+    "tapered toe end",
+    "sole",
+    "heel pocket"
+  ],
+  "807": [
+    "dish-shaped",
+    "central receiver",
+    "concave mirror dish",
+    "rim",
+    "reflective surface"
+  ],
+  "808": [
+    "flared brim",
+    "brim edge",
+    "brim underside",
+    "brim",
+    "circular brim"
+  ],
+  "809": [
+    "base",
+    "hemispherical basin",
+    "decorative rim band",
+    "rim",
+    "round"
+  ],
+  "810": [
+    "rectangular outline",
+    "straight linear edges",
+    "central switch plunger",
+    "hinge clips",
+    "underside mounting posts"
+  ],
+  "811": [
+    "rectangular body",
+    "flat front face",
+    "outer housing",
+    "base stand",
+    "carry handle"
+  ],
+  "812": [
+    "elongated cylindrical body",
+    "vertical tail fin",
+    "smoothly contoured body shape",
+    "landing gear",
+    "delta wings"
+  ],
+  "813": [
+    "flat thin blade shape",
+    "flat blade",
+    "narrow handle",
+    "rectangular or trapezoidal blade",
+    "beveled lifting edge"
+  ],
+  "814": [
+    "hull",
+    "symmetrical outline along centerline",
+    "bow",
+    "flat deck surface",
+    "propeller"
+  ],
+  "815": [
+    "supporting bridge lines",
+    "net-like structure",
+    "dangling loose strands",
+    "central hub",
+    "flat plane"
+  ],
+  "816": [
+    "top hook",
+    "upper tip",
+    "pointed lower tip",
+    "elongated rod",
+    "tapering ends"
+  ],
+  "817": [
+    "aerodynamic contour",
+    "low profile body",
+    "rear bumper",
+    "side mirrors",
+    "front bumper"
+  ],
+  "818": [
+    "cylindrical body",
+    "mounting yoke bracket",
+    "reflector bowl",
+    "mounting base",
+    "symmetrical front face"
+  ],
+  "819": [
+    "front edge",
+    "side edges",
+    "elevated surface",
+    "flat top plane",
+    "straight front edge"
+  ],
+  "820": [
+    "rounded front face",
+    "buffers",
+    "elongated body",
+    "bell",
+    "tender"
+  ],
+  "821": [
+    "curved upper frame",
+    "arched span",
+    "straight horizontal deck",
+    "cross bracing",
+    "vertical posts"
+  ],
+  "822": [
+    "suspension hooks",
+    "cylindrical body",
+    "open bottom",
+    "shallow bowl-shaped top",
+    "note dents"
+  ],
+  "823": [
+    "retaining ring",
+    "bell",
+    "diaphragm",
+    "binaural spring",
+    "flexible tubular form"
+  ],
+  "824": [
+    "seam",
+    "label tag",
+    "long edges",
+    "short edges",
+    "rectangular sheet"
+  ],
+  "825": [
+    "wall top edge",
+    "horizontal stone courses",
+    "rough, irregular outline",
+    "wall face surface",
+    "long horizontal structure"
+  ],
+  "826": [
+    "flat front face",
+    "secondary hand",
+    "central pivot",
+    "circular body",
+    "main timing hand"
+  ],
+  "827": [
+    "rectangular main body",
+    "flat top surface",
+    "support base or legs",
+    "front-facing control layout",
+    "back panel"
+  ],
+  "828": [
+    "hanging hole at handle end",
+    "support feet or resting hooks",
+    "long handle",
+    "shallow hemispherical bowl",
+    "reinforcing band around rim"
+  ],
+  "829": [
+    "elongated rectangular body",
+    "rounded front end",
+    "multi-segment articulated form",
+    "bogies",
+    "low-profile body"
+  ],
+  "830": [
+    "side poles",
+    "flat lying surface",
+    "rectangular profile",
+    "buckles",
+    "carrying handles"
+  ],
+  "831": [
+    "rectangular base",
+    "boxy outline",
+    "low-profile body",
+    "backrest",
+    "support slats"
+  ],
+  "832": [
+    "plinth",
+    "harmika",
+    "finial",
+    "vertical axis symmetry",
+    "square railing"
+  ],
+  "833": [
+    "rudder",
+    "cylindrical body",
+    "main hull",
+    "streamlined profile",
+    "hatches"
+  ],
+  "834": [
+    "breast pocket",
+    "side pockets",
+    "trousers",
+    "cuffs",
+    "waistband"
+  ],
+  "835": [
+    "flat plate form",
+    "dial plate",
+    "rim border",
+    "raised triangular pointer",
+    "gnomon"
+  ],
+  "836": [
+    "disc-like profile",
+    "rim frame",
+    "attachment bracket",
+    "symmetrical outline",
+    "handle shaft"
+  ],
+  "837": [
+    "frame front",
+    "wraparound contour",
+    "curved frame front",
+    "flat lens surfaces",
+    "symmetrical left-right layout"
+  ],
+  "838": [
+    "flattened tube shape",
+    "pump head",
+    "tapered neck region",
+    "tube body",
+    "flip-top lid"
+  ],
+  "839": [
+    "elongated span form",
+    "main cables",
+    "flat horizontal deck",
+    "arched cable profile",
+    "anchorages"
+  ],
+  "840": [
+    "wringer attachment",
+    "hanging hole",
+    "clamping plate",
+    "cylindrical handle section",
+    "elongated handle"
+  ],
+  "841": [
+    "front pocket",
+    "drawstring",
+    "boxy torso shape",
+    "cuffs",
+    "waistband"
+  ],
+  "842": [
+    "short-legged cut",
+    "slightly flared leg shape",
+    "flat front panel",
+    "drawstring",
+    "hem"
+  ],
+  "843": [
+    "suspension hooks",
+    "top crossbar",
+    "side rails",
+    "safety bar",
+    "support frame"
+  ],
+  "844": [
+    "compact block-like body",
+    "flat mounting surface",
+    "actuator",
+    "protruding control element",
+    "outer housing"
+  ],
+  "845": [
+    "plunger rod",
+    "narrow tubular body",
+    "barrel tip",
+    "finger flanges",
+    "elongated cylindrical barrel"
+  ],
+  "846": [
+    "base",
+    "harp frame",
+    "wide flared shade",
+    "top-heavy overall silhouette",
+    "finial"
+  ],
+  "847": [
+    "hull",
+    "periscopes",
+    "hatches",
+    "low rectangular hull",
+    "long cylindrical cannon barrel"
+  ],
+  "848": [
+    "box-like main body",
+    "pinch roller",
+    "capstan",
+    "rectangular front face",
+    "speaker grille"
+  ],
+  "849": [
+    "rounded bulbous body",
+    "main body",
+    "base",
+    "lid",
+    "lid hinge"
+  ],
+  "850": [
+    "bulky, stuffed appearance",
+    "rounded head",
+    "short-limbed proportions",
+    "rounded body profile",
+    "symmetrical front view"
+  ],
+  "851": [
+    "thin slab-like profile",
+    "flat rectangular front face",
+    "wide horizontal aspect ratio",
+    "boxy overall outline",
+    "rear housing panel"
+  ],
+  "852": [
+    "outer felt covering",
+    "spherical outer shell",
+    "equatorial seam band",
+    "continuous rounded outline",
+    "near-spherical shape"
+  ],
+  "853": [
+    "triangular or pitched side profile",
+    "ridge cap section",
+    "eave edges",
+    "two opposing sloping surfaces",
+    "binding or fastening band at the ridge"
+  ],
+  "854": [
+    "top header band or casing",
+    "bottom hem edge",
+    "left and right side edges",
+    "vertical pleats or folds",
+    "overhead valance or header section"
+  ],
+  "855": [
+    "cylindrical body",
+    "seam",
+    "rim",
+    "tapered profile",
+    "inner surface"
+  ],
+  "856": [
+    "rectangular body",
+    "axle",
+    "feed chute",
+    "pulleys",
+    "discharge chute"
+  ],
+  "857": [
+    "crest rail",
+    "symmetrical form",
+    "cushion",
+    "high back",
+    "backrest"
+  ],
+  "858": [
+    "triangular profile",
+    "sloping planes",
+    "ridge line",
+    "roof ridge cap",
+    "ridged pattern"
+  ],
+  "859": [
+    "rectangular body",
+    "boxy shape",
+    "base",
+    "compact form",
+    "rounded edges"
+  ],
+  "860": [
+    "awning",
+    "display window",
+    "sales counter",
+    "shop signboard",
+    "flat vertical facade"
+  ],
+  "861": [
+    "lid",
+    "central opening",
+    "contoured outer edge",
+    "front rim",
+    "rounded rectangular lid"
+  ],
+  "862": [
+    "narrow upper tip",
+    "vertical rod-like form",
+    "cylindrical body",
+    "fuel reservoir",
+    "tapered shaft"
+  ],
+  "863": [
+    "slender upright form",
+    "main pole shaft",
+    "base plinth",
+    "horizontal separating bands",
+    "grooves and notches"
+  ],
+  "864": [
+    "winch cable",
+    "tow boom arm",
+    "boxy cab shape",
+    "rectangular rear structure",
+    "side mirrors"
+  ],
+  "865": [
+    "checkout counter",
+    "aisles",
+    "segment-based floor layout",
+    "overhead signs",
+    "shelves"
+  ],
+  "866": [
+    "elongated body",
+    "rear hitch",
+    "cab",
+    "large rear wheel diameter",
+    "front wheels"
+  ],
+  "867": [
+    "flat vertical front face",
+    "low horizontal profile",
+    "fifth-wheel coupling",
+    "articulated two-section body",
+    "fuel tanks"
+  ],
+  "868": [
+    "flat base",
+    "bottom surface",
+    "shallow rectangular form",
+    "low vertical sides",
+    "reinforcing ribs"
+  ],
+  "869": [
+    "tapered waist",
+    "cuffs",
+    "belt",
+    "lapels",
+    "pockets"
+  ],
+  "870": [
+    "triangular frame",
+    "front wheel",
+    "three-point wheelbase",
+    "frame",
+    "rear axle"
+  ],
+  "871": [
+    "rudder",
+    "main hull",
+    "wide transverse span",
+    "parallel side hulls",
+    "elongated central hull"
+  ],
+  "872": [
+    "head",
+    "quick-release clamp",
+    "mounting plate",
+    "leg sections",
+    "slender vertical profile"
+  ],
+  "873": [
+    "base plinth",
+    "piers",
+    "massive proportions",
+    "bilateral symmetry",
+    "rectangular overall volume"
+  ],
+  "874": [
+    "rectangular box-like body",
+    "body shell",
+    "rounded front edges",
+    "front windshield",
+    "vertical side walls"
+  ],
+  "875": [
+    "slide brace",
+    "water key",
+    "main tubing",
+    "elongated tubular body",
+    "asymmetrical linear profile"
+  ],
+  "876": [
+    "inner basin",
+    "outer shell",
+    "thick surrounding rim",
+    "rim edge",
+    "rounded interior contours"
+  ],
+  "877": [
+    "cross-shaped arm profile",
+    "base plate",
+    "horizontal barrier arms",
+    "vertical cylindrical post",
+    "arm caps"
+  ],
+  "878": [
+    "low-profile flat base",
+    "base plate",
+    "key frame",
+    "slightly concave key surfaces",
+    "staggered key rows"
+  ],
+  "879": [
+    "slender straight shaft",
+    "domed canopy shape",
+    "tip ends",
+    "tapered profile toward top",
+    "ferrule at apex"
+  ],
+  "880": [
+    "crank arms",
+    "narrow profile",
+    "rim",
+    "saddle",
+    "hub"
+  ],
+  "881": [
+    "tall rectangular body",
+    "boxy overall shape",
+    "top lid",
+    "flat top surface",
+    "fallboard"
+  ],
+  "882": [
+    "rectangular floor head",
+    "elongated main body",
+    "main body housing",
+    "upright silhouette",
+    "filter compartment"
+  ],
+  "883": [
+    "base",
+    "rounded body",
+    "rim",
+    "narrow neck",
+    "symmetrical outline"
+  ],
+  "884": [
+    "keystones",
+    "springing points",
+    "groins",
+    "concave interior span",
+    "bays"
+  ],
+  "885": [
+    "flat sheet",
+    "woven base",
+    "thin sheet",
+    "backing layer",
+    "pile layer"
+  ],
+  "886": [
+    "flat vertical front face",
+    "box-like body",
+    "deep cuboid profile",
+    "change return slot",
+    "coin slot"
+  ],
+  "887": [
+    "ankle-length outline",
+    "ornamental band",
+    "neck opening",
+    "long vertical garment form",
+    "wide sleeve profile"
+  ],
+  "888": [
+    "piers",
+    "long linear structure",
+    "abutments",
+    "deck",
+    "tall vertical supports"
+  ],
+  "889": [
+    "pegbox",
+    "tailpiece",
+    "curved outline",
+    "symmetrical body shape",
+    "arched top surface"
+  ],
+  "890": [
+    "evenly rounded",
+    "outer shell",
+    "smooth surface",
+    "inner air chamber",
+    "circumferential band pattern"
+  ],
+  "891": [
+    "rectangular body",
+    "flat base",
+    "locking latch",
+    "bottom heating plate",
+    "top heating plate"
+  ],
+  "892": [
+    "flat front surface",
+    "central spindle",
+    "hanging hook or mounting slot",
+    "outer frame or bezel",
+    "thin profile"
+  ],
+  "893": [
+    "flat body",
+    "rectangular form",
+    "edge binding",
+    "inner lining",
+    "fold crease"
+  ],
+  "894": [
+    "tall rectangular body",
+    "box-like form",
+    "base plinth",
+    "top panel",
+    "hanging rail"
+  ],
+  "895": [
+    "tail section",
+    "streamlined body",
+    "swept-back wings",
+    "landing gear",
+    "fuselage"
+  ],
+  "896": [
+    "basin",
+    "shallow bowl",
+    "mounting rim",
+    "rectangular outline",
+    "overflow hole"
+  ],
+  "897": [
+    "outer drum",
+    "box-shaped body",
+    "lid",
+    "inner drum",
+    "rectangular profile"
+  ],
+  "898": [
+    "cylindrical body",
+    "base",
+    "cap",
+    "narrow neck",
+    "spout"
+  ],
+  "899": [
+    "wide base",
+    "bulbous body",
+    "base",
+    "jug body",
+    "lid"
+  ],
+  "900": [
+    "inlet pipe",
+    "cylindrical upper section",
+    "access hatch",
+    "outlet pipe",
+    "vertically symmetrical form"
+  ],
+  "901": [
+    "flat base",
+    "bulbous body",
+    "jug body",
+    "stable flat-bottomed form",
+    "narrow neck"
+  ],
+  "902": [
+    "small elongated body",
+    "streamlined profile",
+    "air inlet",
+    "rounded edges",
+    "finger grip ridges"
+  ],
+  "903": [
+    "cap-shaped base",
+    "crown area",
+    "front hairline edge",
+    "lace front",
+    "nape section"
+  ],
+  "904": [
+    "thin frame profile",
+    "outer frame",
+    "mounting clips",
+    "bottom rail",
+    "top rail"
+  ],
+  "905": [
+    "thin sheet-like form",
+    "elongated rectangular outline",
+    "bottom hem bar",
+    "mounting brackets",
+    "roller tube"
+  ],
+  "906": [
+    "narrow back blade",
+    "keeper loop",
+    "wide front blade",
+    "elongated strip shape",
+    "interlining layer"
+  ],
+  "907": [
+    "cylindrical body",
+    "punt indentation",
+    "flat standing base",
+    "base",
+    "foil capsule"
+  ],
+  "908": [
+    "lower surface",
+    "relatively flat lower surface",
+    "upper surface",
+    "gently curved upper surface",
+    "tapered outline from root to tip"
+  ],
+  "909": [
+    "upper rim edge",
+    "rounded bottom",
+    "outer shell",
+    "gradually sloping sides",
+    "curved sidewall"
+  ],
+  "910": [
+    "curved profile",
+    "shallow concave bowl",
+    "bowl",
+    "rim of bowl",
+    "neck between bowl and handle"
+  ],
+  "911": [
+    "surface pile",
+    "cylindrical skein",
+    "layered sheet",
+    "threads",
+    "fluffy mass"
+  ],
+  "912": [
+    "linear segments",
+    "end posts",
+    "low horizontal structure",
+    "vertical posts",
+    "stacked rail layers"
+  ],
+  "913": [
+    "bow section",
+    "broken hull",
+    "twisted frame",
+    "stern section",
+    "portholes"
+  ],
+  "914": [
+    "rudder",
+    "gunwale",
+    "shallow hull depth",
+    "hull",
+    "tapered stern"
+  ],
+  "915": [
+    "low rounded profile",
+    "cylindrical base",
+    "tension band",
+    "floor platform",
+    "door frame"
+  ],
+  "916": [
+    "footer section",
+    "rectangular page layout",
+    "header section",
+    "sidebar column",
+    "multi-column structure"
+  ],
+  "917": [
+    "front cover",
+    "portrait-oriented form",
+    "caption boxes",
+    "flat stacked pages",
+    "internal pages"
+  ],
+  "918": [
+    "title heading",
+    "square overall form",
+    "rectangular grid layout",
+    "grid border lines",
+    "symmetrical pattern"
+  ],
+  "919": [
+    "flat planar plate",
+    "mounting post",
+    "reflective surface",
+    "border outline",
+    "rounded or sharp corners"
+  ],
+  "920": [
+    "mounting bracket",
+    "elongated cylindrical pole",
+    "support pole",
+    "backplate panel",
+    "signal housing"
+  ],
+  "921": [
+    "flat rectangular panels",
+    "folded flaps",
+    "thin flexible layer",
+    "bottom edge fold",
+    "outer surface coating"
+  ],
+  "922": [
+    "varied portion sizes",
+    "soup bowl serving",
+    "main course plate",
+    "clustered grouping of plates",
+    "side dish portion"
+  ],
+  "923": [
+    "dinner plate base",
+    "shallow concave surface",
+    "starch side portion",
+    "central protein portion",
+    "plate well"
+  ],
+  "924": [
+    "uneven lumpy mass",
+    "thick semi-fluid layer",
+    "herb flecks",
+    "air pockets in mash",
+    "irregular heap"
+  ],
+  "925": [
+    "flat liquid surface",
+    "bowl rim",
+    "bowl",
+    "shallow circular form",
+    "broth liquid"
+  ],
+  "926": [
+    "domed lid",
+    "broth liquid",
+    "stew surface",
+    "side handles",
+    "symmetrical outline"
+  ],
+  "927": [
+    "flat upper surface",
+    "bowl rim",
+    "bowl base",
+    "symmetrical presentation",
+    "vertical stratification"
+  ],
+  "928": [
+    "mix-in chunks",
+    "conical base",
+    "scoop surface ridges",
+    "hemispherical scoop shape",
+    "topping layer"
+  ],
+  "929": [
+    "flat front face",
+    "elongated rectangular form",
+    "flat back face",
+    "lower portion",
+    "tapered stick"
+  ],
+  "930": [
+    "slightly curved profile",
+    "elongated cylindrical body",
+    "outer ridges",
+    "narrow cross-section",
+    "end faces"
+  ],
+  "931": [
+    "bottom surface",
+    "ring-shaped body",
+    "top surface",
+    "edge rim",
+    "circular outline"
+  ],
+  "932": [
+    "crossing points",
+    "central knot",
+    "elongated strands forming curves",
+    "open holes between loops",
+    "outer crust"
+  ],
+  "933": [
+    "flat base",
+    "roughly cylindrical stack",
+    "rounded top surface",
+    "lettuce layer",
+    "pickle slices"
+  ],
+  "934": [
+    "symmetrical along length",
+    "partially enclosed filling",
+    "relish pieces",
+    "cylindrical sausage",
+    "cut opening in bun"
+  ],
+  "935": [
+    "domed pile",
+    "surface layer",
+    "lumps",
+    "lumpy mass",
+    "valleys"
+  ],
+  "936": [
+    "nearly spherical head",
+    "compact head",
+    "stem base",
+    "core",
+    "slightly flattened sphere"
+  ],
+  "937": [
+    "narrow stalk with wider tip",
+    "thick base",
+    "main stalk",
+    "cut end",
+    "compact crown"
+  ],
+  "938": [
+    "rounded head",
+    "central stem",
+    "cut base",
+    "core",
+    "curd"
+  ],
+  "939": [
+    "smooth-sided shape",
+    "elongated cylindrical body",
+    "gently curved profile",
+    "slightly tapered form",
+    "stem end"
+  ],
+  "940": [
+    "oval",
+    "outer shell",
+    "oblong",
+    "slightly tapered ends",
+    "stem"
+  ],
+  "941": [
+    "outer shell",
+    "deeply lobed",
+    "tapered base",
+    "round",
+    "lobes"
+  ],
+  "942": [
+    "bulbous lower portion",
+    "bulbous base",
+    "cylindrical neck",
+    "outer shell",
+    "stem"
+  ],
+  "943": [
+    "slightly curved body",
+    "rounded ends",
+    "cylindrical",
+    "stem end",
+    "core"
+  ],
+  "944": [
+    "outer bracts",
+    "base",
+    "rounded",
+    "inner bracts",
+    "overlapping layers"
+  ],
+  "945": [
+    "bell-shaped body",
+    "bottom tip",
+    "calyx",
+    "smooth curved surface",
+    "multi-lobed cross-section"
+  ],
+  "946": [
+    "central stalk",
+    "base of stalk",
+    "ribbed stalk surface",
+    "elongated stalks",
+    "leaf stalks"
+  ],
+  "947": [
+    "gills under cap",
+    "stalk base",
+    "junction between cap and stalk",
+    "convex upper surface",
+    "cap margin"
+  ],
+  "948": [
+    "slightly flattened top and bottom",
+    "rounded body",
+    "central axis",
+    "smooth curved surface",
+    "outer skin"
+  ],
+  "949": [
+    "calyx",
+    "ridge around calyx attachment",
+    "overall symmetry along length",
+    "shoulders below calyx",
+    "outer flesh"
+  ],
+  "950": [
+    "slightly flattened at poles",
+    "segments",
+    "stem end",
+    "compact",
+    "peel"
+  ],
+  "951": [
+    "symmetrical along length",
+    "segments",
+    "slightly curved",
+    "stem end",
+    "elongated oval"
+  ],
+  "952": [
+    "bulbous at base",
+    "pear-shaped",
+    "base",
+    "neck region",
+    "ostiole opening"
+  ],
+  "953": [
+    "base",
+    "cylindrical",
+    "individual scales",
+    "fruit body",
+    "thick-bodied"
+  ],
+  "954": [
+    "cylindrical",
+    "stem end",
+    "peel",
+    "tip",
+    "flesh"
+  ],
+  "955": [
+    "oval body",
+    "outer rind",
+    "oblong form",
+    "central core",
+    "stem"
+  ],
+  "956": [
+    "rounded form",
+    "central axis",
+    "outer skin",
+    "slightly tapered end",
+    "lobed surface segments"
+  ],
+  "957": [
+    "outer rind",
+    "arils",
+    "globular body",
+    "crowned top",
+    "central column"
+  ],
+  "958": [
+    "cylindrical roll",
+    "loose heap",
+    "fiber bundles",
+    "irregular mound",
+    "loose strands"
+  ],
+  "959": [
+    "fatty sheen",
+    "seasoning specks",
+    "irregular mound",
+    "egg mixture layer",
+    "heap of strands"
+  ],
+  "960": [
+    "top surface",
+    "thin streaks",
+    "blob-like mass",
+    "smooth layer",
+    "coating layer"
+  ],
+  "961": [
+    "flattened disc",
+    "irregular slab",
+    "flat sheet section",
+    "cylindrical log",
+    "lumps"
+  ],
+  "962": [
+    "rounded ends",
+    "fat pockets",
+    "top surface",
+    "block-like shape",
+    "compact mass"
+  ],
+  "963": [
+    "center area",
+    "circular base",
+    "flat disc",
+    "wedge-shaped pieces",
+    "crust base"
+  ],
+  "964": [
+    "domed lid",
+    "bowl-like cavity",
+    "domed top",
+    "gravy pocket",
+    "filling mixture"
+  ],
+  "965": [
+    "folded ends",
+    "outer shell",
+    "cylindrical roll",
+    "elongated body",
+    "compact, dense form"
+  ],
+  "966": [
+    "upper surface",
+    "flat or gently concave liquid surface",
+    "sediment at bottom",
+    "meniscus at glass edge",
+    "circular rim"
+  ],
+  "967": [
+    "saucer rim",
+    "saucer",
+    "flat liquid surface",
+    "cup base",
+    "circular saucer platform"
+  ],
+  "968": [
+    "upper surface layer",
+    "outward-curving spout lip",
+    "pitcher base",
+    "pitcher body",
+    "pitcher spout"
+  ],
+  "969": [
+    "thick liquid edge around perimeter",
+    "thick, smooth liquid surface",
+    "liquid body",
+    "cylindrical or slightly flared container",
+    "frothy surface layer"
+  ],
+  "970": [
+    "triangular profile",
+    "base",
+    "snowcap",
+    "ridge",
+    "jagged outline"
+  ],
+  "971": [
+    "rounded outline",
+    "central area",
+    "smooth surface",
+    "surface reflection",
+    "top hemisphere"
+  ],
+  "972": [
+    "base",
+    "overhang",
+    "irregular profile",
+    "crest",
+    "jagged outline"
+  ],
+  "973": [
+    "irregular mass",
+    "mounded structure",
+    "branching network",
+    "cavities",
+    "ridge patterns"
+  ],
+  "974": [
+    "basin",
+    "rim",
+    "central opening",
+    "irregular rim",
+    "mound"
+  ],
+  "975": [
+    "shore bank",
+    "curved outline",
+    "gently sloping",
+    "small gully opening",
+    "shoreline edge"
+  ],
+  "976": [
+    "wedge-shaped",
+    "flat plateau top",
+    "rock ledge",
+    "narrow neck",
+    "irregular profile"
+  ],
+  "977": [
+    "hooked end",
+    "low troughs",
+    "low-relief",
+    "central crest",
+    "narrow saddle"
+  ],
+  "978": [
+    "upper beach zone",
+    "lower beach zone",
+    "berm crest",
+    "slightly undulating surface",
+    "wrack line"
+  ],
+  "979": [
+    "central channel",
+    "valley mouth opening",
+    "V-shaped profile",
+    "valley head",
+    "U-shaped profile"
+  ],
+  "980": [
+    "conical profile",
+    "caldera depression",
+    "summit",
+    "dome-shaped peak",
+    "radial ridges"
+  ],
+  "981": [
+    "head",
+    "bilaterally symmetrical body structure",
+    "limb-segmented frame",
+    "narrow waist with broader shoulders",
+    "baseball cap or helmet"
+  ],
+  "982": [
+    "head",
+    "face",
+    "straight-leg trouser line",
+    "fitted jacket shape",
+    "suit trousers"
+  ],
+  "983": [
+    "head",
+    "flipper-like extensions on feet",
+    "streamlined overall profile",
+    "breathing regulator",
+    "air tank"
+  ],
+  "984": [
+    "shallow surface dimples",
+    "fine surface grooves",
+    "rounded seed tip",
+    "seed coat",
+    "slightly irregular bead-like form"
+  ],
+  "985": [
+    "ray florets",
+    "bracts beneath head",
+    "central disc",
+    "slender stem",
+    "disc florets"
+  ],
+  "986": [
+    "dorsal sepal",
+    "pouch-like lip",
+    "lateral sepals",
+    "bilateral symmetry",
+    "arching stem"
+  ],
+  "987": [
+    "plump compact form",
+    "small rounded bodies",
+    "central crease on one side",
+    "smooth curved surfaces",
+    "flatter end of kernel"
+  ],
+  "988": [
+    "cap scales",
+    "rounded base",
+    "domed cap",
+    "base of nut",
+    "pointed tip"
+  ],
+  "989": [
+    "slightly elongated shape",
+    "rounded fruit body",
+    "tapered end near stem",
+    "smooth outer contour",
+    "calyx tube"
+  ],
+  "990": [
+    "rounded belly side",
+    "basal scar area",
+    "nearly spherical body",
+    "flatter side panel",
+    "asymmetrical oval profile"
+  ],
+  "991": [
+    "upright finger-like cluster",
+    "shallow surface grooves",
+    "irregular bushy mass",
+    "shrub-like overall outline",
+    "densely branched structure"
+  ],
+  "992": [
+    "domed to flat cap shape",
+    "gills",
+    "umbrella-shaped profile",
+    "cap margin",
+    "volva at base"
+  ],
+  "993": [
+    "irregularly lobed cap outline",
+    "lobed cap sections",
+    "deep cap folds",
+    "stem shaft",
+    "stem base thickening"
+  ],
+  "994": [
+    "slimy gleba layer on cap",
+    "elongated cylindrical body",
+    "cap head at tip",
+    "rounded egg-shaped base",
+    "tapered club-like form"
+  ],
+  "995": [
+    "ray tips",
+    "spherical central body",
+    "ray surfaces",
+    "ostiole opening",
+    "base attachment area"
+  ],
+  "996": [
+    "bushy overall form",
+    "irregular lobed caps",
+    "attachment base",
+    "short central stem",
+    "upper cap surfaces"
+  ],
+  "997": [
+    "stipe base",
+    "cap margin",
+    "cap underside",
+    "thick cylindrical stem",
+    "cap"
+  ],
+  "998": [
+    "base end",
+    "cob surface pits",
+    "straight longitudinal axis",
+    "tip end",
+    "slightly tapered ends"
+  ],
+  "999": [
+    "thin flat sheets",
+    "outer loose sheet end",
+    "circular roll edges",
+    "rectangular sheet sections",
+    "sheet edges"
+  ]
+}
