@@ -321,7 +321,7 @@ class SelfAttentionFuser(BaseFuser):
         super().__init__(input_dim, cfg)
         
         # 允许配置层数，建议 2 层
-        num_layers = cfg.get('fuser_layers', 1) if cfg else 2
+        num_layers = cfg.get('fuser_layers', 2) if cfg else 2
         
         # 【修改点 1】删掉了 self.cls_token = nn.Parameter(...)
         # 我们直接用外部传入的特征

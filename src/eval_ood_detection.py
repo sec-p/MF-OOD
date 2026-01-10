@@ -70,6 +70,8 @@ def main():
 
     # Load base CLIP model
     clip_model, preprocess = set_model_clip(args)
+    test_loader = set_val_loader(args, preprocess)
+    test_labels = get_test_labels(args)
     
     if args.model == 'modular':
         # Get class names from dataset
@@ -96,7 +98,7 @@ def main():
         }
         
         # Build modular model
-        net = build_modular_model(cfg, classnames, clip_model)
+        net = build_modular_model(cfg, test_labels, clip_model)
         
         # Move entire model to CUDA device first (critical for new layers)
         device = torch.device(f'cuda:{args.gpu}')
@@ -125,8 +127,7 @@ def main():
     elif args.in_dataset in ['ImageNet']:
         out_datasets = ['iNaturalist', 'SUN', 'places365', 'Texture']
 
-    test_loader = set_val_loader(args, preprocess)
-    test_labels = get_test_labels(args)
+    
 
     in_score = get_ood_scores_clip(args, net, test_loader, test_labels)
 
