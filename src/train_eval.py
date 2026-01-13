@@ -536,7 +536,8 @@ class TrainEvalOrchestrator:
         # This is needed because set_training_stage already builds components without visual prototypes
         if visual_prototypes is not None:
             # Re-build only the visual classifier with the computed prototypes
-            self.model.visual_classifier = VisualClassifier(
+            # Use the model's own VisualClassifier class reference
+            self.model.visual_classifier = self.model.visual_classifier.__class__(
                 self.model.feat_dim,
                 self.model.num_classes,
                 text_prototypes=self.model.text_features,
