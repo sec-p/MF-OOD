@@ -23,10 +23,10 @@ EXPERIMENT_NAME="stage2_hyperparam_search"
 
 # Dataset configuration
 ID_DATASET="ImageNet"
-ROOT_PATH="/data/datasets"
+ROOT_PATH="/data/ICML2026/clip/FA/my_dataset"
 
 # Stage 1 checkpoint (required)
-STAGE1_CKPT="/data/ICML2026/GL_MCM_FA/stage1_logs/.../epoch_010.pt"
+STAGE1_CKPT="/data/ICML2026/GL_MCM_FA/logs/GL_MCM_FA_mlp_42_20260105_173642/checkpoints/epoch_999.pt"
 
 # Training configuration
 EPOCHS=10
@@ -72,7 +72,7 @@ run_single_experiment() {
     mkdir -p ${exp_dir}/checkpoints
     
     # Run Stage 2 training
-    python /root/MF-OOD/src/train_eval.py \
+    python src/train_eval.py \
         --train_stage 2 \
         --stage1_checkpoint ${STAGE1_CKPT} \
         --stage2_epochs ${EPOCHS} \
