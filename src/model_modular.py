@@ -638,7 +638,6 @@ class ModularCustomCLIP(nn.Module):
         self._build_components()
         self._cache_text_features()
         self._cache_negative_text_features()
-        self._cache_attribute_features()
         
         # Initialize Stage 2 components (VisualAdapter + VisualClassifier)
         self._build_stage2_components()
