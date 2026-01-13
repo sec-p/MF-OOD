@@ -72,10 +72,11 @@ run_single_experiment() {
     mkdir -p ${exp_dir}/checkpoints
     
     # Run Stage 2 training
-    python /root/MF-OOD/scripts/train_stage2.py \
+    python /root/MF-OOD/src/train_eval.py \
+        --train_stage 2 \
         --stage1_checkpoint ${STAGE1_CKPT} \
-        --epochs ${EPOCHS} \
-        --lr ${lr} \
+        --stage2_epochs ${EPOCHS} \
+        --stage2_lr ${lr} \
         --batch_size ${BATCH_SIZE} \
         --seed ${SEED} \
         --device ${DEVICE} \
@@ -83,28 +84,42 @@ run_single_experiment() {
         --adapter_hidden_dim ${adapter_dim} \
         --id_dataset ${ID_DATASET} \
         --root_path ${ROOT_PATH} \
-        --name ${exp_name} > ${exp_dir}/train.log 2>&1
+        --selector_type slot \
+        --fuser_type self_attn \
+        --score_type GL-MCM \
+        --lambda_local 1.0 > ${exp_dir}/train.log 2>&1
     
     local exit_code=$?
     
     if [ ${exit_code} -eq 0 ]; then
         log_message "✓ Experiment ${exp_name} completed successfully"
         
-        # Extract best ID accuracy from results.json
+        # Extract best metrics from results.json
         if [ -f "${exp_dir}/stage2_results.json" ]; then
-            local best_acc=$(python3 -c "
+            local metrics=$(python3 -c "
 import json
 with open('${exp_dir}/stage2_results.json', 'r') as f:
     results = json.load(f)
     # Find best id_acc
-    best_acc = max([r.get('id_acc', 0) for r in results])
-    print(f'{best_acc:.2f}')
+    best_id_acc = max([r.get('id_acc', 0) for r in results])
+    # Find best DS-MCM avg auroc
+    best_ds_auroc = max([r.get('DS-MCM_avg_auroc', 0) for r in results])
+    # Find best Visual-GL-MCM avg auroc
+    best_visual_auroc = max([r.get('Visual-GL-MCM_avg_auroc', 0) for r in results])
+    # Find best Stage1-GL-MCM avg auroc
+    best_stage1_auroc = max([r.get('Stage1-GL-MCM_avg_auroc', 0) for r in results])
+    print(f'{best_id_acc:.2f},{best_ds_auroc:.2f},{best_visual_auroc:.2f},{best_stage1_auroc:.2f}')
 ")
-            log_message "Best ID Accuracy: ${best_acc}%"
-            echo "${exp_name},${lr},${adapter_dim},${use_weighted_pool},${best_acc}%" >> ${OUTPUT_BASE}/summary.csv
+            IFS=',' read -r id_acc ds_auroc visual_auroc stage1_auroc <<< "$metrics"
+            log_message "Best ID Acc: ${id_acc}%, DS-MCM AUROC: ${ds_auroc}%, Visual-GL-MCM AUROC: ${visual_auroc}%, Stage1-GL-MCM AUROC: ${stage1_auroc}%"
+            echo "${exp_name},${lr},${adapter_dim},${use_weighted_pool},${id_acc}%,${ds_auroc}%,${visual_auroc}%,${stage1_auroc}%" >> ${OUTPUT_BASE}/summary.csv
+        else
+            log_message "✗ Experiment ${exp_name} failed: results.json not found"
+            echo "${exp_name},${lr},${adapter_dim},${use_weighted_pool},FAILED,FAILED,FAILED,FAILED" >> ${OUTPUT_BASE}/summary.csv
+        fi
     else
         log_message "✗ Experiment ${exp_name} failed with exit code ${exit_code}"
-        echo "${exp_name},${lr},${adapter_dim},${use_weighted_pool},FAILED" >> ${OUTPUT_BASE}/summary.csv
+        echo "${exp_name},${lr},${adapter_dim},${use_weighted_pool},FAILED,FAILED,FAILED,FAILED" >> ${OUTPUT_BASE}/summary.csv
     fi
     
     log_message ""
@@ -120,7 +135,7 @@ log_message "Log file: ${LOG_FILE}"
 log_message ""
 
 # Create summary CSV header
-echo "Experiment,LR,AdapterDim,WeightedPool,Best_ID_Acc" > ${OUTPUT_BASE}/summary.csv
+echo "Experiment,LR,AdapterDim,WeightedPool,Best_ID_Acc,DS-MCM_AUROC,Visual-GL-MCM_AUROC,Stage1-GL-MCM_AUROC" > ${OUTPUT_BASE}/summary.csv
 
 # Run all combinations
 total_experiments=0
@@ -129,6 +144,7 @@ for lr in "${LR_LIST[@]}"; do
         for use_weighted_pool in "${USE_WEIGHTED_POOL_OPTIONS[@]}"; do
             run_single_experiment ${lr} ${adapter_dim} ${use_weighted_pool}
             total_experiments=$((total_experiments + 1))
+        done
     done
 done
 
@@ -147,13 +163,13 @@ log_message ""
 log_message "Summary of Results:"
 log_message "-------------------"
 echo ""
-printf "%-30s | %-10s | %-10s | %-15s | %-12s\n" "Experiment" "LR" "Adapter Dim" "Weighted Pool" "Best ID Acc"
+printf "%-30s | %-10s | %-10s | %-15s | %-12s | %-12s | %-12s | %-12s\n" "Experiment" "LR" "Adapter Dim" "Weighted Pool" "ID Acc" "DS-MCM" "Visual-GL-MCM" "Stage1-GL-MCM"
 echo "-------------------"
 
 # Read and display summary
 if [ -f "${OUTPUT_BASE}/summary.csv" ]; then
-    tail -n +2 ${OUTPUT_BASE}/summary.csv | while IFS=',' read -r exp lr dim pool acc; do
-        printf "%-30s | %-10s | %-10s | %-15s | %-12.2f%%\n" "$exp" "$lr" "$dim" "$pool" "$acc"
+    tail -n +2 ${OUTPUT_BASE}/summary.csv | while IFS=',' read -r exp lr dim pool id_acc ds_auroc visual_auroc stage1_auroc; do
+        printf "%-30s | %-10s | %-10s | %-15s | %-12.2f%% | %-12.2f%% | %-12.2f%% | %-12.2f%%\n" "$exp" "$lr" "$dim" "$pool" "$id_acc" "$ds_auroc" "$visual_auroc" "$stage1_auroc"
     done
     echo "-------------------"
 fi
