@@ -74,7 +74,8 @@ class TrainEvalOrchestrator:
                  lambda_local: float = 1.0,
                  # Stage 2 parameters
                  use_weighted_pool: bool = False,
-                 adapter_hidden_dim: int = None):
+                 adapter_hidden_dim: int = None,
+                 use_visual_prototypes: bool = False):
         
         self.method = method
         self.epochs = epochs
@@ -107,6 +108,7 @@ class TrainEvalOrchestrator:
         # Stage 2 parameters
         self.use_weighted_pool = use_weighted_pool
         self.adapter_hidden_dim = adapter_hidden_dim
+        self.use_visual_prototypes = use_visual_prototypes
         
         # Model settings
         self.num_select = num_select
@@ -288,6 +290,7 @@ class TrainEvalOrchestrator:
             'selector_temperature': self.selector_temperature,
             'patches_per_slot_attn': self.patches_per_slot_attn,
             'templates': imagenet_templates,
+            'use_visual_prototypes': self.use_visual_prototypes,
             
             # Feature flags
             'use_redundancy_loss': True,
@@ -518,8 +521,28 @@ class TrainEvalOrchestrator:
         self.model.load_state_dict(state_dict, strict=False)
         self.logger.debug('✓ Stage 1 parameters loaded')
         
-        # Switch to stage 2 training mode
+        # Check if visual prototype initialization is enabled
+        use_visual_prototypes = self.cfg.get('use_visual_prototypes', False)
+        visual_prototypes = None
+        
+        if use_visual_prototypes:
+            # Compute class feature centers from training data
+            visual_prototypes = self.model.compute_class_feature_centers(self.train_loader)
+        
+        # Switch to stage 2 training mode and build components with visual prototypes if available
         self.model.set_training_stage(stage=2)
+        
+        # Re-build visual classifier with visual prototypes if available
+        # This is needed because set_training_stage already builds components without visual prototypes
+        if visual_prototypes is not None:
+            # Re-build only the visual classifier with the computed prototypes
+            self.model.visual_classifier = VisualClassifier(
+                self.model.feat_dim,
+                self.model.num_classes,
+                text_prototypes=self.model.text_features,
+                visual_prototypes=visual_prototypes,
+                cfg=self.cfg
+            )
         
         # Setup optimizer for stage 2 (only adapter and classifier)
         stage2_params = []
@@ -1090,6 +1113,8 @@ def main():
                         help='Use score-weighted pooling in VisualAdapter')
     parser.add_argument('--adapter_hidden_dim', type=int, default=None,
                         help='Hidden dimension for VisualAdapter (default: same as input_dim)')
+    parser.add_argument('--use_visual_prototypes', type=eval, default=False,
+                        help='Use class feature centers for visual prototype initialization')
 
     args = parser.parse_args()
 
@@ -1120,7 +1145,8 @@ def main():
         temperature=args.temperature,
         lambda_local=args.lambda_local,
         use_weighted_pool=args.use_weighted_pool,
-        adapter_hidden_dim=args.adapter_hidden_dim
+        adapter_hidden_dim=args.adapter_hidden_dim,
+        use_visual_prototypes=args.use_visual_prototypes
     )
 
     # Check which stage to train

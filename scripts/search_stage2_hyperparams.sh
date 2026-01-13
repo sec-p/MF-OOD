@@ -97,6 +97,10 @@ run_single_experiment() {
         cmd="${cmd} --use_weighted_pool"
     fi
     
+    # Add use_visual_prototypes flag for visual prototype initialization
+    # This uses class feature centers computed from training data
+    cmd="${cmd} --use_visual_prototypes true"
+    
     # Run the command - output to terminal instead of file for debugging
     ${cmd}
     

@@ -9,6 +9,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from abc import ABC, abstractmethod
 from typing import Tuple, Dict, Optional
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 import math
 import clip
 import json
@@ -473,6 +475,7 @@ class VisualClassifier(nn.Module):
     """
     def __init__(self, input_dim: int, num_classes: int, 
                  text_prototypes: torch.Tensor = None,
+                 visual_prototypes: torch.Tensor = None,
                  cfg: Dict = None):
         super().__init__()
         
@@ -480,19 +483,20 @@ class VisualClassifier(nn.Module):
         self.num_classes = num_classes
         self.cfg = cfg or {}
         
-        # Learnable prototypes (initialized from text features if provided)
-        if text_prototypes is not None:
-            # text_prototypes: [num_classes, D]
+        # Learnable prototypes with multiple initialization options
+        if visual_prototypes is not None:
+            # Priority 1: Use visual prototypes (from class feature centers)
+            self.prototypes = nn.Parameter(visual_prototypes.clone())
+            print(f"✓ VisualClassifier initialized with visual prototypes from class feature centers")
+        elif text_prototypes is not None:
+            # Priority 2: Use text prototypes (from CLIP text encoder)
             self.prototypes = nn.Parameter(text_prototypes.clone())
+            print(f"✓ VisualClassifier initialized with text prototypes")
         else:
-            # Random initialization
+            # Priority 3: Random initialization
             self.prototypes = nn.Parameter(torch.randn(num_classes, input_dim))
             nn.init.xavier_uniform_(self.prototypes)
-        
-        # For CE loss in stage 2, we don't need a learnable logit scale at all
-        # The cosine similarity (-1 to 1 range) is sufficient for CE loss
-        # Remove the learnable logit scale to prevent gradient explosion
-        # We'll set the device dynamically in forward pass
+            print(f"✓ VisualClassifier initialized with random prototypes")
         
         # Optional: learnable temperature
         self.use_temperature = self.cfg.get('use_temperature', False)
@@ -698,10 +702,13 @@ class ModularCustomCLIP(nn.Module):
             self.fuser = MeanPoolFuser(self.feat_dim, self.cfg)
         # self.fuser = self.fuser.to(self.dtype)
     
-    def _build_stage2_components(self):
+    def _build_stage2_components(self, visual_prototypes: torch.Tensor = None):
         """
         Build Stage 2 components: VisualAdapter and VisualClassifier.
         These components are used for the second stage training.
+        
+        Args:
+            visual_prototypes: [num_classes, D] - Class feature centers for visual prototype initialization
         """
         # Visual Adapter: processes selected features from selector
         adapter_hidden_dim = self.cfg.get('adapter_hidden_dim', None)
@@ -711,11 +718,12 @@ class ModularCustomCLIP(nn.Module):
             cfg=self.cfg
         )
         
-        # Visual Classifier: CLIP-aligned classifier with text prototype initialization
+        # Visual Classifier: CLIP-aligned classifier with multiple prototype initialization options
         self.visual_classifier = VisualClassifier(
             self.feat_dim,
             self.num_classes,
-            text_prototypes=self.text_features,  # Initialize from text features
+            text_prototypes=self.text_features,  # Initialize from text features (fallback)
+            visual_prototypes=visual_prototypes,   # Initialize from class feature centers (priority)
             cfg=self.cfg
         )
         
@@ -964,6 +972,63 @@ class ModularCustomCLIP(nn.Module):
             print("✓ Training Stage 2: VisualAdapter + VisualClassifier (Stage 1 frozen)")
         else:
             raise ValueError(f"Invalid stage: {stage}. Must be 1 or 2.")
+    
+    def compute_class_feature_centers(self, train_loader: DataLoader) -> torch.Tensor:
+        """
+        Compute class feature centers from training data.
+        Used for visual prototype initialization in Stage 2.
+        
+        Args:
+            train_loader: Training data loader to compute centers from
+        
+        Returns:
+            visual_prototypes: [num_classes, D] - class feature centers
+        """
+        print("\n=== Computing Class Feature Centers ===")
+        self.eval()
+        
+        # Initialize feature accumulator
+        class_features = {i: [] for i in range(self.num_classes)}
+        
+        with torch.no_grad():
+            for batch_idx, (images, labels) in enumerate(tqdm(train_loader, desc="Computing centers")):
+                images, labels = images.to(self.device), labels.to(self.device)
+                
+                # Get local features from backbone
+                _, local_features = self.encode_image(images)
+                
+                # Get selected features from selector
+                selected_feats, _, _ = self.selector(local_features)
+                
+                # Aggregate by class
+                for i in range(images.shape[0]):
+                    label = labels[i].item()
+                    # Use mean pooling as the adapter does when initialized with zero weights
+                    pooled_feat = selected_feats[i].mean(dim=0)
+                    class_features[label].append(pooled_feat)
+        
+        # Compute mean for each class
+        visual_prototypes_list = []
+        for i in range(self.num_classes):
+            if class_features[i]:
+                class_feat_tensor = torch.stack(class_features[i], dim=0)
+                class_center = class_feat_tensor.mean(dim=0)
+                # Normalize the center
+                class_center = class_center / class_center.norm(dim=-1, keepdim=True)
+                visual_prototypes_list.append(class_center)
+            else:
+                # Fallback for empty classes
+                print(f"Warning: No samples for class {i}, using random initialization")
+                random_center = torch.randn(self.feat_dim, device=self.device)
+                random_center = random_center / random_center.norm()
+                visual_prototypes_list.append(random_center)
+        
+        visual_prototypes = torch.stack(visual_prototypes_list, dim=0)
+        print(f"✓ Class feature centers computed: {visual_prototypes.shape}")
+        print(f"  - Feature dimension: {visual_prototypes.shape[1]}")
+        print(f"  - Number of classes: {visual_prototypes.shape[0]}")
+        
+        return visual_prototypes
     
     def freeze_stage1(self):
         """Freeze all stage 1 components (selector and fuser)."""
