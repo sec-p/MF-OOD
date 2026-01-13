@@ -433,6 +433,7 @@ class VisualAdapter(nn.Module):
             adapted_feats: [B, D] - aggregated and adapted features
         """
         B, N, D = selected_feats.shape
+        dtype = selected_feats.dtype
         
         if self.use_weighted_pool and selector_scores is not None:
             # Score-weighted pooling
@@ -450,7 +451,15 @@ class VisualAdapter(nn.Module):
             pooled_feats = selected_feats.mean(dim=1)  # [B, D]
         
         # Apply adapter with residual connection
-        adapted_feats = pooled_feats + self.adapter(pooled_feats)
+        # Convert to FP32 for adapter operations (linear layers expect FP32 params)
+        pooled_feats_fp32 = pooled_feats.float()
+        adapter_output_fp32 = self.adapter(pooled_feats_fp32)
+        
+        # Convert back to original dtype
+        adapter_output = adapter_output_fp32.to(dtype)
+        
+        # Residual connection with matching dtypes
+        adapted_feats = pooled_feats + adapter_output
         
         return adapted_feats
 
@@ -495,9 +504,15 @@ class VisualClassifier(nn.Module):
         Returns:
             logits: [B, num_classes] - classification logits
         """
+        # Get input dtype to ensure compatibility
+        dtype = features.dtype
+        
         # Normalize features and prototypes (cosine similarity)
         features_norm = F.normalize(features, dim=-1, eps=1e-8)
         prototypes_norm = F.normalize(self.prototypes, dim=-1, eps=1e-8)
+        
+        # Convert prototypes to match input dtype for matmul
+        prototypes_norm = prototypes_norm.to(dtype)
         
         # Compute cosine similarity
         logits = torch.matmul(features_norm, prototypes_norm.T)  # [B, num_classes]
