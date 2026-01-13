@@ -541,8 +541,7 @@ class TrainEvalOrchestrator:
                 self.model.feat_dim,
                 self.model.num_classes,
                 text_prototypes=self.model.text_features,
-                visual_prototypes=visual_prototypes,
-                cfg=self.cfg
+                visual_prototypes=visual_prototypes
             )
         
         # Setup optimizer for stage 2 (only adapter and classifier)
