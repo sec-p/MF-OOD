@@ -13,7 +13,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from utils.common import setup_seed, get_test_labels
-from utils.detection_util import print_measures, get_and_print_results, get_ood_scores_clip
+from utils.detection_util import print_measures, get_and_print_results, get_ood_scores_clip, get_ood_scores_dual_stream
 from utils.file_ops import save_as_dataframe, setup_log
 from utils.plot_util import plot_distribution
 from utils.train_eval_util import set_model_clip, set_val_loader, set_ood_loader_ImageNet
@@ -39,9 +39,13 @@ def process_args():
     parser.add_argument('--model', default='modular', type=str, choices=['CLIP', 'modular'], help='model architecture')
     parser.add_argument('--CLIP_ckpt', type=str, default='ViT-B/16',
                         choices=['ViT-B/16', 'RN50', 'RN101'], help='which pretrained img encoder to use')
-    parser.add_argument('--score', default='MCM', type=str, choices=['MCM', 'L-MCM', 'GL-MCM','GL-MCM-L','GPT','SA-MCM'], help='score options')
+    parser.add_argument('--score', default='MCM', type=str, choices=['MCM', 'L-MCM', 'GL-MCM','GL-MCM-L','GPT','SA-MCM','AL-MCM','DS-MCM'], help='score options')
     parser.add_argument('--num_ood_sumple', default=-1, type=int, help="numbers of ood_sumples")
     parser.add_argument('--lambda_local', default=0.4, type=float, help='weight for local score')
+    
+    # Dual-Stream Fusion parameters
+    parser.add_argument('--fusion_strategy', default='geometric', type=str, choices=['arithmetic', 'geometric'], 
+                        help='Fusion strategy for dual-stream: arithmetic mean or geometric mean')
     
     # Modular model parameters
     parser.add_argument('--model_path', type=str, default=None, help='path to trained modular model checkpoint')
@@ -127,14 +131,27 @@ def main():
 
     test_loader = set_val_loader(args, preprocess)
     test_labels = get_test_labels(args)
-
-    in_score = get_ood_scores_clip(args, net, test_loader, test_labels)
-
+    
+    # Choose scoring method based on args.score
+    if args.score == 'DS-MCM':
+        # Dual-Stream MCM for Stage 2
+        in_score = get_ood_scores_dual_stream(args, net, test_loader, test_labels)
+    else:
+        # Standard MCM methods
+        in_score = get_ood_scores_clip(args, net, test_loader, test_labels)
+    
     auroc_list, aupr_list, fpr_list = [], [], []
     for out_dataset in out_datasets:
         log.debug(f"Evaluting OOD dataset {out_dataset}")
         ood_loader = set_ood_loader_ImageNet(args, out_dataset, preprocess, root=args.root_dir)
-        out_score = get_ood_scores_clip(args, net, ood_loader, test_labels)
+        
+        if args.score == 'DS-MCM':
+            # Dual-Stream MCM for Stage 2
+            out_score = get_ood_scores_dual_stream(args, net, ood_loader, test_labels)
+        else:
+            # Standard MCM methods
+            out_score = get_ood_scores_clip(args, net, ood_loader, test_labels)
+        
         log.debug(f"in scores: {stats.describe(in_score)}")
         log.debug(f"out scores: {stats.describe(out_score)}")
         plot_distribution(args, in_score, out_score, out_dataset)

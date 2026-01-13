@@ -210,7 +210,103 @@ def get_ood_scores_clip(args, net, loader, test_labels):
 
                 else:
                     raise NotImplementedError
-    return concat(_score)[:len(loader.dataset)].copy()   
+    return concat(_score)[:len(loader.dataset)].copy()
+
+
+def get_ood_scores_dual_stream(args, net, loader, test_labels):
+    """
+    Dual-Stream Contrastive Inference for Stage 2 OOD Detection.
+    
+    Global Stream (MCM Baseline):
+    - Uses original CLIP features
+    - Very strong on ID, very weak on Texture OOD (high score)
+    - Role: "Base Confidence"
+    
+    Causal Stream (Your Trained Adapter):
+    - Uses Top-K Patches selected by Selector
+    - Processed through trained Adapter
+    - Very low on Texture OOD (texture suppressed by CE loss, no shape support)
+    - High on ID
+    - Role: "Validation Factor"
+    
+    Fusion Strategy:
+    - ID: Base High + Causal High → Very High
+    - Texture: Base High + Causal Low → Suppress (pulled down)
+    
+    Args:
+        args: Arguments containing fusion parameters
+        net: Model with trained adapter and classifier
+        loader: Data loader for OOD dataset
+        test_labels: Class labels for text features
+    
+    Returns:
+        OOD scores array
+    """
+    to_np = lambda x: x.data.cpu().numpy()
+    concat = lambda x: np.concatenate(x, axis=0)
+    _score = []
+    
+    # Use cached text features
+    if hasattr(net, 'text_features') and net.text_features is not None:
+        text_features = net.text_features
+    else:
+        tokenizer = clip.tokenize
+        with torch.no_grad():
+            text_inputs = tokenizer([f"a photo of a {c}" for c in test_labels])
+            text_features = net.encode_text(text_inputs.cuda()).float()
+            text_features /= text_features.norm(dim=-1, keepdim=True)
+    
+    tqdm_object = tqdm(loader, total=len(loader))
+    
+    with torch.no_grad():
+        with autocast():
+            for batch_idx, (images, labels, *id_flag) in enumerate(tqdm_object):
+                bz = images.size(0)
+                labels = labels.long().cuda()
+                images = images.cuda()
+                
+                # === Global Stream (MCM Baseline) ===
+                # Use original CLIP forward (Stage 1)
+                res_stage1 = net(images, labels=None)
+                global_features = res_stage1['global_features']  # [B, D]
+                
+                # Compute Global Stream score
+                output_global = global_features @ text_features.T  # [B, C]
+                smax_global = to_np(F.softmax(output_global / args.T, dim=1))
+                base_confidence = -np.max(smax_global, axis=1)  # [B,]
+                
+                # === Causal Stream (Trained Adapter) ===
+                # Use Stage 2 forward (adapter + classifier)
+                res_stage2 = net.forward_stage2(images, labels=None, return_features=True)
+                adapted_feats = res_stage2['adapted_feats']  # [B, D]
+                stage1_global_feats = res_stage2['stage1_global_features']  # [B, D]
+                
+                # Compute Causal Stream score using Stage 2 classifier
+                output_causal = adapted_feats @ text_features.T  # [B, C]
+                smax_causal = to_np(F.softmax(output_causal / args.T, dim=1))
+                causal_factor = -np.max(smax_causal, axis=1)  # [B,]
+                
+                # === Fusion Strategy ===
+                # Option 1: Arithmetic Mean (default)
+                # ID: Base High + Causal High → Very High
+                # Texture: Base High + Causal Low → Medium (suppressed)
+                final_score_mean = (base_confidence + causal_factor) / 2
+                
+                # Option 2: Geometric Mean (more aggressive suppression)
+                # ID: High * High → High
+                # Texture: High * Low → Much Lower (strong suppression)
+                final_score_geom = np.sqrt(base_confidence * causal_factor)
+                
+                # Choose fusion strategy based on args
+                if hasattr(args, 'fusion_strategy') and args.fusion_strategy == 'geometric':
+                    final_score = final_score_geom
+                else:
+                    # Default to arithmetic mean
+                    final_score = final_score_mean
+                
+                _score.append(final_score)
+    
+    return concat(_score)[:len(loader.dataset)].copy()
 
 
 def get_and_print_results(args, log, in_score, out_score, auroc_list, aupr_list, fpr_list):

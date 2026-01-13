@@ -372,6 +372,131 @@ class SelfAttentionFuser(BaseFuser):
         return x_out
 
 
+# ============================================================================
+# PART 3.5: VISUAL ADAPTER AND CLASSIFIER (For Two-Stage Training)
+# ============================================================================
+
+class VisualAdapter(nn.Module):
+    """
+    Visual Adapter for processing selected features from selector.
+    Supports both mean pooling and score-weighted aggregation.
+    """
+    def __init__(self, input_dim: int, hidden_dim: int = None, cfg: Dict = None):
+        super().__init__()
+        
+        if hidden_dim is None:
+            hidden_dim = input_dim
+        
+        self.input_dim = input_dim
+        self.cfg = cfg or {}
+        
+        # Adapter architecture
+        self.adapter = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.LayerNorm(hidden_dim),
+            nn.GELU(),
+            nn.Linear(hidden_dim, input_dim)
+        )
+        
+        # Zero initialization for residual connection
+        nn.init.zeros_(self.adapter[-1].weight)
+        nn.init.zeros_(self.adapter[-1].bias)
+        
+        self.use_weighted_pool = self.cfg.get('use_weighted_pool', False)
+    
+    def forward(self, selected_feats: torch.Tensor, 
+                selector_scores: Optional[torch.Tensor] = None) -> torch.Tensor:
+        """
+        Args:
+            selected_feats: [B, N, D] - selected features from selector
+            selector_scores: [B, N, H] or [B, N] - scores from selector for weighted pooling
+        
+        Returns:
+            adapted_feats: [B, D] - aggregated and adapted features
+        """
+        B, N, D = selected_feats.shape
+        
+        if self.use_weighted_pool and selector_scores is not None:
+            # Score-weighted pooling
+            if selector_scores.dim() == 3:
+                # Average over heads if multi-head
+                selector_scores = selector_scores.mean(dim=-1)  # [B, N]
+            
+            # Apply softmax to get weights
+            weights = F.softmax(selector_scores, dim=1)  # [B, N]
+            
+            # Weighted sum
+            pooled_feats = torch.einsum('bn,bnd->bd', weights, selected_feats)  # [B, D]
+        else:
+            # Mean pooling
+            pooled_feats = selected_feats.mean(dim=1)  # [B, D]
+        
+        # Apply adapter with residual connection
+        adapted_feats = pooled_feats + self.adapter(pooled_feats)
+        
+        return adapted_feats
+
+
+class VisualClassifier(nn.Module):
+    """
+    Visual Classifier for stage 2 training.
+    Aligned with CLIP computation style (cosine similarity + logit scale).
+    Prototypes initialized from text features.
+    """
+    def __init__(self, input_dim: int, num_classes: int, 
+                 text_prototypes: torch.Tensor = None,
+                 cfg: Dict = None):
+        super().__init__()
+        
+        self.input_dim = input_dim
+        self.num_classes = num_classes
+        self.cfg = cfg or {}
+        
+        # Learnable prototypes (initialized from text features if provided)
+        if text_prototypes is not None:
+            # text_prototypes: [num_classes, D]
+            self.prototypes = nn.Parameter(text_prototypes.clone())
+        else:
+            # Random initialization
+            self.prototypes = nn.Parameter(torch.randn(num_classes, input_dim))
+            nn.init.xavier_uniform_(self.prototypes)
+        
+        # Learnable logit scale (aligned with CLIP)
+        self.logit_scale = nn.Parameter(torch.ones(1) * np.log(1 / 0.07))
+        
+        # Optional: learnable temperature
+        self.use_temperature = self.cfg.get('use_temperature', False)
+        if self.use_temperature:
+            self.temperature = nn.Parameter(torch.ones(1) * 0.07)
+    
+    def forward(self, features: torch.Tensor) -> torch.Tensor:
+        """
+        Args:
+            features: [B, D] - adapted features from VisualAdapter
+        
+        Returns:
+            logits: [B, num_classes] - classification logits
+        """
+        # Normalize features and prototypes (cosine similarity)
+        features_norm = F.normalize(features, dim=-1, eps=1e-8)
+        prototypes_norm = F.normalize(self.prototypes, dim=-1, eps=1e-8)
+        
+        # Compute cosine similarity
+        logits = torch.matmul(features_norm, prototypes_norm.T)  # [B, num_classes]
+        
+        # Apply logit scale (aligned with CLIP)
+        logit_scale = self.logit_scale.exp()
+        logits = logits * logit_scale
+        
+        return logits
+    
+    def get_temperature(self) -> float:
+        """Get current temperature value."""
+        if self.use_temperature:
+            return self.temperature.item()
+        else:
+            return 0.07  # Default CLIP temperature
+
 
 # ============================================================================
 # PART 4: LOSS FUNCTIONS (FP32 Enforced)
@@ -513,8 +638,13 @@ class ModularCustomCLIP(nn.Module):
         self._build_components()
         self._cache_text_features()
         self._cache_negative_text_features()
+        self._cache_attribute_features()
+        
+        # Initialize Stage 2 components (VisualAdapter + VisualClassifier)
+        self._build_stage2_components()
+        
         print(f"✓ ModularCustomCLIP initialized. Dtype: {self.dtype}")
-
+    
     def _build_components(self):
         s_type = self.cfg.get('selector_type', 'mlp')
         num_sel = self.cfg.get('num_select', 49)
@@ -535,6 +665,29 @@ class ModularCustomCLIP(nn.Module):
         else:
             self.fuser = MeanPoolFuser(self.feat_dim, self.cfg)
         # self.fuser = self.fuser.to(self.dtype)
+    
+    def _build_stage2_components(self):
+        """
+        Build Stage 2 components: VisualAdapter and VisualClassifier.
+        These components are used for the second stage training.
+        """
+        # Visual Adapter: processes selected features from selector
+        adapter_hidden_dim = self.cfg.get('adapter_hidden_dim', None)
+        self.visual_adapter = VisualAdapter(
+            self.feat_dim, 
+            hidden_dim=adapter_hidden_dim, 
+            cfg=self.cfg
+        )
+        
+        # Visual Classifier: CLIP-aligned classifier with text prototype initialization
+        self.visual_classifier = VisualClassifier(
+            self.feat_dim,
+            self.num_classes,
+            text_prototypes=self.text_features,  # Initialize from text features
+            cfg=self.cfg
+        )
+        
+        print(f"✓ Stage 2 components built: VisualAdapter + VisualClassifier")
 
     def _cache_text_features(self):
         templates = self.cfg.get('templates', ["a photo of a {}"])
@@ -759,6 +912,131 @@ class ModularCustomCLIP(nn.Module):
             'global_features': global_features,
             'local_features': local_features
         }
+    
+    def set_training_stage(self, stage: int):
+        """
+        Set the current training stage.
+        Stage 1: Train selector + fuser (original training)
+        Stage 2: Train visual_adapter + visual_classifier (freeze other components)
+        
+        Args:
+            stage: 1 or 2
+        """
+        if stage == 1:
+            self.freeze_stage1()
+            self.unfreeze_stage2(freeze=True)  # Freeze stage 2 components
+            print("✓ Training Stage 1: Selector + Fuser (Stage 2 frozen)")
+        elif stage == 2:
+            self.freeze_stage1()
+            self.unfreeze_stage2(freeze=False)  # Unfreeze stage 2 components
+            print("✓ Training Stage 2: VisualAdapter + VisualClassifier (Stage 1 frozen)")
+        else:
+            raise ValueError(f"Invalid stage: {stage}. Must be 1 or 2.")
+    
+    def freeze_stage1(self):
+        """Freeze all stage 1 components (selector and fuser)."""
+        for param in self.selector.parameters():
+            param.requires_grad = False
+        for param in self.fuser.parameters():
+            param.requires_grad = False
+        print("✓ Stage 1 components frozen")
+    
+    def unfreeze_stage1(self):
+        """Unfreeze all stage 1 components (selector and fuser)."""
+        for param in self.selector.parameters():
+            param.requires_grad = True
+        for param in self.fuser.parameters():
+            param.requires_grad = True
+        print("✓ Stage 1 components unfrozen")
+    
+    def freeze_stage2(self):
+        """Freeze all stage 2 components (visual_adapter and visual_classifier)."""
+        for param in self.visual_adapter.parameters():
+            param.requires_grad = False
+        for param in self.visual_classifier.parameters():
+            param.requires_grad = False
+        print("✓ Stage 2 components frozen")
+    
+    def unfreeze_stage2(self, freeze: bool = False):
+        """
+        Unfreeze or freeze stage 2 components.
+        
+        Args:
+            freeze: If True, freeze stage 2. If False, unfreeze stage 2.
+        """
+        for param in self.visual_adapter.parameters():
+            param.requires_grad = not freeze
+        for param in self.visual_classifier.parameters():
+            param.requires_grad = not freeze
+        status = "frozen" if freeze else "unfrozen"
+        print(f"✓ Stage 2 components {status}")
+    
+    def forward_stage2(self, image: torch.Tensor, 
+                      labels: Optional[torch.Tensor] = None,
+                      return_features: bool = False) -> Dict:
+        """
+        Forward pass for Stage 2 training.
+        Uses frozen selector to get selected features, then processes through
+        visual_adapter and visual_classifier.
+        
+        Args:
+            image: Input images [B, C, H, W]
+            labels: Ground truth labels [B] (optional)
+            return_features: If True, return intermediate features
+        
+        Returns:
+            Dict containing:
+                - 'logits': Classification logits from visual_classifier [B, num_classes]
+                - 'adapted_feats': Features from visual_adapter [B, D]
+                - 'selected_feats': Selected features from selector [B, N, D]
+                - 'ce_loss': Cross-entropy loss (if labels provided)
+        """
+        B = image.shape[0]
+        
+        with torch.no_grad():
+            # 1. Encode Image (frozen backbone)
+            image_features, local_features = self.encode_image(image)
+            
+            # 2. Select Features (frozen selector)
+            selected_feats, sel_aux_loss, bg_mask = self.selector(local_features)
+            
+            # Get selector scores for weighted pooling (if available)
+            selector_scores = None
+            if hasattr(self.selector, 'selected_scores'):
+                selector_scores = self.selector.selected_scores
+        
+        # 3. Process through Fuser (frozen, Stage 1 output)
+        # This computes the Stage 1 fused features
+        stage1_final_feats = self.fuser(selected_feats, global_feat=image_features)
+        stage1_global_features = image_features + stage1_final_feats
+        stage1_global_features = stage1_global_features / stage1_global_features.norm(dim=-1, keepdim=True)
+        
+        # 4. Process through Visual Adapter (trainable)
+        adapted_feats = self.visual_adapter(selected_feats, selector_scores)
+        
+        # 5. Classify through Visual Classifier (trainable)
+        logits = self.visual_classifier(adapted_feats)
+        
+        result = {
+            'logits': logits,
+            'adapted_feats': adapted_feats,
+            'selected_feats': selected_feats,
+            'bg_mask': bg_mask,
+            # Stage 1 outputs (for reference)
+            'stage1_final_feats': stage1_final_feats,
+            'stage1_global_features': stage1_global_features,
+        }
+        
+        if return_features:
+            result['image_features'] = image_features
+            result['local_features'] = local_features
+        
+        # Compute Cross-Entropy Loss if labels provided
+        if labels is not None:
+            ce_loss = F.cross_entropy(logits, labels)
+            result['ce_loss'] = ce_loss
+        
+        return result
 
 
 # ============================================================================

@@ -49,6 +49,7 @@ from utils.detection_util import (
     fpr_and_fdr_at_recall, 
     get_measures as detection_get_measures,
     get_ood_scores_clip, 
+    get_ood_scores_dual_stream,
     get_and_print_results, 
     print_measures
 )
@@ -70,7 +71,10 @@ class TrainEvalOrchestrator:
                  # OOD score parameters
                  score_type: str = 'GL-MCM',
                  temperature: float = 1.0,
-                 lambda_local: float = 1.0):
+                 lambda_local: float = 1.0,
+                 # Stage 2 parameters
+                 use_weighted_pool: bool = False,
+                 adapter_hidden_dim: int = None):
         
         self.method = method
         self.epochs = epochs
@@ -99,6 +103,10 @@ class TrainEvalOrchestrator:
         self.score_type = score_type
         self.temperature = temperature
         self.lambda_local = lambda_local
+        
+        # Stage 2 parameters
+        self.use_weighted_pool = use_weighted_pool
+        self.adapter_hidden_dim = adapter_hidden_dim
         
         # Model settings
         self.num_select = num_select
@@ -289,6 +297,10 @@ class TrainEvalOrchestrator:
             
             # Loss weights
             'lambda_redundancy': 0.1,
+            
+            # Stage 2 parameters
+            'use_weighted_pool': self.use_weighted_pool,
+            'adapter_hidden_dim': self.adapter_hidden_dim,
         }
         
         self.logger.debug(f'Config: {json.dumps(cfg, default=str, indent=2)}')
@@ -473,8 +485,416 @@ class TrainEvalOrchestrator:
         except:
             auroc, aupr, fpr = 0.0, 0.0, 0.0
         
-        return auroc, aupr, fpr
+        return avg_auroc, aupr, fpr
     
+    def train_stage2(self, stage1_checkpoint: str, epochs: int = 10, lr: float = 0.001) -> Dict:
+        """
+        Train Stage 2: VisualAdapter + VisualClassifier with CE loss.
+        Other components (selector, fuser, backbone) are frozen.
+        
+        Args:
+            stage1_checkpoint: Path to stage 1 checkpoint
+            epochs: Number of training epochs for stage 2
+            lr: Learning rate for stage 2
+        
+        Returns:
+            Dict containing training metrics
+        """
+        self.logger.debug('\n' + '='*80)
+        self.logger.debug('Starting Stage 2 Training: VisualAdapter + VisualClassifier')
+        self.logger.debug('='*80 + '\n')
+        
+        # Load stage 1 checkpoint
+        self.logger.debug(f'Loading stage 1 checkpoint from: {stage1_checkpoint}')
+        checkpoint = torch.load(stage1_checkpoint, map_location=self.device, weights_only=False)
+        
+        # Load state dict (only trainable parameters from stage 1)
+        if 'state_dict' in checkpoint:
+            state_dict = checkpoint['state_dict']
+        else:
+            state_dict = checkpoint
+        
+        # Load stage 1 parameters
+        self.model.load_state_dict(state_dict, strict=False)
+        self.logger.debug('✓ Stage 1 parameters loaded')
+        
+        # Switch to stage 2 training mode
+        self.model.set_training_stage(stage=2)
+        
+        # Setup optimizer for stage 2 (only adapter and classifier)
+        stage2_params = []
+        for name, param in self.model.named_parameters():
+            if param.requires_grad:
+                stage2_params.append(param)
+                self.logger.debug(f'  Trainable: {name}')
+        
+        self.optimizer = torch.optim.AdamW(
+            stage2_params,
+            lr=lr,
+            weight_decay=1e-5
+        )
+        
+        # Setup scheduler for stage 2
+        self.scheduler = CosineAnnealingLR(self.optimizer, T_max=epochs)
+        
+        # Setup GradScaler for AMP
+        self.scaler = GradScaler()
+        
+        self.logger.debug(f'✓ Stage 2 trainable parameters: {sum(p.numel() for p in stage2_params)}')
+        
+        # Training loop
+        best_acc = 0.0
+        results_history = []
+        
+        # Setup OOD datasets for evaluation
+        OOD_DATASETS = ['iNaturalist', 'SUN', 'places365', 'Texture']
+        ood_loaders = {}
+        
+        # Create args-like object for OOD loader
+        class OODArgs:
+            def __init__(self, **kwargs):
+                self.__dict__.update(kwargs)
+        
+        ood_args = OODArgs(
+            root_dir=self.root_path,
+            batch_size=self.batch_size,
+            seed=self.seed,
+            shots=0,
+            in_dataset=self.id_dataset,
+            num_ood_sumple=-1,
+            gpu=0
+        )
+        
+        for ood_dataset in OOD_DATASETS:
+            try:
+                ood_loaders[ood_dataset] = set_ood_loader_ImageNet(
+                    ood_args,
+                    ood_dataset,
+                    self.preprocess,
+                    root=self.root_path
+                )
+                self.logger.debug(f'  ✓ Loaded OOD dataset: {ood_dataset}')
+            except Exception as e:
+                self.logger.debug(f'  ⚠ Failed to load OOD dataset {ood_dataset}: {e}')
+        
+        for epoch in range(epochs):
+            train_loss, train_acc = self._train_epoch_stage2(epoch)
+            self.scheduler.step()
+            
+            # Evaluate on ID test set
+            id_acc = self._evaluate_stage2()
+            
+            # Evaluate OOD performance (every 5 epochs or last epoch)
+            ood_results = {}
+            if (epoch + 1) % 5 == 0 or epoch == epochs - 1:
+                ood_results = self._evaluate_ood_stage2(ood_loaders)
+            
+            # Log results
+            self.logger.debug(f'\n[Epoch {epoch+1}/{epochs}]')
+            self.logger.debug(f'  Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%')
+            self.logger.debug(f'  ID Test Acc: {id_acc:.2f}%')
+            
+            # Log OOD results if available
+            if ood_results:
+                self.logger.debug('  OOD Results:')
+                for method in ['DS-MCM', 'Visual-GL-MCM', 'Stage1-GL-MCM']:
+                    self.logger.debug(f'    {method}:')
+                    for ood_name in OOD_DATASETS:
+                        if ood_name in ood_loaders:
+                            auroc_key = f'{method}_{ood_name}_auroc'
+                            fpr95_key = f'{method}_{ood_name}_fpr95'
+                            if auroc_key in ood_results:
+                                self.logger.debug(f'      {ood_name:15} AUROC: {ood_results[auroc_key]:.2f}%, FPR95: {ood_results[fpr95_key]:.2f}%')
+                
+                # Log average OOD metrics
+                for method in ['DS-MCM', 'Visual-GL-MCM', 'Stage1-GL-MCM']:
+                    avg_auroc_key = f'{method}_avg_auroc'
+                    avg_fpr95_key = f'{method}_avg_fpr95'
+                    if avg_auroc_key in ood_results:
+                        self.logger.debug(f'    {method} Avg: AUROC: {ood_results[avg_auroc_key]:.2f}%, FPR95: {ood_results[avg_fpr95_key]:.2f}%')
+            
+            # Save checkpoint
+            if (epoch + 1) % 5 == 0 or epoch == epochs - 1:
+                self._save_stage2_checkpoint(epoch, train_loss, train_acc, id_acc, ood_results)
+            
+            # Track best
+            if id_acc > best_acc:
+                best_acc = id_acc
+                self._save_stage2_checkpoint(999, train_loss, train_acc, id_acc, ood_results)  # 999 for 'best'
+                self.logger.debug(f'  ★ New Best ID Acc: {best_acc:.2f}%')
+            
+            # Update history
+            history_entry = {
+                'epoch': epoch,
+                'train_loss': train_loss,
+                'train_acc': train_acc,
+                'id_acc': id_acc
+            }
+            # Add OOD results if available
+            if ood_results:
+                history_entry.update(ood_results)
+            results_history.append(history_entry)
+        
+        # Save all results
+        results_path = os.path.join(self.log_dir, 'stage2_results.json')
+        with open(results_path, 'w') as f:
+            json.dump(results_history, f, indent=2)
+        
+        self.logger.debug('\nStage 2 training completed.')
+        self.logger.debug(f'Best ID Accuracy: {best_acc:.2f}%')
+        
+        return {
+            'best_id_acc': best_acc,
+            'results_history': results_history
+        }
+    
+    def _train_epoch_stage2(self, epoch: int) -> Tuple[float, float]:
+        """Train one epoch for stage 2 with CE loss."""
+        self.model.train()
+        total_loss = 0.0
+        correct = 0
+        total = 0
+        
+        pbar = tqdm(self.train_loader, desc=f'Epoch {epoch+1} [Stage 2]', ncols=100)
+        
+        for batch_idx, (images, labels) in enumerate(pbar):
+            images, labels = images.to(self.device), labels.to(self.device)
+            
+            self.optimizer.zero_grad()
+            
+            # Forward with autocast
+            with autocast():
+                # Use stage 2 forward pass
+                output_dict = self.model.forward_stage2(images, labels=labels)
+                
+                logits = output_dict['logits']
+                ce_loss = output_dict['ce_loss']
+            
+            # Backward with scaler
+            self.scaler.scale(ce_loss).backward()
+            
+            # Gradient clipping
+            self.scaler.unscale_(self.optimizer)
+            torch.nn.utils.clip_grad_norm_(
+                [p for p in self.model.parameters() if p.requires_grad],
+                max_norm=1.0
+            )
+            
+            # Optimizer step
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
+            
+            # Metrics
+            total_loss += ce_loss.item()
+            with torch.no_grad():
+                _, predicted = logits.max(1)
+                correct += predicted.eq(labels).sum().item()
+                total += labels.size(0)
+            
+            # Update progress bar
+            pbar.set_postfix({
+                'Loss': f'{ce_loss.item():.4f}',
+                'Acc': f'{100.*correct/total:.2f}%'
+            })
+        
+        avg_loss = total_loss / len(self.train_loader) if len(self.train_loader) > 0 else 0
+        train_acc = 100.0 * correct / total if total > 0 else 0
+        
+        return avg_loss, train_acc
+    
+    def _evaluate_stage2(self) -> float:
+        """Evaluate stage 2 on ID test set."""
+        self.model.eval()
+        correct = 0
+        total = 0
+        
+        with torch.no_grad():
+            for images, labels in self.test_loader:
+                images, labels = images.to(self.device), labels.to(self.device)
+                
+                with autocast():
+                    output_dict = self.model.forward_stage2(images, labels=None)
+                    logits = output_dict['logits']
+                
+                _, predicted = logits.max(1)
+                correct += predicted.eq(labels).sum().item()
+                total += labels.size(0)
+        
+        id_acc = 100.0 * correct / total if total > 0 else 0.0
+        return id_acc
+    
+    def _evaluate_ood_stage2(self, ood_loaders: Dict[str, DataLoader]) -> Dict:
+        """
+        Evaluate OOD performance using three methods:
+        1. DS-MCM: Dual-Stream Contrastive Inference
+        2. Visual-GL-MCM: Pure visual GL-MCM (adapter output + local features with visual prototypes)
+        3. Stage1-GL-MCM: Stage 1 GL-MCM (global features)
+        
+        Args:
+            ood_loaders: Dict of OOD dataset loaders
+        
+        Returns:
+            Dict containing OOD metrics for all methods
+        """
+        self.model.eval()
+        results = {}
+        
+        # Create args-like object for detection_util functions
+        class Args:
+            def __init__(self, **kwargs):
+                self.__dict__.update(kwargs)
+        
+        # Compute ID scores once for all OOD datasets (for Stage1-GL-MCM)
+        args_stage1 = Args(
+            T=self.temperature,
+            score='GL-MCM',
+            lambda_local=self.lambda_local
+        )
+        id_scores_stage1 = get_ood_scores_clip(args_stage1, self.model, self.test_loader, self.classnames)
+        
+        # Compute ID scores for DS-MCM
+        args_ds = Args(
+            T=self.temperature,
+            score='DS-MCM',
+            lambda_local=self.lambda_local,
+            fusion_strategy='geometric'
+        )
+        id_scores_ds = get_ood_scores_dual_stream(args_ds, self.model, self.test_loader, self.classnames)
+        
+        # Compute ID scores for Visual-GL-MCM
+        id_scores_visual = self._compute_visual_gl_mcm_scores(self.test_loader, self.classnames)
+        
+        # Evaluate each OOD dataset
+        for ood_name, ood_loader in ood_loaders.items():
+            # 1. DS-MCM: Dual-Stream Contrastive Inference
+            out_scores_ds = get_ood_scores_dual_stream(args_ds, self.model, ood_loader, self.classnames)
+            measures_ds = detection_get_measures(-id_scores_ds, -out_scores_ds)
+            results[f'DS-MCM_{ood_name}_auroc'] = measures_ds[0] * 100
+            results[f'DS-MCM_{ood_name}_fpr95'] = measures_ds[2] * 100
+            
+            # 2. Visual-GL-MCM: Pure visual (adapter output + local features)
+            out_scores_visual = self._compute_visual_gl_mcm_scores(ood_loader, self.classnames)
+            measures_visual = detection_get_measures(-id_scores_visual, -out_scores_visual)
+            results[f'Visual-GL-MCM_{ood_name}_auroc'] = measures_visual[0] * 100
+            results[f'Visual-GL-MCM_{ood_name}_fpr95'] = measures_visual[2] * 100
+            
+            # 3. Stage1-GL-MCM: Stage 1 global features
+            out_scores_stage1 = get_ood_scores_clip(args_stage1, self.model, ood_loader, self.classnames)
+            measures_stage1 = detection_get_measures(-id_scores_stage1, -out_scores_stage1)
+            results[f'Stage1-GL-MCM_{ood_name}_auroc'] = measures_stage1[0] * 100
+            results[f'Stage1-GL-MCM_{ood_name}_fpr95'] = measures_stage1[2] * 100
+        
+        # Compute average OOD metrics for each method
+        for method in ['DS-MCM', 'Visual-GL-MCM', 'Stage1-GL-MCM']:
+            aurocs = []
+            fpr95s = []
+            for ood_name in ood_loaders.keys():
+                aurocs.append(results[f'{method}_{ood_name}_auroc'])
+                fpr95s.append(results[f'{method}_{ood_name}_fpr95'])
+            results[f'{method}_avg_auroc'] = np.mean(aurocs) if aurocs else 0.0
+            results[f'{method}_avg_fpr95'] = np.mean(fpr95s) if fpr95s else 0.0
+        
+        return results
+    
+    def _compute_visual_gl_mcm_scores(self, loader: DataLoader, test_labels: List[str]) -> np.ndarray:
+        """
+        Compute Visual-GL-MCM scores using adapter output and local features.
+        Uses visual prototypes (initialized from text features).
+        
+        Args:
+            loader: Data loader
+            test_labels: Class labels for text features
+        
+        Returns:
+            OOD scores array
+        """
+        to_np = lambda x: x.data.cpu().numpy()
+        concat = lambda x: np.concatenate(x, axis=0)
+        _score = []
+        
+        # Use cached text features (visual prototypes)
+        if hasattr(self.model, 'text_features') and self.model.text_features is not None:
+            text_features = self.model.text_features
+        else:
+            tokenizer = clip.tokenize
+            with torch.no_grad():
+                text_inputs = tokenizer([f"a photo of a {c}" for c in test_labels])
+                text_features = self.model.encode_text(text_inputs.cuda()).float()
+                text_features /= text_features.norm(dim=-1, keepdim=True)
+        
+        tqdm_object = tqdm(loader, total=len(loader), desc='Visual-GL-MCM', ncols=100, leave=False)
+        
+        with torch.no_grad():
+            with autocast():
+                for batch_idx, (images, labels, *id_flag) in enumerate(tqdm_object):
+                    images = images.cuda()
+                    
+                    # Stage 2 forward pass
+                    output_dict = self.model.forward_stage2(images, labels=None, return_features=True)
+                    
+                    # Get adapter output (visual features)
+                    adapted_feats = output_dict['adapted_feats']  # [B, D]
+                    
+                    # Get local features (selected patches)
+                    selected_feats = output_dict['selected_feats']  # [B, N, D]
+                    
+                    # Normalize features
+                    adapted_feats = F.normalize(adapted_feats, dim=-1, eps=1e-8)
+                    selected_feats = F.normalize(selected_feats, dim=-1, eps=1e-8)
+                    
+                    # Global score: adapter output
+                    output_global = adapted_feats @ text_features.T  # [B, C]
+                    smax_global = to_np(F.softmax(output_global / self.temperature, dim=1))
+                    mcm_global_score = -np.max(smax_global, axis=1)
+                    
+                    # Local score: selected patches
+                    # Compute similarity: [B, N, D] @ [D, C] -> [B, N, C]
+                    sim = selected_feats @ text_features.T
+                    
+                    # Max-Pooling: Find best matching patch for each class
+                    val, _ = sim.max(dim=1)  # [B, C]
+                    
+                    # Apply temperature and softmax
+                    s_local = to_np(F.softmax(val / self.temperature, dim=1))
+                    mcm_local_score = -np.max(s_local, axis=1)
+                    
+                    # Fusion: Global + lambda * Local
+                    final_score = mcm_global_score + self.lambda_local * mcm_local_score
+                    
+                    _score.append(final_score)
+        
+        return concat(_score)[:len(loader.dataset)].copy()
+    
+    def _save_stage2_checkpoint(self, epoch: int, train_loss: float, 
+                               train_acc: float, id_acc: float, ood_results: Dict = None):
+        """Save stage 2 checkpoint."""
+        checkpoint_path = os.path.join(self.log_dir, 'checkpoints', f'stage2_epoch_{epoch:03d}.pt')
+        
+        # Extract only stage 2 trainable parameters
+        stage2_state = {}
+        for name, param in self.model.named_parameters():
+            if param.requires_grad:
+                stage2_state[name] = param.data.clone()
+        
+        checkpoint = {
+            'epoch': epoch,
+            'stage': 2,
+            'train_loss': train_loss,
+            'train_acc': train_acc,
+            'id_acc': id_acc,
+            'state_dict': stage2_state,
+            'optimizer': self.optimizer.state_dict(),
+            'scaler': self.scaler.state_dict()
+        }
+        
+        # Add OOD results if available
+        if ood_results is not None:
+            checkpoint['ood_results'] = ood_results
+        
+        torch.save(checkpoint, checkpoint_path)
+        self.logger.debug(f'  ✓ Saved checkpoint: {checkpoint_path}')
+        return checkpoint_path
+
     def _compute_auroc(self, id_scores: np.ndarray, ood_scores: np.ndarray) -> float:
         """Compute AUROC (wrapped for backward compatibility)"""
         auroc, _, _ = self.get_measures(id_scores, ood_scores)
@@ -659,6 +1079,20 @@ def main():
     parser.add_argument('--score_type', type=str, default='GL-MCM', help='OOD scoring method')
     parser.add_argument('--temperature', type=float, default=1.0, help='Temperature for OOD scoring')
     parser.add_argument('--lambda_local', type=float, default=1.0, help='Weight for local component in GL-MCM')
+    
+    # Stage 2 training parameters
+    parser.add_argument('--train_stage', type=int, default=1, choices=[1, 2], 
+                        help='Training stage: 1 (selector+fuser) or 2 (adapter+classifier)')
+    parser.add_argument('--stage1_checkpoint', type=str, default=None,
+                        help='Path to stage 1 checkpoint (required for stage 2 training)')
+    parser.add_argument('--stage2_epochs', type=int, default=10,
+                        help='Number of epochs for stage 2 training')
+    parser.add_argument('--stage2_lr', type=float, default=0.001,
+                        help='Learning rate for stage 2 training')
+    parser.add_argument('--use_weighted_pool', action='store_true',
+                        help='Use score-weighted pooling in VisualAdapter')
+    parser.add_argument('--adapter_hidden_dim', type=int, default=None,
+                        help='Hidden dimension for VisualAdapter (default: same as input_dim)')
 
     args = parser.parse_args()
 
@@ -687,11 +1121,33 @@ def main():
         patches_per_slot_attn=args.patches_per_slot_attn,
         score_type=args.score_type,
         temperature=args.temperature,
-        lambda_local=args.lambda_local
+        lambda_local=args.lambda_local,
+        use_weighted_pool=args.use_weighted_pool,
+        adapter_hidden_dim=args.adapter_hidden_dim
     )
 
-    trainer.train_with_eval()
-
+    # Check which stage to train
+    if args.train_stage == 2:
+        # Stage 2 training
+        if args.stage1_checkpoint is None:
+            raise ValueError("--stage1_checkpoint is required for stage 2 training")
+        
+        # Setup data and model (needed for stage 2)
+        trainer.setup_data()
+        trainer.setup_model()
+        
+        # Train stage 2
+        stage2_results = trainer.train_stage2(
+            stage1_checkpoint=args.stage1_checkpoint,
+            epochs=args.stage2_epochs,
+            lr=args.stage2_lr
+        )
+        
+        print(f"\nStage 2 Training Complete!")
+        print(f"Best ID Accuracy: {stage2_results['best_id_acc']:.2f}%")
+    else:
+        # Stage 1 training (default)
+        trainer.train_with_eval()
 
 if __name__ == '__main__':
     main()
