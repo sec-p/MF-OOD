@@ -227,26 +227,30 @@ class SparseSlotAttentionSelector(BaseSelector):
         B, N, D = local_feats.shape
         dtype = local_feats.dtype
         
+        # Convert to FP32 before normalization layers
+        local_feats_fp32 = local_feats.float()
+        
         # 归一化输入，有助于训练稳定
-        local_feats_norm = self.norm_input(local_feats)
+        local_feats_norm = self.norm_input(local_feats_fp32)
         
         # Expand slots
         slots_expanded = self.slots.expand(B, -1, -1)
-        slots_norm = self.norm_slots(slots_expanded)
+        slots_norm = self.norm_slots(slots_expanded.float())
         
         # --- 核心逻辑 ---
         # 1. 提取特征 (Run heavy lifting in FP32)
         slot_feats_fp32, ortho_loss, img_space_mask_fp32 = self._forward_fp32(
-            local_feats_norm.float(), slots_norm.float()
+            local_feats_norm, slots_norm
         )
-        
-        # 2. 转回原始精度
-        slot_feats = slot_feats_fp32.to(dtype)
         
         # 3. 特征加工 (FFN)
         # 原来的 MHA 是多余的，这里加一个 FFN 做非线性变换即可
         # 类似于 Transformer Block 里的 FeedForward
-        slot_feats = slot_feats + self.ff(slot_feats)
+        # 先在FP32中计算FFN，然后转回原始精度
+        slot_feats = slot_feats_fp32 + self.ff(slot_feats_fp32)
+        
+        # 2. 转回原始精度
+        slot_feats = slot_feats.to(dtype)
         
         # 返回提取出的特征 (B, Slots, D)，而不是 Queries
         return slot_feats, {'orthogonality': ortho_loss.to(dtype)}, img_space_mask_fp32.to(dtype)
