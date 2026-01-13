@@ -72,7 +72,7 @@ run_single_experiment() {
     mkdir -p ${exp_dir}/checkpoints
     
     # Run Stage 2 training
-    python src/train_eval.py \
+    local cmd="python src/train_eval.py \
         --train_stage 2 \
         --stage1_checkpoint ${STAGE1_CKPT} \
         --stage2_epochs ${EPOCHS} \
@@ -80,14 +80,25 @@ run_single_experiment() {
         --batch_size ${BATCH_SIZE} \
         --seed ${SEED} \
         --device ${DEVICE} \
-        --use_weighted_pool ${use_weighted_pool} \
-        --adapter_hidden_dim ${adapter_dim} \
         --id_dataset ${ID_DATASET} \
         --root_path ${ROOT_PATH} \
         --selector_type slot \
         --fuser_type self_attn \
         --score_type GL-MCM \
-        --lambda_local 1.0 > ${exp_dir}/train.log 2>&1
+        --lambda_local 1.0"
+    
+    # Add adapter_hidden_dim if specified
+    if [ "${adapter_dim}" != "None" ] && [ "${adapter_dim}" != "" ]; then
+        cmd="${cmd} --adapter_hidden_dim ${adapter_dim}"
+    fi
+    
+    # Add use_weighted_pool flag if true
+    if [ "${use_weighted_pool}" = "true" ]; then
+        cmd="${cmd} --use_weighted_pool"
+    fi
+    
+    # Run the command
+    ${cmd} > ${exp_dir}/train.log 2>&1
     
     local exit_code=$?
     
