@@ -522,7 +522,7 @@ class TrainEvalOrchestrator:
         self.logger.debug('✓ Stage 1 parameters loaded')
         
         # Check if visual prototype initialization is enabled
-        use_visual_prototypes = self.cfg.get('use_visual_prototypes', False)
+        use_visual_prototypes = self.use_visual_prototypes
         visual_prototypes = None
         
         if use_visual_prototypes:
