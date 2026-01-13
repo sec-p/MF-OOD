@@ -97,8 +97,8 @@ run_single_experiment() {
         cmd="${cmd} --use_weighted_pool"
     fi
     
-    # Run the command
-    ${cmd} > ${exp_dir}/train.log 2>&1
+    # Run the command - output to terminal instead of file for debugging
+    ${cmd}
     
     local exit_code=$?
     

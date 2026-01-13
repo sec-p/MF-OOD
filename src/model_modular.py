@@ -488,8 +488,10 @@ class VisualClassifier(nn.Module):
             self.prototypes = nn.Parameter(torch.randn(num_classes, input_dim))
             nn.init.xavier_uniform_(self.prototypes)
         
-        # Learnable logit scale (aligned with CLIP)
-        self.logit_scale = nn.Parameter(torch.ones(1) * np.log(1 / 0.07))
+        # For CE loss in stage 2, we don't need a learnable logit scale at all
+        # The cosine similarity (-1 to 1 range) is sufficient for CE loss
+        # Remove the learnable logit scale to prevent gradient explosion
+        # We'll set the device dynamically in forward pass
         
         # Optional: learnable temperature
         self.use_temperature = self.cfg.get('use_temperature', False)
@@ -514,12 +516,9 @@ class VisualClassifier(nn.Module):
         # Convert prototypes to match input dtype for matmul
         prototypes_norm = prototypes_norm.to(dtype)
         
-        # Compute cosine similarity
+        # Compute cosine similarity - no logit scale needed for CE loss
+        # Cosine similarity in [-1, 1] range is sufficient for CE loss
         logits = torch.matmul(features_norm, prototypes_norm.T)  # [B, num_classes]
-        
-        # Apply logit scale (aligned with CLIP)
-        logit_scale = self.logit_scale.exp()
-        logits = logits * logit_scale
         
         return logits
     
