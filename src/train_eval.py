@@ -537,8 +537,8 @@ class TrainEvalOrchestrator:
         # Setup scheduler for stage 2
         self.scheduler = CosineAnnealingLR(self.optimizer, T_max=epochs)
         
-        # Setup GradScaler for AMP
-        self.scaler = GradScaler()
+        # NOTE: Removed GradScaler for Stage 2 as it causes FP16 gradient errors
+        # The adapter and classifier are small, so FP32 training is efficient
         
         self.logger.debug(f'✓ Stage 2 trainable parameters: {sum(p.numel() for p in stage2_params)}')
         
@@ -662,27 +662,24 @@ class TrainEvalOrchestrator:
             
             self.optimizer.zero_grad()
             
-            # Forward with autocast
-            with autocast():
-                # Use stage 2 forward pass
-                output_dict = self.model.forward_stage2(images, labels=labels)
-                
-                logits = output_dict['logits']
-                ce_loss = output_dict['ce_loss']
+            # Forward without autocast (FP32 training for adapter/classifier)
+            # Use stage 2 forward pass
+            output_dict = self.model.forward_stage2(images, labels=labels)
             
-            # Backward with scaler
-            self.scaler.scale(ce_loss).backward()
-            
+            logits = output_dict['logits']
+            ce_loss = output_dict['ce_loss']
+        
+            # Backward pass
+            ce_loss.backward()
+        
             # Gradient clipping
-            self.scaler.unscale_(self.optimizer)
             torch.nn.utils.clip_grad_norm_(
                 [p for p in self.model.parameters() if p.requires_grad],
                 max_norm=1.0
             )
-            
+        
             # Optimizer step
-            self.scaler.step(self.optimizer)
-            self.scaler.update()
+            self.optimizer.step()
             
             # Metrics
             total_loss += ce_loss.item()
