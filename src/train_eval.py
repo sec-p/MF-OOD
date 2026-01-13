@@ -1113,12 +1113,15 @@ def main():
                         help='Use score-weighted pooling in VisualAdapter')
     parser.add_argument('--adapter_hidden_dim', type=int, default=None,
                         help='Hidden dimension for VisualAdapter (default: same as input_dim)')
-    parser.add_argument('--use_visual_prototypes', type=eval, default=False,
+    parser.add_argument('--use_visual_prototypes', type=str, default='false',
                         help='Use class feature centers for visual prototype initialization')
 
     args = parser.parse_args()
 
     # Create trainer
+    # Convert string to boolean for use_visual_prototypes
+    use_visual_prototypes = args.use_visual_prototypes.lower() in ('true', '1', 'yes', 'y')
+    
     trainer = TrainEvalOrchestrator(
         method=args.method,
         epochs=args.epochs,
@@ -1146,7 +1149,7 @@ def main():
         lambda_local=args.lambda_local,
         use_weighted_pool=args.use_weighted_pool,
         adapter_hidden_dim=args.adapter_hidden_dim,
-        use_visual_prototypes=args.use_visual_prototypes
+        use_visual_prototypes=use_visual_prototypes
     )
 
     # Check which stage to train
