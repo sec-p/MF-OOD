@@ -94,8 +94,9 @@ class MultiHeadMLPSelector(BaseSelector):
         dtype = local_feats.dtype
         device = local_feats.device
         
-        # 1. Scorer can run in FP16 (faster)
-        head_scores_list = [scorer(local_feats) for scorer in self.scorers]
+        # 1. Convert to FP32 for scorer operations (linear layers expect FP32 params)
+        local_feats_fp32 = local_feats.float()
+        head_scores_list = [scorer(local_feats_fp32) for scorer in self.scorers]
         scores = torch.cat(head_scores_list, dim=-1)  # (B, N, H)
         
         # 2. Selection Logic (Force FP32 for stability with TopK & Indices)
