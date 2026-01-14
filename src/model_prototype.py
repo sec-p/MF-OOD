@@ -4,6 +4,7 @@ Uses raw ViT features (cls token and patch tokens) without projection to shared 
 Classifies using visual prototypes initialized from training data.
 """
 
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -221,3 +222,39 @@ class PrototypeCLIP(nn.Module):
         all_labels = torch.cat(all_labels, dim=0)
         
         self.init_prototypes_from_features(all_features, all_labels)
+    
+    def save_selector_weights(self, save_path: str):
+        """Save selector weights to a file.
+        
+        Args:
+            save_path: Path to save the selector weights.
+        """
+        selector_state = {
+            'selector_type': self.cfg.get('selector_type', 'identity'),
+            'selector_state_dict': self.selector.state_dict(),
+            'cfg': self.cfg
+        }
+        torch.save(selector_state, save_path)
+        print(f"✓ Selector weights saved to {save_path}")
+    
+    def load_selector_weights(self, load_path: str):
+        """Load selector weights from a file.
+        
+        Args:
+            load_path: Path to load the selector weights from.
+        """
+        if not os.path.exists(load_path):
+            raise FileNotFoundError(f"Selector weights file not found: {load_path}")
+        
+        selector_state = torch.load(load_path, map_location=self.device)
+        
+        # Verify selector type matches
+        saved_selector_type = selector_state.get('selector_type', 'identity')
+        current_selector_type = self.cfg.get('selector_type', 'identity')
+        if saved_selector_type != current_selector_type:
+            print(f"Warning: Selector type mismatch. Saved: {saved_selector_type}, Current: {current_selector_type}")
+        
+        # Load weights
+        self.selector.load_state_dict(selector_state['selector_state_dict'])
+        print(f"✓ Selector weights loaded from {load_path}")
+        print(f"  Selector type: {saved_selector_type}")
