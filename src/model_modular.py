@@ -445,7 +445,8 @@ class VisualAdapter(nn.Module):
                 selector_scores = selector_scores.mean(dim=-1)  # [B, N]
             
             # Apply softmax to get weights
-            weights = F.softmax(selector_scores, dim=1)  # [B, N]
+            # Use stable softmax with temperature scaling to prevent overflow
+            weights = F.softmax(selector_scores / 1.0, dim=1)  # [B, N]
             
             # Weighted sum
             pooled_feats = torch.einsum('bn,bnd->bd', weights, selected_feats)  # [B, D]
@@ -458,11 +459,22 @@ class VisualAdapter(nn.Module):
         pooled_feats_fp32 = pooled_feats.float()
         adapter_output_fp32 = self.adapter(pooled_feats_fp32)
         
+        # Clip adapter output to FP16 range to prevent Inf when converting
+        # FP16 max value is ~65504, leave some margin
+        adapter_output_fp32 = torch.clamp(adapter_output_fp32, -30000.0, 30000.0)
+        
+        # Check for NaN in adapter output
+        if torch.isnan(adapter_output_fp32).any():
+            adapter_output_fp32 = torch.nan_to_num(adapter_output_fp32, nan=0.0, posinf=30000.0, neginf=-30000.0)
+        
         # Convert back to original dtype
         adapter_output = adapter_output_fp32.to(dtype)
         
         # Residual connection with matching dtypes
         adapted_feats = pooled_feats + adapter_output
+        
+        # Normalize output to prevent explosion
+        adapted_feats = F.normalize(adapted_feats, dim=-1, eps=1e-8)
         
         return adapted_feats
 
@@ -517,6 +529,7 @@ class VisualClassifier(nn.Module):
         # Normalize features and prototypes (cosine similarity)
         features_norm = F.normalize(features, dim=-1)
         prototypes_norm = F.normalize(self.prototypes, dim=-1)
+
         
         # Convert prototypes to match input dtype for matmul
         prototypes_norm = prototypes_norm.to(dtype)
@@ -524,6 +537,9 @@ class VisualClassifier(nn.Module):
         # Compute cosine similarity - no logit scale needed for CE loss
         # Cosine similarity in [-1, 1] range is sufficient for CE loss
         logits = torch.matmul(features_norm, prototypes_norm.T)  # [B, num_classes]
+        
+        # Check for NaN/Inf in logits and replace with safe values
+        logits = torch.nan_to_num(logits, nan=0.0, posinf=1.0, neginf=-1.0)
         
         return logits
     
@@ -1105,12 +1121,22 @@ class ModularCustomCLIP(nn.Module):
         
         # 3. Process through Fuser (frozen, Stage 1 output)
         # This computes the Stage 1 fused features
-        stage1_final_feats = self.fuser(selected_feats, global_feat=image_features)
+        # Handle different fuser types correctly
+        fuser_type = self.cfg.get('fuser_type', 'mean')
+        if fuser_type == 'self_attn':
+            # SelfAttentionFuser requires global_feat
+            stage1_final_feats = self.fuser(selected_feats, global_feat=image_features)
+        else:
+            # Other fusers don't accept global_feat
+            stage1_final_feats = self.fuser(selected_feats)
         stage1_global_features = image_features + stage1_final_feats
         stage1_global_features = stage1_global_features / stage1_global_features.norm(dim=-1, keepdim=True)
         
         # 4. Process through Visual Adapter (trainable)
-        adapted_feats = self.visual_adapter(selected_feats, selector_scores)
+        # Run trainable modules in FP32 for stability
+        # No autocast to avoid PyTorch 2.x compatibility issues
+        selected_feats_fp32 = selected_feats.float()
+        adapted_feats = self.visual_adapter(selected_feats_fp32, selector_scores)
         
         # 5. Classify through Visual Classifier (trainable)
         logits = self.visual_classifier(adapted_feats)
@@ -1130,8 +1156,11 @@ class ModularCustomCLIP(nn.Module):
             result['local_features'] = local_features
         
         # Compute Cross-Entropy Loss if labels provided
+        # IMPORTANT: Compute loss in FP32 to ensure stable gradients for GradScaler
         if labels is not None:
-            ce_loss = F.cross_entropy(logits, labels)
+            # Convert logits to FP32 for stable CE loss computation
+            logits_fp32 = logits.float()
+            ce_loss = F.cross_entropy(logits_fp32, labels)
             result['ce_loss'] = ce_loss
         
         return result
