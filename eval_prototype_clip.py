@@ -40,7 +40,7 @@ def process_args():
     parser.add_argument('--seed', default=1, type=int, help="random seed")
     parser.add_argument('--gpu', default=0, type=int, help='the GPU indice to use')
     parser.add_argument('-b', '--batch-size', default=512, type=int, help='mini-batch size')
-    parser.add_argument('--T', type=int, default=1, help='temperature parameter')
+    parser.add_argument('--T', type=int, default=0.8, help='temperature parameter')
     parser.add_argument('--CLIP_ckpt', type=str, default='ViT-B/16',
                         choices=['ViT-B/16', 'RN50', 'RN101'], help='which pretrained img encoder to use')
     parser.add_argument('--score', default='GL-MCM', type=str, 
@@ -81,22 +81,22 @@ def get_ood_scores_prototype(args, model, loader):
             res = model(images)
             global_features = res['global_features']
             local_features = res['local_features']
-            selected_feats = res['selected_feats']
+            # selected_feats = res['selected_feats']
             
             # Normalize features
             global_features = global_features / global_features.norm(dim=-1, keepdim=True)
             local_features = local_features / local_features.norm(dim=-1, keepdim=True)
-            selected_feats = selected_feats / selected_feats.norm(dim=-1, keepdim=True) + 1e-8
+            # selected_feats = selected_feats / selected_feats.norm(dim=-1, keepdim=True) + 1e-8
             
             # Calculate similarity with visual prototypes (not text features!)
             output_global = global_features @ prototypes.T
             output_local = local_features @ prototypes.T
-            output_selected = selected_feats @ prototypes.T
+            # output_selected = selected_feats @ prototypes.T
             
             # Apply softmax
             smax_global = to_np(torch.nn.functional.softmax(output_global / args.T, dim=1))
             smax_local = to_np(torch.nn.functional.softmax(output_local / args.T, dim=-1))  # batch, grid, grid, class
-            smax_selected = to_np(torch.nn.functional.softmax(output_selected / args.T, dim=-1))
+            # smax_selected = to_np(torch.nn.functional.softmax(output_selected / args.T, dim=-1))
             
             if args.score == 'MCM':
                 _score.append(-np.max(smax_global, axis=1)) 
@@ -239,7 +239,7 @@ def main():
     # Get class names from dataset
     root = args.root_dir
     if args.in_dataset == "ImageNet":
-        dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet', 'val'))
+        dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet','images', 'val'))
     elif args.in_dataset == 'COCO_single':
         dataset = datasets.ImageFolder(os.path.join(root, 'ID_COCO_single'))
     elif args.in_dataset == 'COCO_multi':
@@ -279,13 +279,13 @@ def main():
     if args.use_train_set:
         # Use training set for prototype initialization
         if args.in_dataset == "ImageNet":
-            train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet', 'train'), transform=test_transform)
+            train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet', 'images','train'), transform=test_transform)
         else:
             train_dataset = datasets.ImageFolder(os.path.join(root, f'ID_{args.in_dataset}'), transform=test_transform)
     else:
         # Use validation set for prototype initialization (default, faster)
         if args.in_dataset == "ImageNet":
-            train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet', 'val'), transform=test_transform)
+            train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet','images', 'val'), transform=test_transform)
         else:
             train_dataset = datasets.ImageFolder(os.path.join(root, f'ID_{args.in_dataset}'), transform=test_transform)
     
