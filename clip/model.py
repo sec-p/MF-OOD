@@ -250,11 +250,12 @@ class Transformer(nn.Module):
 
 
 class VisionTransformer(nn.Module):
-    def __init__(self, input_resolution: int, patch_size: int, width: int, layers: int, heads: int, output_dim: int, return_raw_features: bool = False):
+    def __init__(self, input_resolution: int, patch_size: int, width: int, layers: int, heads: int, output_dim: int, return_raw_features: bool = False, return_both_features: bool = False):
         super().__init__()
         self.input_resolution = input_resolution
         self.output_dim = output_dim
         self.return_raw_features = return_raw_features
+        self.return_both_features = return_both_features
         self.width = width  # Store width for access
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=width, kernel_size=patch_size, stride=patch_size, bias=False)
 
@@ -298,6 +299,16 @@ class VisionTransformer(nn.Module):
 
         cls_token = self.ln_post(x[:, 0, :])
 
+        if self.return_both_features:
+            # Return both raw (before projection) and projected (after projection) features
+            if self.proj is not None:
+                cls_token_proj = cls_token @ self.proj
+                feat_proj = v @ self.proj
+            else:
+                cls_token_proj = cls_token
+                feat_proj = v
+            return cls_token, v, cls_token_proj, feat_proj
+
         if self.return_raw_features:
             return cls_token, v
 
@@ -321,7 +332,8 @@ class CLIP(nn.Module):
                  transformer_width: int,
                  transformer_heads: int,
                  transformer_layers: int,
-                 return_raw_features: bool = False
+                 return_raw_features: bool = False,
+                 return_both_features: bool = False
                  ):
         super().__init__()
 
@@ -345,7 +357,8 @@ class CLIP(nn.Module):
                 layers=vision_layers,
                 heads=vision_heads,
                 output_dim=embed_dim,
-                return_raw_features=return_raw_features
+                return_raw_features=return_raw_features,
+                return_both_features=return_both_features
             )
 
         self.transformer = Transformer(
@@ -464,7 +477,7 @@ def convert_weights(model: nn.Module):
     model.apply(_convert_weights_to_fp16)
 
 
-def build_model(state_dict: dict, return_raw_features: bool = False):
+def build_model(state_dict: dict, return_raw_features: bool = False, return_both_features: bool = False):
     vit = "visual.proj" in state_dict
 
     if vit:
@@ -493,7 +506,8 @@ def build_model(state_dict: dict, return_raw_features: bool = False):
         embed_dim,
         image_resolution, vision_layers, vision_width, vision_patch_size,
         context_length, vocab_size, transformer_width, transformer_heads, transformer_layers,
-        return_raw_features=return_raw_features
+        return_raw_features=return_raw_features,
+        return_both_features=return_both_features
     )
 
     for key in ["input_resolution", "context_length", "vocab_size"]:

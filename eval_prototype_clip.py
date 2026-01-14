@@ -81,22 +81,22 @@ def get_ood_scores_prototype(args, model, loader):
             res = model(images)
             global_features = res['global_features']
             local_features = res['local_features']
-            # selected_feats = res['selected_feats']
+            selected_feats = res['selected_feats']
             
             # Normalize features
             global_features = global_features / global_features.norm(dim=-1, keepdim=True)
             local_features = local_features / local_features.norm(dim=-1, keepdim=True)
-            # selected_feats = selected_feats / selected_feats.norm(dim=-1, keepdim=True) + 1e-8
+            selected_feats = selected_feats / selected_feats.norm(dim=-1, keepdim=True) + 1e-8
             
             # Calculate similarity with visual prototypes (not text features!)
             output_global = global_features @ prototypes.T
             output_local = local_features @ prototypes.T
-            # output_selected = selected_feats @ prototypes.T
+            output_selected = selected_feats @ prototypes.T
             
             # Apply softmax
             smax_global = to_np(torch.nn.functional.softmax(output_global / args.T, dim=1))
             smax_local = to_np(torch.nn.functional.softmax(output_local / args.T, dim=-1))  # batch, grid, grid, class
-            # smax_selected = to_np(torch.nn.functional.softmax(output_selected / args.T, dim=-1))
+            smax_selected = to_np(torch.nn.functional.softmax(output_selected / args.T, dim=-1))
             
             if args.score == 'MCM':
                 _score.append(-np.max(smax_global, axis=1)) 
@@ -169,11 +169,10 @@ def init_prototypes_from_fewshot(model, loader, classnames):
             images = images.cuda()
             labels = labels.cuda()
             
-            # Extract features
-            cls_token, patch_tokens = model.encode_image(images)
-            patch_mean = patch_tokens.mean(dim=1)
-            features = cls_token + patch_mean
-            features = features / features.norm(dim=-1, keepdim=True)
+            # Extract features using the model's forward pass (includes selector)
+            outputs = model(images)
+            # Use global_features which are in raw feature space (768 for ViT-B/16)
+            features = outputs['global_features']
             
             all_features.append(features.cpu())
             all_labels.append(labels.cpu())
@@ -227,13 +226,13 @@ def main():
     print(f"Use training set for prototypes: {args.use_train_set}")
     print("="*80)
     
-    # Load CLIP model with return_raw_features=True
+    # Load CLIP model with return_both_features=True
     print("\nLoading CLIP model...")
     clip_model, preprocess = set_model_clip(args)
     
-    # Re-load CLIP with return_raw_features=True
+    # Re-load CLIP with return_both_features=True
     device = torch.device(f'cuda:{args.gpu}')
-    clip_model, _ = clip.load(args.CLIP_ckpt, device=device, return_raw_features=True)
+    clip_model, _ = clip.load(args.CLIP_ckpt, device=device, return_both_features=True)
     clip_model = clip_model.to(device)
     
     # Get class names from dataset

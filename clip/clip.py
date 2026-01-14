@@ -86,7 +86,7 @@ def available_models() -> List[str]:
     return list(_MODELS.keys())
 
 
-def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_available() else "cpu", jit=False, return_raw_features: bool = False):
+def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_available() else "cpu", jit=False, return_raw_features: bool = False, return_both_features: bool = False):
     """Load a CLIP model
 
     Parameters
@@ -102,6 +102,9 @@ def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_a
 
     return_raw_features : bool
         Whether to return raw features from ViT (cls token and patch tokens) without projection to shared space.
+
+    return_both_features : bool
+        Whether to return both raw features (before projection) and projected features (after projection).
 
     Returns
     -------
@@ -130,7 +133,7 @@ def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_a
         state_dict = torch.load(model_path, map_location="cpu")
 
     if not jit:
-        model = build_model(state_dict or model.state_dict(), return_raw_features=return_raw_features).to(device)
+        model = build_model(state_dict or model.state_dict(), return_raw_features=return_raw_features, return_both_features=return_both_features).to(device)
         if str(device) == "cpu":
             model.float()
         return model, _transform(model.visual.input_resolution)

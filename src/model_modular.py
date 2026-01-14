@@ -346,13 +346,14 @@ class SelfAttentionFuser(BaseFuser):
         # 依然保持零初始化，保证初始阶段不破坏原特征
         nn.init.zeros_(self.proj[-1].weight)
         nn.init.zeros_(self.proj[-1].bias)
-
+    
     def forward(self, selected_feats, global_feat, text_feats=None, labels=None):
         """
         selected_feats: [B, N, D] (Patches)
         global_feat:    [B, D]    (CLIP Original CLS)
         """
         B = selected_feats.shape[0]
+        dtype = selected_feats.dtype
         
         # 【修改点 2】拼接：把 Global Feat 变成序列的第一个 Token
         # [B, D] -> [B, 1, D]
@@ -372,7 +373,7 @@ class SelfAttentionFuser(BaseFuser):
         # 投影
         x_out = self.proj(x_aggregated)
         
-        return x_out
+        return x_out.to(dtype)
 
 
 
@@ -510,8 +511,23 @@ class ModularCustomCLIP(nn.Module):
         for p in self.image_encoder.parameters(): p.requires_grad = False
         for p in self.text_encoder.parameters(): p.requires_grad = False
         
-        try: self.feat_dim = self.image_encoder.output_dim
-        except: self.feat_dim = clip_model.ln_final.weight.shape[0]
+        # Get feature dimensions from ViT
+        # For ViT-B/16:
+        # - raw_feat_dim = 768 (width, before projection)
+        # - proj_feat_dim = 512 (output_dim, after projection)
+        try:
+            self.raw_feat_dim = self.image_encoder.width
+        except:
+            self.raw_feat_dim = clip_model.ln_final.weight.shape[0]
+        
+        try: 
+            self.proj_feat_dim = self.image_encoder.output_dim
+        except: 
+            self.proj_feat_dim = clip_model.ln_final.weight.shape[0]
+        
+        # Use proj_feat_dim for text features and selector
+        # Use raw_feat_dim for final features
+        self.feat_dim = self.proj_feat_dim
         
         self._build_components()
         self._cache_text_features()
@@ -522,22 +538,26 @@ class ModularCustomCLIP(nn.Module):
         s_type = self.cfg.get('selector_type', 'mlp')
         num_sel = self.cfg.get('num_select', 49)
         
+        # Use projected feature dimension for selector (512 for ViT-B/16)
         if s_type == 'mlp':
-            self.selector = MultiHeadMLPSelector(self.feat_dim, num_sel, self.cfg.get('num_heads_selector', 8), self.cfg)
+            self.selector = MultiHeadMLPSelector(self.proj_feat_dim, num_sel, self.cfg.get('num_heads_selector', 8), self.cfg)
         elif s_type == 'slot':
-            self.selector = SparseSlotAttentionSelector(self.feat_dim, num_sel, self.cfg.get('num_slots', 8), self.cfg)
+            self.selector = SparseSlotAttentionSelector(self.proj_feat_dim, num_sel, self.cfg.get('num_slots', 8), self.cfg)
         else:
-            self.selector = IdentitySelector(self.feat_dim, num_sel, self.cfg)
-        # self.selector = self.selector.to(self.dtype)
+            self.selector = IdentitySelector(self.proj_feat_dim, num_sel, self.cfg)
+        # Convert selector to correct dtype
+        self.selector = self.selector.to(self.dtype)
         
         f_type = self.cfg.get('fuser_type', 'mean')
+        # Use raw feature dimension for fuser (768 for ViT-B/16)
         if f_type == 'query_attn':
-            self.fuser = QueryGuidedAttentionFuser(self.feat_dim, self.cfg.get('num_heads_fuser', 8), self.cfg)
+            self.fuser = QueryGuidedAttentionFuser(self.raw_feat_dim, self.cfg.get('num_heads_fuser', 8), self.cfg)
         elif f_type == 'self_attn':
-            self.fuser = SelfAttentionFuser(self.feat_dim, self.cfg.get('num_heads_fuser', 8), self.cfg)
+            self.fuser = SelfAttentionFuser(self.raw_feat_dim, self.cfg.get('num_heads_fuser', 8), self.cfg)
         else:
-            self.fuser = MeanPoolFuser(self.feat_dim, self.cfg)
-        # self.fuser = self.fuser.to(self.dtype)
+            self.fuser = MeanPoolFuser(self.raw_feat_dim, self.cfg)
+        # Convert fuser to correct dtype
+        self.fuser = self.fuser.to(self.dtype)
 
     def _cache_text_features(self):
         templates = self.cfg.get('templates', ["a photo of a {}"])
@@ -620,12 +640,29 @@ class ModularCustomCLIP(nn.Module):
             logit_scale=scale_val
         )
 
-    def encode_image(self, image: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Encode image into global and local features."""
-        image_features, local_features = self.image_encoder(image.type(self.dtype))
-        B = image_features.shape[0]
-        local_features = local_features.reshape(B, -1, self.feat_dim)
-        return image_features, local_features
+    def encode_image(self, image: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Encode image into global and local features.
+        Returns both raw (before projection) and projected (after projection) features.
+        """
+        # Get raw and projected features from ViT
+        # The image_encoder.visual should have return_both_features=True
+        cls_token_raw, patch_tokens_raw, cls_token_proj, patch_tokens_proj = self.image_encoder(image.type(self.dtype))
+        B = cls_token_raw.shape[0]
+        
+        # Reshape patch tokens to (B, N, D)
+        if len(patch_tokens_raw.shape) == 4:
+            H, W, C = patch_tokens_raw.shape[1], patch_tokens_raw.shape[2], patch_tokens_raw.shape[3]
+            local_features_raw = patch_tokens_raw.reshape(B, H * W, C)
+        else:
+            local_features_raw = patch_tokens_raw
+        
+        if len(patch_tokens_proj.shape) == 4:
+            H, W, C = patch_tokens_proj.shape[1], patch_tokens_proj.shape[2], patch_tokens_proj.shape[3]
+            local_features_proj = patch_tokens_proj.reshape(B, H * W, C)
+        else:
+            local_features_proj = patch_tokens_proj
+        
+        return cls_token_raw, local_features_raw, cls_token_proj, local_features_proj
     
     def encode_text(self, text: torch.Tensor) -> torch.Tensor:
         """Encode text into features."""
@@ -636,41 +673,45 @@ class ModularCustomCLIP(nn.Module):
 
         B = image.shape[0]
 
-        # 1. Encode Image (FP16)
-        image_features, local_features = self.encode_image(image)
+        # 1. Encode Image (FP16) - get raw and projected features
+        cls_token_raw, local_features_raw, cls_token_proj, local_features_proj = self.encode_image(image)
         
-        # image_features = F.normalize(image_features, dim=-1)
-        # local_features = F.normalize(local_features, dim=-1)
+        # 2. Use selector on projected features to get mask
+        selected_feats_proj, sel_aux_loss, bg_mask = self.selector(local_features_proj)
         
-        # 2. Select Features (Mixed Precision managed internally)
-        selected_feats, sel_aux_loss, bg_mask = self.selector(local_features)
-
-        # 3. Text Features
+        # 3. Apply mask to raw features to get selected raw features
+        selected_feats_raw = local_features_raw * bg_mask
+        
+        # 4. Text Features
         text_feats = self._text_features.type(self.dtype)
         if labels is not None:
             pos_text_feat = text_feats[labels]
         else:
             pos_text_feat = text_feats.mean(dim=0, keepdim=True).expand(B, -1)
             
-        # 4. Fusion
-        final_feats = self.fuser(selected_feats, global_feat=image_features)
-        global_features=image_features+final_feats
-        # final_feats = F.normalize(global_features, dim=-1)
-        # final_feats = F.normalize(final_feats, dim=-1)
-        final_feats = global_features / global_features.norm(dim=-1, keepdim=True)
-        # final_feats = F.normalize(final_feats, dim=-1)
+        # 5. Fusion - use selected raw features
+        final_feats = self.fuser(selected_feats_raw, global_feat=cls_token_raw)
+        global_features = cls_token_raw + final_feats
+        
+        # 6. Project global_features to shared space for logits calculation
+        # Get projection matrix from image_encoder
+        proj = self.image_encoder.proj
+        global_features_proj = global_features @ proj
+        
+        # 7. Normalize
+        final_feats = global_features_proj / global_features_proj.norm(dim=-1, keepdim=True)
 
-        # 5. Logits
+        # 8. Logits
         logit_scale = self.logit_scale.exp()
         logits = logit_scale * final_feats @ text_feats.T
         
-        # 6. Losses
+        # 8. Losses
         aux_losses = sel_aux_loss.copy()
         
         # A. Redundancy
         if self.cfg.get('use_redundancy_loss', False):
             aux_losses['redundancy'] = self.cfg.get('lambda_redundancy', 0) * \
-                                     compute_redundancy_loss(selected_feats)
+                                     compute_redundancy_loss(selected_feats_raw)
         
         # B. LLM Negatives - now uses cached negative features
         if negative_text_tokens is None and self.cfg.get('use_llm_negatives', False) and labels is not None:
@@ -745,7 +786,7 @@ class ModularCustomCLIP(nn.Module):
         if self.cfg.get('use_mixup_invariance', False):
             scale_val = logit_scale.item()
             mixup_loss = compute_mixup_invariance_loss(
-                final_feats, local_features, bg_mask,
+                final_feats, local_features_raw, bg_mask,
                 text_feats=text_feats,
                 labels=labels,
                 logit_scale=scale_val,
@@ -757,10 +798,10 @@ class ModularCustomCLIP(nn.Module):
         return {
             'logits': logits,
             'aux_losses': aux_losses,
-            'selected_feats': selected_feats,
+            'selected_feats': selected_feats_raw,
             'final_feats': final_feats,
-            'global_features': global_features,
-            'local_features': local_features
+            'global_features': global_features_proj,
+            'local_features': local_features_raw
         }
 
 

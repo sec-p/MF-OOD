@@ -29,24 +29,55 @@ class PrototypeCLIP(nn.Module):
         for p in self.image_encoder.parameters(): p.requires_grad = False
         for p in self.text_encoder.parameters(): p.requires_grad = False
         
-        # Get feature dimension from ViT (before projection)
-        # For ViT-B/16, this is 768 (width), not 512 (embed_dim)
+        # Get feature dimensions from ViT
+        # For ViT-B/16:
+        # - raw_feat_dim = 768 (width, before projection)
+        # - proj_feat_dim = 512 (output_dim, after projection)
         try: 
-            self.feat_dim = self.image_encoder.width
+            self.raw_feat_dim = self.image_encoder.width
         except: 
-            # Fallback to output_dim if width not available
             try:
-                self.feat_dim = self.image_encoder.output_dim
+                self.raw_feat_dim = self.image_encoder.output_dim
             except:
-                self.feat_dim = clip_model.ln_final.weight.shape[0]
+                self.raw_feat_dim = clip_model.ln_final.weight.shape[0]
+        
+        try:
+            self.proj_feat_dim = self.image_encoder.output_dim
+        except:
+            self.proj_feat_dim = clip_model.ln_final.weight.shape[0]
+        
+        # Use raw_feat_dim for prototypes (visual prototypes are in raw feature space)
+        self.feat_dim = self.raw_feat_dim
         
         # Create prototype classifier - this will be our "text" features
         # These are initialized later from training data
-        self.prototypes = nn.Parameter(torch.empty(self.num_classes, self.feat_dim), requires_grad=False)
+        self.prototypes = nn.Parameter(torch.empty(self.num_classes, self.feat_dim, dtype=self.dtype), requires_grad=False)
+        
+        # Build selector component for feature selection
+        self._build_selector()
         
         # Cache text features for comparison if needed
         self._cache_text_features()
         print(f"✓ PrototypeCLIP initialized. Dtype: {self.dtype}, Feat Dim: {self.feat_dim}")
+    
+    def _build_selector(self):
+        """Build selector component for feature selection."""
+        # Import here to avoid circular import
+        from .model_modular import IdentitySelector, MultiHeadMLPSelector, SparseSlotAttentionSelector
+        
+        s_type = self.cfg.get('selector_type', 'identity')
+        num_sel = self.cfg.get('num_select', 49)
+        
+        # Use projected feature dimension for selector (512 for ViT-B/16)
+        if s_type == 'mlp':
+            self.selector = MultiHeadMLPSelector(self.proj_feat_dim, num_sel, self.cfg.get('num_heads_selector', 8), self.cfg)
+        elif s_type == 'slot':
+            self.selector = SparseSlotAttentionSelector(self.proj_feat_dim, num_sel, self.cfg.get('num_slots', 8), self.cfg)
+        else:
+            self.selector = IdentitySelector(self.proj_feat_dim, num_sel, self.cfg)
+        
+        # Convert selector to correct dtype
+        self.selector = self.selector.to(self.dtype)
     
     def _cache_text_features(self):
         """Cache original text features for reference."""
@@ -70,66 +101,85 @@ class PrototypeCLIP(nn.Module):
     
     def set_prototypes(self, prototypes: torch.Tensor):
         """Set the prototypes for classification.
-        prototypes: (num_classes, feat_dim)
+        prototypes: (num_classes, feat_dim) - should be in projected feature space (512 for ViT-B/16)
         """
         assert prototypes.shape == (self.num_classes, self.feat_dim), \
             f"Expected prototypes shape {(self.num_classes, self.feat_dim)}, got {prototypes.shape}"
         self.prototypes.data = prototypes.to(self.device).type(self.dtype)
     
-    def encode_image(self, image: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Encode image into global and local features (raw ViT features)."""
-        # Get raw features from ViT (cls token and patch tokens)
-        # The image_encoder.visual should have return_raw_features=True
-        cls_token, patch_tokens = self.image_encoder(image.type(self.dtype))
-        B = cls_token.shape[0]
+    def encode_image(self, image: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Encode image into global and local features (raw ViT features).
+        Returns both raw (before projection) and projected (after projection) features.
+        """
+        # Get raw and projected features from ViT
+        # The image_encoder.visual should have return_both_features=True
+        cls_token_raw, patch_tokens_raw, cls_token_proj, patch_tokens_proj = self.image_encoder(image.type(self.dtype))
+        B = cls_token_raw.shape[0]
         
-        # patch_tokens shape: (B, H, W, C) where C = self.feat_dim
+        # patch_tokens shape: (B, H, W, C) where C = self.feat_dim (raw) or output_dim (proj)
         # Reshape to (B, H*W, C)
-        if len(patch_tokens.shape) == 4:
-            H, W, C = patch_tokens.shape[1], patch_tokens.shape[2], patch_tokens.shape[3]
-            local_features = patch_tokens.reshape(B, H * W, C)
+        if len(patch_tokens_raw.shape) == 4:
+            H, W, C = patch_tokens_raw.shape[1], patch_tokens_raw.shape[2], patch_tokens_raw.shape[3]
+            local_features_raw = patch_tokens_raw.reshape(B, H * W, C)
         else:
             # Already reshaped
-            local_features = patch_tokens
+            local_features_raw = patch_tokens_raw
         
-        return cls_token, local_features
+        if len(patch_tokens_proj.shape) == 4:
+            H, W, C = patch_tokens_proj.shape[1], patch_tokens_proj.shape[2], patch_tokens_proj.shape[3]
+            local_features_proj = patch_tokens_proj.reshape(B, H * W, C)
+        else:
+            # Already reshaped
+            local_features_proj = patch_tokens_proj
+        
+        return cls_token_raw, local_features_raw, cls_token_proj, local_features_proj
     
     def forward(self, image: torch.Tensor, labels: Optional[torch.Tensor] = None, 
                 negative_text_tokens: Optional[torch.Tensor] = None) -> Dict:
         
         B = image.shape[0]
         
-        # 1. Encode Image (FP16) - get raw ViT features
-        cls_token, patch_tokens = self.encode_image(image)
+        # 1. Encode Image (FP16) - get raw and projected ViT features
+        cls_token_raw, patch_tokens_raw, cls_token_proj, patch_tokens_proj = self.encode_image(image)
         
-        # 2. Calculate patch mean (for prototype initialization)
-        patch_mean = patch_tokens.mean(dim=1)
+        # 2. Use selector on projected features to get mask
+        selected_feats_proj, sel_aux_loss, bg_mask = self.selector(patch_tokens_proj)
         
-        # 3. Use patch mean as global feature for OOD detection
-        # This allows using patch token pooling in OOD score calculation
-        global_features = cls_token + patch_mean
+        # 3. Apply mask to raw features to get selected raw features
+        # bg_mask shape: (B, N, 1) or (B, K, 1) depending on selector
+        selected_feats_raw = patch_tokens_raw * bg_mask
         
-        # 4. Normalize input features
+        # 4. Calculate mean of selected raw patches
+        selected_patch_mean = selected_feats_raw.mean(dim=1)
+        
+        # 5. Use cls_token_raw + selected_patch_mean as global feature for OOD detection
+        # This is in raw feature space (768 for ViT-B/16)
+        global_features = cls_token_raw + selected_patch_mean
+        
+        # 6. Normalize input features
         global_features = global_features / global_features.norm(dim=-1, keepdim=True)
         
-        # 5. Ensure prototypes are normalized
+        # 7. Ensure prototypes are normalized
         prototypes_norm = self.prototypes / self.prototypes.norm(dim=-1, keepdim=True)
         
-        # 6. Logits - same as CLIP's similarity calculation
+        # 8. Logits - same as CLIP's similarity calculation
+        # Both global_features and prototypes are in raw feature space (768 for ViT-B/16)
         logit_scale = self.logit_scale.exp()
         logits = logit_scale * global_features @ prototypes_norm.T
         
         return {
             'logits': logits,
-            'aux_losses': {},
+            'aux_losses': sel_aux_loss,
             'final_feats': global_features,
-            'global_features': global_features,  # Changed to patch mean
-            'local_features': patch_tokens
+            'global_features': global_features,
+            'local_features': patch_tokens_raw,
+            'selected_feats': selected_feats_raw,
+            'bg_mask': bg_mask
         }
     
     def init_prototypes_from_features(self, train_features: torch.Tensor, train_labels: torch.Tensor):
         """Initialize prototypes from training features.
-        train_features: (N, feat_dim)
+        train_features: (N, feat_dim) - should be in raw feature space (768 for ViT-B/16)
         train_labels: (N,)
         """
         with torch.no_grad():
@@ -138,8 +188,7 @@ class PrototypeCLIP(nn.Module):
                 cls_mask = (train_labels == cls)
                 if cls_mask.sum() > 0:
                     cls_feats = train_features[cls_mask]
-                    # Take the mean of all patch token features for this class as prototype
-                    # Note: train_features should be patch means, not cls_token + patch_mean
+                    # Take the mean of all features for this class as prototype
                     prototypes[cls] = cls_feats.mean(dim=0)
             
             # Normalize prototypes
@@ -160,10 +209,10 @@ class PrototypeCLIP(nn.Module):
                 images = batch['image'].to(self.device)
                 labels = batch['label'].to(self.device)
                 
-                # Extract patch mean features (not cls_token + patch_mean)
-                cls_token, patch_tokens = self.encode_image(images)
-                patch_mean = patch_tokens.mean(dim=1)
-                features = patch_mean / patch_mean.norm(dim=-1, keepdim=True)
+                # Extract features using the model's forward pass (includes selector)
+                # The global_features are already in raw feature space (768 for ViT-B/16)
+                outputs = self(images)
+                features = outputs['global_features']
                 
                 all_features.append(features.cpu())
                 all_labels.append(labels.cpu())
