@@ -242,19 +242,47 @@ class PrototypeCLIP(nn.Module):
         
         Args:
             load_path: Path to load the selector weights from.
+                     Can be either:
+                     1. A file saved by save_selector_weights (contains selector_state_dict)
+                     2. A checkpoint saved by train_eval.py (contains full state_dict)
         """
         if not os.path.exists(load_path):
             raise FileNotFoundError(f"Selector weights file not found: {load_path}")
         
-        selector_state = torch.load(load_path, map_location=self.device)
+        checkpoint = torch.load(load_path, map_location=self.device)
+        
+        # Check if this is a full checkpoint or just selector weights
+        if 'selector_state_dict' in checkpoint:
+            # Format 1: Saved by save_selector_weights
+            selector_state_dict = checkpoint['selector_state_dict']
+            saved_selector_type = checkpoint.get('selector_type', 'identity')
+        elif 'state_dict' in checkpoint:
+            # Format 2: Full checkpoint from train_eval.py
+            # Extract selector parameters from full state_dict
+            full_state_dict = checkpoint['state_dict']
+            selector_state_dict = {}
+            
+            # Get selector parameter prefix
+            selector_prefix = 'selector.'
+            
+            # Extract all selector parameters
+            for key in full_state_dict:
+                if key.startswith(selector_prefix):
+                    # Remove the 'selector.' prefix to match selector's state_dict keys
+                    new_key = key[len(selector_prefix):]
+                    selector_state_dict[new_key] = full_state_dict[key]
+            
+            saved_selector_type = checkpoint.get('config', {}).get('selector_type', 'identity')
+        else:
+            raise ValueError(f"Unknown checkpoint format. Expected 'selector_state_dict' or 'state_dict' in checkpoint.")
         
         # Verify selector type matches
-        saved_selector_type = selector_state.get('selector_type', 'identity')
         current_selector_type = self.cfg.get('selector_type', 'identity')
         if saved_selector_type != current_selector_type:
             print(f"Warning: Selector type mismatch. Saved: {saved_selector_type}, Current: {current_selector_type}")
         
         # Load weights
-        self.selector.load_state_dict(selector_state['selector_state_dict'])
+        self.selector.load_state_dict(selector_state_dict)
         print(f"✓ Selector weights loaded from {load_path}")
         print(f"  Selector type: {saved_selector_type}")
+        print(f"  Number of parameters loaded: {len(selector_state_dict)}")

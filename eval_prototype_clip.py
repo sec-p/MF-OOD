@@ -50,13 +50,12 @@ def process_args():
     parser.add_argument('--templates', type=str, default="a photo of a {}", help='templates for text prompts')
     parser.add_argument('--lambda_local', default=0.4, type=float, help='weight for local score in GL-MCM')
     parser.add_argument('--use_train_set', action='store_true', help='use training set for prototype initialization (default: use validation set)')
+    parser.add_argument('--selector-weights', type=str, default=None, help='path to pre-trained selector weights to load')
     
     args = parser.parse_args()
-
     args.CLIP_ckpt_name = args.CLIP_ckpt.replace('/', '_')
     args.log_directory = f"results/{args.in_dataset}/{args.score}/PrototypeCLIP_{args.CLIP_ckpt_name}_T_{args.T}_ID_{args.name}"
     os.makedirs(args.log_directory, exist_ok=True)
-
     return args
 
 
@@ -258,6 +257,12 @@ def main():
     
     model = PrototypeCLIP(cfg, classnames, clip_model)
     model = model.to(device)
+    
+    # Load pre-trained selector weights if provided
+    if args.selector_weights is not None:
+        print(f"\nLoading pre-trained selector weights from {args.selector_weights}...")
+        model.load_selector_weights(args.selector_weights)
+        print(f"✓ Pre-trained selector weights loaded")
     
     # Setup data loaders
     print("\nSetting up data loaders...")
