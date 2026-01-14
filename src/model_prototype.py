@@ -102,30 +102,28 @@ class PrototypeCLIP(nn.Module):
         # 1. Encode Image (FP16) - get raw ViT features
         cls_token, patch_tokens = self.encode_image(image)
         
-        # 2. Combine cls token and patch tokens as input features
-        # Option 1: Use only cls token
-        # input_features = cls_token
-        # Option 2: Concatenate cls token with patch tokens mean
+        # 2. Calculate patch mean (for prototype initialization)
         patch_mean = patch_tokens.mean(dim=1)
-        input_features = cls_token + patch_mean
-        # Option 3: Concatenate cls token with all patch tokens (flattened)
-        # But this would increase feature dim, so we use option 2 for now
         
-        # Normalize input features
-        input_features = input_features / input_features.norm(dim=-1, keepdim=True)
+        # 3. Use patch mean as global feature for OOD detection
+        # This allows using patch token pooling in OOD score calculation
+        global_features = patch_mean
         
-        # 3. Ensure prototypes are normalized
+        # 4. Normalize input features
+        global_features = global_features / global_features.norm(dim=-1, keepdim=True)
+        
+        # 5. Ensure prototypes are normalized
         prototypes_norm = self.prototypes / self.prototypes.norm(dim=-1, keepdim=True)
         
-        # 4. Logits - same as CLIP's similarity calculation
+        # 6. Logits - same as CLIP's similarity calculation
         logit_scale = self.logit_scale.exp()
-        logits = logit_scale * input_features @ prototypes_norm.T
+        logits = logit_scale * global_features @ prototypes_norm.T
         
         return {
             'logits': logits,
             'aux_losses': {},
-            'final_feats': input_features,
-            'global_features': cls_token,
+            'final_feats': global_features,
+            'global_features': global_features,  # Changed to patch mean
             'local_features': patch_tokens
         }
     
@@ -140,7 +138,8 @@ class PrototypeCLIP(nn.Module):
                 cls_mask = (train_labels == cls)
                 if cls_mask.sum() > 0:
                     cls_feats = train_features[cls_mask]
-                    # Take the mean of all features for this class as prototype
+                    # Take the mean of all patch token features for this class as prototype
+                    # Note: train_features should be patch means, not cls_token + patch_mean
                     prototypes[cls] = cls_feats.mean(dim=0)
             
             # Normalize prototypes
@@ -161,11 +160,10 @@ class PrototypeCLIP(nn.Module):
                 images = batch['image'].to(self.device)
                 labels = batch['label'].to(self.device)
                 
-                # Extract features
+                # Extract patch mean features (not cls_token + patch_mean)
                 cls_token, patch_tokens = self.encode_image(images)
                 patch_mean = patch_tokens.mean(dim=1)
-                features = cls_token + patch_mean
-                features = features / features.norm(dim=-1, keepdim=True)
+                features = patch_mean / patch_mean.norm(dim=-1, keepdim=True)
                 
                 all_features.append(features.cpu())
                 all_labels.append(labels.cpu())
