@@ -85,7 +85,7 @@ run_single_experiment() {
         --selector_type slot \
         --fuser_type self_attn \
         --score_type GL-MCM \
-        --lambda_local 1.0"
+        --lambda_local 0.5"
     
     # Add adapter_hidden_dim if specified
     if [ "${adapter_dim}" != "None" ] && [ "${adapter_dim}" != "" ]; then

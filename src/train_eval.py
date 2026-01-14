@@ -681,27 +681,20 @@ class TrainEvalOrchestrator:
         pbar = tqdm(self.train_loader, desc=f'Epoch {epoch+1} [Stage 2]', ncols=100)
         
         for batch_idx, (images, labels) in enumerate(pbar):
+            # import pdb
+            # pdb.set_trace()
             images, labels = images.to(self.device), labels.to(self.device)
             
             self.optimizer.zero_grad()
             
-            # Forward without autocast - trainable modules run in FP32 for stability
+            # Forward without autocast (FP32 training for adapter/classifier)
+            # Use stage 2 forward pass
             output_dict = self.model.forward_stage2(images, labels=labels)
             
             logits = output_dict['logits']
             ce_loss = output_dict['ce_loss']
         
-            # Check for NaN in logits and loss
-            if torch.isnan(logits).any():
-                print(f'❌ NaN detected in logits at batch {batch_idx+1}')
-                print(f'Logits: {logits}')
-                continue
-            if torch.isnan(ce_loss):
-                print(f'❌ NaN detected in loss at batch {batch_idx+1}')
-                print(f'Loss: {ce_loss}')
-                continue
-        
-            # Backward pass - no GradScaler needed since we're running in FP32
+            # Backward pass
             ce_loss.backward()
         
             # Gradient clipping

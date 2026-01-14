@@ -459,13 +459,6 @@ class VisualAdapter(nn.Module):
         pooled_feats_fp32 = pooled_feats.float()
         adapter_output_fp32 = self.adapter(pooled_feats_fp32)
         
-        # Clip adapter output to FP16 range to prevent Inf when converting
-        # FP16 max value is ~65504, leave some margin
-        adapter_output_fp32 = torch.clamp(adapter_output_fp32, -30000.0, 30000.0)
-        
-        # Check for NaN in adapter output
-        if torch.isnan(adapter_output_fp32).any():
-            adapter_output_fp32 = torch.nan_to_num(adapter_output_fp32, nan=0.0, posinf=30000.0, neginf=-30000.0)
         
         # Convert back to original dtype
         adapter_output = adapter_output_fp32.to(dtype)
@@ -474,7 +467,7 @@ class VisualAdapter(nn.Module):
         adapted_feats = pooled_feats + adapter_output
         
         # Normalize output to prevent explosion
-        adapted_feats = F.normalize(adapted_feats, dim=-1, eps=1e-8)
+        adapted_feats = F.normalize(adapted_feats, dim=-1)
         
         return adapted_feats
 
@@ -495,53 +488,25 @@ class VisualClassifier(nn.Module):
         self.num_classes = num_classes
         self.cfg = cfg or {}
         
-        # Learnable prototypes with multiple initialization options
         if visual_prototypes is not None:
-            # Priority 1: Use visual prototypes (from class feature centers)
-            self.prototypes = nn.Parameter(visual_prototypes.clone())
+            proto = visual_prototypes
             print(f"✓ VisualClassifier initialized with visual prototypes from class feature centers")
         elif text_prototypes is not None:
-            # Priority 2: Use text prototypes (from CLIP text encoder)
-            self.prototypes = nn.Parameter(text_prototypes.clone())
+            proto = text_prototypes
             print(f"✓ VisualClassifier initialized with text prototypes")
         else:
-            # Priority 3: Random initialization
-            self.prototypes = nn.Parameter(torch.randn(num_classes, input_dim))
-            nn.init.xavier_uniform_(self.prototypes)
+            proto = torch.randn(num_classes, input_dim)
             print(f"✓ VisualClassifier initialized with random prototypes")
-        
+
+        self.prototypes = nn.Parameter(
+            F.normalize(proto.float(), dim=-1)
+        )
+
         # Optional: learnable temperature
         self.use_temperature = self.cfg.get('use_temperature', False)
         if self.use_temperature:
             self.temperature = nn.Parameter(torch.ones(1) * 0.07)
         
-        # Add a hook to ensure prototypes never become NaN
-        self.register_backward_hook(self._prototype_backward_hook)
-        self.register_forward_hook(self._prototype_forward_hook)
-    
-    def _prototype_backward_hook(self, module, grad_input, grad_output):
-        """Hook to prevent prototype gradients from exploding"""
-        # Clip gradients for prototypes to prevent explosion
-        if grad_input[0] is not None:
-            # Clip gradients to [-1, 1] range
-            grad_input = tuple(torch.clamp(g, -1.0, 1.0) if g is not None else g for g in grad_input)
-        return grad_input
-    
-    def _prototype_forward_hook(self, module, input, output):
-        """Hook to ensure prototypes never become NaN"""
-        # Ensure prototypes are always valid
-        with torch.no_grad():
-            # Replace any NaN/Inf with safe values
-            if torch.isnan(self.prototypes.data).any() or torch.isinf(self.prototypes.data).any():
-                print(f"⚠️  Fixing invalid prototypes: NaN/Inf detected")
-                self.prototypes.data = torch.nan_to_num(
-                    self.prototypes.data,
-                    nan=0.0,
-                    posinf=1.0,
-                    neginf=-1.0
-                )
-                # Re-normalize to ensure valid cosine similarity
-                self.prototypes.data = F.normalize(self.prototypes.data, dim=-1)
     
     def forward(self, features: torch.Tensor) -> torch.Tensor:
         """
@@ -552,15 +517,17 @@ class VisualClassifier(nn.Module):
             logits: [B, num_classes] - classification logits
         """
         # Get input dtype to ensure compatibility
+        # import pdb
+        # pdb.set_trace()
         dtype = features.dtype
         
         # CRITICAL FIX: Convert prototypes to match input dtype BEFORE normalization
         # This ensures both features and prototypes are in the same dtype during normalization
-        prototypes_fp32 = self.prototypes.to(dtype)
+        # prototypes_fp32 = self.prototypes.to(dtype)
         
         # Normalize features and prototypes (cosine similarity) - same dtype
-        features_norm = F.normalize(features, dim=-1)
-        prototypes_norm = F.normalize(prototypes_fp32, dim=-1)
+        features_norm = F.normalize(features, dim=-1, eps=1e-6)
+        prototypes_norm = F.normalize(self.prototypes, dim=-1, eps=1e-6)
         
         # Compute cosine similarity - no logit scale needed for CE loss
         # Cosine similarity in [-1, 1] range is sufficient for CE loss
@@ -1130,8 +1097,6 @@ class ModularCustomCLIP(nn.Module):
                 - 'ce_loss': Cross-entropy loss (if labels provided)
         """
         B = image.shape[0]
-        # import pdb
-        # pdb.set_trace()
         with torch.no_grad():
             # 1. Encode Image (frozen backbone)
             image_features, local_features = self.encode_image(image)
