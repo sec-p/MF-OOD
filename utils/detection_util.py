@@ -122,7 +122,7 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                 res=net(images)
                 global_features = res['global_features']  # .float()
                 local_features = res['local_features']  # .float()
-                selected_feats = res['selected_feats']
+                # selected_feats = res['selected_feats']
 
                 # Remove unnecessary FP32 conversion - let autocast handle precision
                 # global_features = global_features.float()
@@ -131,18 +131,18 @@ def get_ood_scores_clip(args, net, loader, test_labels):
 
                 global_features /= global_features.norm(dim=-1, keepdim=True)
                 local_features /= local_features.norm(dim=-1, keepdim=True)
-                selected_feats /= selected_feats.norm(dim=-1, keepdim=True)+1e-8
+                # selected_feats /= selected_feats.norm(dim=-1, keepdim=True)+1e-8
 
                 # Use cached text features from model (no recomputation needed)
                 output_global = global_features @ text_features.T
                 output_local = local_features @ text_features.T
-                output_selected = selected_feats @ text_features.T
+                # output_selected = selected_feats @ text_features.T
                 # import pdb
                 # pdb.set_trace()
 
                 smax_global = to_np(F.softmax(output_global/ args.T, dim=1))
                 smax_local = to_np(F.softmax(output_local/ args.T, dim=-1))  # batch, grid, grid, class
-                smax_selected = to_np(F.softmax(output_selected/ args.T, dim=-1))
+                # smax_selected = to_np(F.softmax(output_selected/ args.T, dim=-1))
 
                 if args.score == 'MCM':
                     _score.append(-np.max(smax_global, axis=1)) 
@@ -166,7 +166,7 @@ def get_ood_scores_clip(args, net, loader, test_labels):
 
                     mcm_local_score = -np.max(smax_local, axis=(1, 2))
 
-                    mcm_selected_score= -np.min(np.max(smax_selected,axis=2), axis=(1))
+                    # mcm_selected_score= -np.min(np.max(smax_selected,axis=2), axis=(1))
                     
 
 

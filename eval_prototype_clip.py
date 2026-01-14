@@ -162,7 +162,7 @@ def main():
     # Get class names from dataset
     root = args.root_dir
     if args.in_dataset == "ImageNet":
-        dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet', 'val'))
+        dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet','images', 'val'))
     elif args.in_dataset == 'COCO_single':
         dataset = datasets.ImageFolder(os.path.join(root, 'ID_COCO_single'))
     elif args.in_dataset == 'COCO_multi':
@@ -202,13 +202,13 @@ def main():
     if args.use_train_set:
         # Use training set for prototype initialization
         if args.in_dataset == "ImageNet":
-            train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet', 'train'), transform=test_transform)
+            train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet','images', 'train'), transform=test_transform)
         else:
             train_dataset = datasets.ImageFolder(os.path.join(root, f'ID_{args.in_dataset}'), transform=test_transform)
     else:
         # Use validation set for prototype initialization (default, faster)
         if args.in_dataset == "ImageNet":
-            train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet', 'val'), transform=test_transform)
+            train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet','images', 'val'), transform=test_transform)
         else:
             train_dataset = datasets.ImageFolder(os.path.join(root, f'ID_{args.in_dataset}'), transform=test_transform)
     
