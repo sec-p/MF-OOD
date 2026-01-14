@@ -14,6 +14,9 @@ import clip
 import json
 from torch.cuda.amp import autocast
 
+# Import PrototypeCLIP model
+from .model_prototype import PrototypeCLIP
+
 
 # ============================================================================
 # PART 1: BASE CLASSES
@@ -155,7 +158,7 @@ class SparseSlotAttentionSelector(BaseSelector):
         self.num_slots = num_slots
         
         # 1. Slot Query 初始化 (正交)
-        # 这些是“提问者”，负责去图像里找特定的特征
+        # 这些是"提问者"，负责去图像里找特定的特征
         self.slots = nn.Parameter(torch.empty(num_slots, input_dim))
         nn.init.orthogonal_(self.slots.data, gain=1.0)
         self.slots.data = self.slots.data.unsqueeze(0) # (1, S, D)
@@ -209,7 +212,7 @@ class SparseSlotAttentionSelector(BaseSelector):
         attn = F.softmax(masked_logits, dim=-1)
 
         # 5. Weighted Sum (Aggregation)
-        # 这就是真正的“提取”步骤：Slot 根据 Attention 权重聚合 Image Patch
+        # 这就是真正的"提取"步骤：Slot 根据 Attention 权重聚合 Image Patch
         slot_feats = torch.einsum('bkn,bnd->bkd', attn, local_feats)
         
         # 6. Global Mask (Union over slots) for Mixup
@@ -612,7 +615,7 @@ class ModularCustomCLIP(nn.Module):
         # Wrapper to pass logit scale
         scale_val = self.logit_scale.exp().item()
         return compute_semantic_exclusion_loss(
-            final_feats, pos_text_feats, neg_text_tokens,
+            final_feats, pos_text_feat, neg_text_tokens,
             margin=self.cfg.get('margin', 0.1),
             logit_scale=scale_val
         )
@@ -767,7 +770,11 @@ class ModularCustomCLIP(nn.Module):
 
 def build_modular_model(cfg: Dict, classnames: list, clip_model, class_negatives: Dict = None):
     """Factory function to create modular model."""
-    return ModularCustomCLIP(cfg, classnames, clip_model, class_negatives=class_negatives)
+    model_type = cfg.get('model_type', 'modular')
+    if model_type == 'prototype':
+        return PrototypeCLIP(cfg, classnames, clip_model, class_negatives=class_negatives)
+    else:
+        return ModularCustomCLIP(cfg, classnames, clip_model, class_negatives=class_negatives)
 
 
 if __name__ == '__main__':
@@ -776,17 +783,12 @@ if __name__ == '__main__':
     
     cfg = {
         'device': torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-        'selector_type': 'mlp',  # or 'slot'
-        'fuser_type': 'query_attn',  # or 'mean', 'self_attn'
-        'num_select': 49,
-        'num_heads_selector': 4,
-        'num_heads_fuser': 4,
-        'templates': ["a photo of a"],
-        'use_semantic_exclusion': True,
+        'model_type': 'prototype',  # or 'modular'
+        'templates': ["a photo of a {}"],
     }
     
     classnames = ["dog", "cat", "bird"]
-    clip_model, _ = clip_module.load("ViT-B/16", device=cfg['device'])
+    clip_model, _ = clip_module.load("ViT-B/16", device=cfg['device'], return_raw_features=True)
     
     model = build_modular_model(cfg, classnames, clip_model)
     
@@ -794,7 +796,14 @@ if __name__ == '__main__':
     x = torch.randn(2, 3, 224, 224).to(cfg['device'])
     labels = torch.tensor([0, 1]).to(cfg['device'])
     
+    # Initialize prototypes with random values for testing
+    if isinstance(model, PrototypeCLIP):
+        random_prototypes = torch.randn(len(classnames), model.feat_dim)
+        random_prototypes = random_prototypes / random_prototypes.norm(dim=-1, keepdim=True)
+        model.set_prototypes(random_prototypes)
+    
     output = model(x, labels)
     print(f"✓ Forward pass successful")
     print(f"  logits shape: {output['logits'].shape}")
     print(f"  aux_losses: {output['aux_losses'].keys()}")
+    print(f"  final_feats shape: {output['final_feats'].shape}")

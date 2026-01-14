@@ -86,19 +86,22 @@ def available_models() -> List[str]:
     return list(_MODELS.keys())
 
 
-def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_available() else "cpu", jit=False):
+def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_available() else "cpu", jit=False, return_raw_features: bool = False):
     """Load a CLIP model
 
     Parameters
     ----------
     name : str
-        A model name listed by `clip.available_models()`, or the path to a model checkpoint containing the state_dict
+        A model name listed by `clip.available_models()`, or path to a model checkpoint containing state_dict
 
     device : Union[str, torch.device]
-        The device to put the loaded model
+        The device to put the loaded model on
 
     jit : bool
         Whether to load the optimized JIT model or more hackable non-JIT model (default).
+
+    return_raw_features : bool
+        Whether to return raw features from ViT (cls token and patch tokens) without projection to shared space.
 
     Returns
     -------
@@ -127,12 +130,12 @@ def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_a
         state_dict = torch.load(model_path, map_location="cpu")
 
     if not jit:
-        model = build_model(state_dict or model.state_dict()).to(device)
+        model = build_model(state_dict or model.state_dict(), return_raw_features=return_raw_features).to(device)
         if str(device) == "cpu":
             model.float()
         return model, _transform(model.visual.input_resolution)
 
-    # patch the device names
+    # patch device names
     device_holder = torch.jit.trace(lambda: torch.ones([]).to(torch.device(device)), example_inputs=[])
     device_node = [n for n in device_holder.graph.findAllNodes("prim::Constant") if "Device" in repr(n)][-1]
 
@@ -187,7 +190,7 @@ def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_a
 
 def tokenize(texts: Union[str, List[str]], context_length: int = 77, truncate: bool = False) -> torch.LongTensor:
     """
-    Returns the tokenized representation of given input string(s)
+    Returns the tokenized representation of the given input string(s)
 
     Parameters
     ----------

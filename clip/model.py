@@ -13,7 +13,7 @@ class Bottleneck(nn.Module):
     def __init__(self, inplanes, planes, stride=1):
         super().__init__()
 
-        # all conv layers have stride 1. an avgpool is performed after the second convolution when stride > 1
+        # all conv layers have stride 1. an avgpool is performed after second convolution when stride > 1
         self.conv1 = nn.Conv2d(inplanes, planes, 1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
 
@@ -74,7 +74,7 @@ class AttentionPool2d(nn.Module):
         dim = x.shape[-1]
         w0 = w
         h0 = h
-        # we add a small number to avoid floating point error in the interpolation
+        # we add a small number to avoid floating point error in interpolation
         # see discussion at https://github.com/facebookresearch/dino/issues/8
         w0, h0 = w0 + 0.1, h0 + 0.1
         patch_pos_embed = nn.functional.interpolate(
@@ -131,12 +131,12 @@ class ModifiedResNet(nn.Module):
         self.output_dim = output_dim
         self.input_resolution = input_resolution
 
-        # the 3-layer stem
+        # 3-layer stem
         self.conv1 = nn.Conv2d(3, width // 2, kernel_size=3, stride=2, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(width // 2)
-        self.conv2 = nn.Conv2d(width // 2, width // 2, kernel_size=3, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(width // 2, width // 2, kernel_size=3, stride=2, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(width // 2)
-        self.conv3 = nn.Conv2d(width // 2, width, kernel_size=3, padding=1, bias=False)
+        self.conv3 = nn.Conv2d(width // 2, width, kernel_size=3, stride=2, padding=1, bias=False)
         self.bn3 = nn.BatchNorm2d(width)
         self.avgpool = nn.AvgPool2d(2)
         self.relu = nn.ReLU(inplace=True)
@@ -148,7 +148,7 @@ class ModifiedResNet(nn.Module):
         self.layer3 = self._make_layer(width * 4, layers[2], stride=2)
         self.layer4 = self._make_layer(width * 8, layers[3], stride=2)
 
-        embed_dim = width * 32  # the ResNet feature dimension
+        embed_dim = width * 32  # ResNet feature dimension
         self.attnpool = AttentionPool2d(input_resolution // 32, embed_dim, heads, output_dim)
 
     def _make_layer(self, planes, blocks, stride=1):
@@ -250,10 +250,12 @@ class Transformer(nn.Module):
 
 
 class VisionTransformer(nn.Module):
-    def __init__(self, input_resolution: int, patch_size: int, width: int, layers: int, heads: int, output_dim: int):
+    def __init__(self, input_resolution: int, patch_size: int, width: int, layers: int, heads: int, output_dim: int, return_raw_features: bool = False):
         super().__init__()
         self.input_resolution = input_resolution
         self.output_dim = output_dim
+        self.return_raw_features = return_raw_features
+        self.width = width  # Store width for access
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=width, kernel_size=patch_size, stride=patch_size, bias=False)
 
         scale = width ** -0.5
@@ -294,10 +296,13 @@ class VisionTransformer(nn.Module):
         B, _, C = out.shape
         v = v.reshape(B, hw_shape[0], hw_shape[1], C).contiguous()
 
-        x = self.ln_post(x[:, 0, :])
+        cls_token = self.ln_post(x[:, 0, :])
+
+        if self.return_raw_features:
+            return cls_token, v
 
         if self.proj is not None:
-            x = x @ self.proj
+            x = cls_token @ self.proj
             feat = v @ self.proj
         return x, feat
 
@@ -315,7 +320,8 @@ class CLIP(nn.Module):
                  vocab_size: int,
                  transformer_width: int,
                  transformer_heads: int,
-                 transformer_layers: int
+                 transformer_layers: int,
+                 return_raw_features: bool = False
                  ):
         super().__init__()
 
@@ -338,7 +344,8 @@ class CLIP(nn.Module):
                 width=vision_width,
                 layers=vision_layers,
                 heads=vision_heads,
-                output_dim=embed_dim
+                output_dim=embed_dim,
+                return_raw_features=return_raw_features
             )
 
         self.transformer = Transformer(
@@ -457,7 +464,7 @@ def convert_weights(model: nn.Module):
     model.apply(_convert_weights_to_fp16)
 
 
-def build_model(state_dict: dict):
+def build_model(state_dict: dict, return_raw_features: bool = False):
     vit = "visual.proj" in state_dict
 
     if vit:
@@ -485,7 +492,8 @@ def build_model(state_dict: dict):
     model = CLIP(
         embed_dim,
         image_resolution, vision_layers, vision_width, vision_patch_size,
-        context_length, vocab_size, transformer_width, transformer_heads, transformer_layers
+        context_length, vocab_size, transformer_width, transformer_heads, transformer_layers,
+        return_raw_features=return_raw_features
     )
 
     for key in ["input_resolution", "context_length", "vocab_size"]:
