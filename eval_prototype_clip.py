@@ -16,14 +16,14 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
 # Add project root to path for imports
-project_root = Path(__file__).parent.parent
+project_root = Path(__file__).parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 import clip
 from src.model_prototype import PrototypeCLIP
 from utils.common import setup_seed, get_test_labels
-from utils.detection_util import print_measures, get_and_print_results
+from utils.detection_util import print_measures, get_and_print_results, get_ood_scores_clip
 from utils.file_ops import save_as_dataframe, setup_log
 from utils.plot_util import plot_distribution
 from utils.train_eval_util import set_model_clip, set_val_loader, set_ood_loader_ImageNet
@@ -43,11 +43,13 @@ def process_args():
     parser.add_argument('--T', type=int, default=1, help='temperature parameter')
     parser.add_argument('--CLIP_ckpt', type=str, default='ViT-B/16',
                         choices=['ViT-B/16', 'RN50', 'RN101'], help='which pretrained img encoder to use')
-    parser.add_argument('--score', default='max_logits', type=str, 
-                        choices=['max_logits', 'energy', 'msp'], help='score options for OOD detection')
+    parser.add_argument('--score', default='GL-MCM', type=str, 
+                        choices=['MCM', 'L-MCM', 'GL-MCM', 'GL-MCM-L', 'SA-MCM'], help='score options for OOD detection')
     parser.add_argument('--num_ood_sumple', default=-1, type=int, help="numbers of ood_samples")
     parser.add_argument('--shots', default=16, type=int, help='number of shots for few-shot learning')
     parser.add_argument('--templates', type=str, default="a photo of a {}", help='templates for text prompts')
+    parser.add_argument('--lambda_local', default=0.4, type=float, help='weight for local score in GL-MCM')
+    parser.add_argument('--use_train_set', action='store_true', help='use training set for prototype initialization (default: use validation set)')
     
     args = parser.parse_args()
 
@@ -58,36 +60,25 @@ def process_args():
     return args
 
 
-def get_ood_scores_prototype(args, model, loader, classnames):
-    """Calculate OOD scores for PrototypeCLIP model."""
-    model.eval()
-    scores = []
+def create_fewshot_subset_from_dataset(dataset, shots, seed=42):
+    """Create few-shot subset from dataset without iterating through all samples."""
+    np.random.seed(seed)
     
-    with torch.no_grad():
-        for images, _ in tqdm(loader, desc="Computing OOD scores"):
-            images = images.cuda()
-            
-            # Get model outputs
-            outputs = model(images)
-            logits = outputs['logits']
-            
-            # Calculate OOD scores based on the specified method
-            if args.score == 'max_logits':
-                # Maximum logit as confidence score
-                score = logits.max(dim=1)[0]
-            elif args.score == 'energy':
-                # Energy score
-                score = torch.logsumexp(logits, dim=1)
-            elif args.score == 'msp':
-                # Maximum softmax probability
-                probs = torch.softmax(logits / args.T, dim=1)
-                score = probs.max(dim=1)[0]
-            else:
-                raise ValueError(f"Unknown score type: {args.score}")
-            
-            scores.append(score.cpu())
+    # Get class names and their indices
+    class_to_indices = {i: [] for i in range(len(dataset.classes))}
     
-    return torch.cat(scores).numpy()
+    # Use dataset.samples to get file paths and labels without loading images
+    for idx, (_, label) in enumerate(dataset.samples):
+        class_to_indices[label].append(idx)
+    
+    # Sample shots per class
+    fewshot_indices = []
+    for class_idx, indices in class_to_indices.items():
+        if len(indices) > 0:
+            sampled_indices = np.random.choice(indices, min(shots, len(indices)), replace=False)
+            fewshot_indices.extend(sampled_indices)
+    
+    return fewshot_indices
 
 
 def init_prototypes_from_fewshot(model, loader, classnames):
@@ -155,6 +146,8 @@ def main():
     print(f"In-distribution dataset: {args.in_dataset}")
     print(f"OOD score method: {args.score}")
     print(f"Few-shot shots: {args.shots}")
+    print(f"Lambda local: {args.lambda_local}")
+    print(f"Use training set for prototypes: {args.use_train_set}")
     print("="*80)
     
     # Load CLIP model with return_raw_features=True
@@ -169,7 +162,7 @@ def main():
     # Get class names from dataset
     root = args.root_dir
     if args.in_dataset == "ImageNet":
-        dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet','images', 'val'))
+        dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet', 'val'))
     elif args.in_dataset == 'COCO_single':
         dataset = datasets.ImageFolder(os.path.join(root, 'ID_COCO_single'))
     elif args.in_dataset == 'COCO_multi':
@@ -193,14 +186,11 @@ def main():
     # Setup data loaders
     print("\nSetting up data loaders...")
     
-    # Create few-shot loader for prototype initialization
-    # We'll use the same transform as training
-    train_transform = transforms.Compose([
-        transforms.RandomResizedCrop(size=224, scale=(0.8, 1), interpolation=transforms.InterpolationMode.BICUBIC),
-        transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomRotation(degrees=5),
-        transforms.ColorJitter(brightness=0.15, contrast=0.1, saturation=0.1),
-        transforms.RandomGrayscale(p=0.1),
+    # Use test transforms for prototype initialization (no data augmentation)
+    # Same as CLIP's preprocess
+    test_transform = transforms.Compose([
+        transforms.Resize(224, interpolation=transforms.InterpolationMode.BICUBIC),
+        transforms.CenterCrop(224),
         transforms.ToTensor(),
         transforms.Normalize(
             mean=(0.48145466, 0.4578275, 0.40821073),
@@ -209,23 +199,23 @@ def main():
     ])
     
     # Create few-shot dataset
-    if args.in_dataset == "ImageNet":
-        train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet','images', 'train'), transform=train_transform)
+    if args.use_train_set:
+        # Use training set for prototype initialization
+        if args.in_dataset == "ImageNet":
+            train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet', 'train'), transform=test_transform)
+        else:
+            train_dataset = datasets.ImageFolder(os.path.join(root, f'ID_{args.in_dataset}'), transform=test_transform)
     else:
-        # For other datasets, use the same dataset as validation
-        train_dataset = datasets.ImageFolder(os.path.join(root, f'ID_{args.in_dataset}'), transform=train_transform)
+        # Use validation set for prototype initialization (default, faster)
+        if args.in_dataset == "ImageNet":
+            train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet', 'val'), transform=test_transform)
+        else:
+            train_dataset = datasets.ImageFolder(os.path.join(root, f'ID_{args.in_dataset}'), transform=test_transform)
     
-    # Create few-shot subset
-    fewshot_indices = []
-    class_to_indices = {i: [] for i in range(len(classnames))}
-    
-    for idx, (_, label) in enumerate(train_dataset):
-        class_to_indices[label].append(idx)
-    
-    # Sample shots per class
-    for class_idx, indices in class_to_indices.items():
-        sampled_indices = np.random.choice(indices, min(args.shots, len(indices)), replace=False)
-        fewshot_indices.extend(sampled_indices)
+    # Create few-shot subset using efficient method (without iterating through all samples)
+    print(f"\nCreating {args.shots}-shot subset from {'training' if args.use_train_set else 'validation'} set...")
+    fewshot_indices = create_fewshot_subset_from_dataset(train_dataset, args.shots, seed=args.seed)
+    print(f"✓ Few-shot subset created with {len(fewshot_indices)} samples")
     
     fewshot_dataset = torch.utils.data.Subset(train_dataset, fewshot_indices)
     fewshot_loader = DataLoader(fewshot_dataset, batch_size=args.batch_size, shuffle=False, num_workers=4)
@@ -251,9 +241,9 @@ def main():
     elif args.in_dataset in ['ImageNet']:
         out_datasets = ['iNaturalist', 'SUN', 'places365', 'Texture']
     
-    # Calculate ID scores
+    # Calculate ID scores using get_ood_scores_clip (reusing existing utility)
     print("\nCalculating ID scores...")
-    in_score = get_ood_scores_prototype(args, model, test_loader, classnames)
+    in_score = get_ood_scores_clip(args, model, test_loader, test_labels)
     
     auroc_list, aupr_list, fpr_list = [], [], []
     results_dict = {'id_accuracy': id_accuracy}
@@ -262,7 +252,7 @@ def main():
         print(f"\nEvaluating OOD dataset: {out_dataset}")
         try:
             ood_loader = set_ood_loader_ImageNet(args, out_dataset, preprocess, root=args.root_dir)
-            out_score = get_ood_scores_prototype(args, model, ood_loader, classnames)
+            out_score = get_ood_scores_clip(args, model, ood_loader, test_labels)
             
             print(f"ID scores: {stats.describe(in_score)}")
             print(f"OOD scores: {stats.describe(out_score)}")
