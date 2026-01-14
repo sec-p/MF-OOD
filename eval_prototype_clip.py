@@ -169,7 +169,7 @@ def main():
     # Get class names from dataset
     root = args.root_dir
     if args.in_dataset == "ImageNet":
-        dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet', 'val'))
+        dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet','images', 'val'))
     elif args.in_dataset == 'COCO_single':
         dataset = datasets.ImageFolder(os.path.join(root, 'ID_COCO_single'))
     elif args.in_dataset == 'COCO_multi':
@@ -210,7 +210,7 @@ def main():
     
     # Create few-shot dataset
     if args.in_dataset == "ImageNet":
-        train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet', 'train'), transform=train_transform)
+        train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet','images', 'train'), transform=train_transform)
     else:
         # For other datasets, use the same dataset as validation
         train_dataset = datasets.ImageFolder(os.path.join(root, f'ID_{args.in_dataset}'), transform=train_transform)
