@@ -23,7 +23,7 @@ if str(project_root) not in sys.path:
 import clip
 from src.model_prototype import PrototypeCLIP
 from utils.common import setup_seed, get_test_labels
-from utils.detection_util import print_measures, get_and_print_results, get_ood_scores_clip
+from utils.detection_util import print_measures, get_and_print_results
 from utils.file_ops import save_as_dataframe, setup_log
 from utils.plot_util import plot_distribution
 from utils.train_eval_util import set_model_clip, set_val_loader, set_ood_loader_ImageNet
@@ -58,6 +58,83 @@ def process_args():
     os.makedirs(args.log_directory, exist_ok=True)
 
     return args
+
+
+def get_ood_scores_prototype(args, model, loader):
+    """Calculate OOD scores for PrototypeCLIP model using visual prototypes."""
+    to_np = lambda x: x.data.cpu().numpy()
+    concat = lambda x: np.concatenate(x, axis=0)
+    _score = []
+    
+    # Use visual prototypes from PrototypeCLIP model (not text features!)
+    prototypes = model.prototypes  # Shape: (num_classes, feat_dim)
+    prototypes = prototypes / prototypes.norm(dim=-1, keepdim=True)  # Normalize
+    
+    tqdm_object = tqdm(loader, total=len(loader))
+    with torch.no_grad():
+        for batch_idx, (images, labels, *id_flag) in enumerate(tqdm_object):
+            bz = images.size(0)
+            labels = labels.long().cuda()
+            images = images.cuda()
+            
+            # Get model outputs
+            res = model(images)
+            global_features = res['global_features']
+            local_features = res['local_features']
+            selected_feats = res['selected_feats']
+            
+            # Normalize features
+            global_features = global_features / global_features.norm(dim=-1, keepdim=True)
+            local_features = local_features / local_features.norm(dim=-1, keepdim=True)
+            selected_feats = selected_feats / selected_feats.norm(dim=-1, keepdim=True) + 1e-8
+            
+            # Calculate similarity with visual prototypes (not text features!)
+            output_global = global_features @ prototypes.T
+            output_local = local_features @ prototypes.T
+            output_selected = selected_feats @ prototypes.T
+            
+            # Apply softmax
+            smax_global = to_np(torch.nn.functional.softmax(output_global / args.T, dim=1))
+            smax_local = to_np(torch.nn.functional.softmax(output_local / args.T, dim=-1))  # batch, grid, grid, class
+            smax_selected = to_np(torch.nn.functional.softmax(output_selected / args.T, dim=-1))
+            
+            if args.score == 'MCM':
+                _score.append(-np.max(smax_global, axis=1)) 
+            elif args.score == 'L-MCM':
+                mcm_local_score = -np.max(smax_local, axis=(1, 2))
+                _score.append(mcm_local_score) 
+            elif args.score == 'GL-MCM':
+                mcm_global_score = -np.max(smax_global, axis=1)
+                mcm_local_score = -np.max(smax_local, axis=(1, 2))
+                _score.append(mcm_global_score + args.lambda_local * mcm_local_score)
+            elif args.score == 'GL-MCM-L':
+                mcm_global_score = -np.max(smax_global, axis=1)
+                mcm_local_score = -np.max(smax_local, axis=(1, 2))
+                mcm_selected_score = -np.min(np.max(smax_selected, axis=2), axis=(1))
+                _score.append(mcm_global_score + args.lambda_local * mcm_local_score + args.lambda_local * mcm_selected_score)
+            elif args.score == 'SA-MCM':
+                # 1. 确定目标类别 (基于最准的 Global 分数)
+                pred_labels = np.argmax(smax_global, axis=1)
+                
+                # 2. 计算 Global Score
+                mcm_global_score = -np.max(smax_global, axis=1)
+                
+                # 3. 计算 Local Score (Selected Slots)
+                B, K, C = smax_selected.shape
+                slot_confs = smax_selected[np.arange(B)[:, None], np.arange(K)[None, :], pred_labels[:, None]]
+                min_slot_conf = np.min(slot_confs, axis=1)
+                mcm_selected_score = -min_slot_conf
+                
+                # 4. 计算 Local Score (Patch)
+                patch_confs = smax_local[np.arange(B)[:, None], np.arange(smax_local.shape[1])[None, :], pred_labels[:, None]]
+                mcm_local_score = -np.max(patch_confs, axis=1)
+                
+                # 5. 融合
+                _score.append(mcm_global_score + args.lambda_local * mcm_selected_score)
+            else:
+                raise NotImplementedError
+    
+    return concat(_score)[:len(loader.dataset)].copy()
 
 
 def create_fewshot_subset_from_dataset(dataset, shots, seed=42):
@@ -162,7 +239,7 @@ def main():
     # Get class names from dataset
     root = args.root_dir
     if args.in_dataset == "ImageNet":
-        dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet','images', 'val'))
+        dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet', 'val'))
     elif args.in_dataset == 'COCO_single':
         dataset = datasets.ImageFolder(os.path.join(root, 'ID_COCO_single'))
     elif args.in_dataset == 'COCO_multi':
@@ -202,13 +279,13 @@ def main():
     if args.use_train_set:
         # Use training set for prototype initialization
         if args.in_dataset == "ImageNet":
-            train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet','images', 'train'), transform=test_transform)
+            train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet', 'train'), transform=test_transform)
         else:
             train_dataset = datasets.ImageFolder(os.path.join(root, f'ID_{args.in_dataset}'), transform=test_transform)
     else:
         # Use validation set for prototype initialization (default, faster)
         if args.in_dataset == "ImageNet":
-            train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet','images', 'val'), transform=test_transform)
+            train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet', 'val'), transform=test_transform)
         else:
             train_dataset = datasets.ImageFolder(os.path.join(root, f'ID_{args.in_dataset}'), transform=test_transform)
     
@@ -241,9 +318,9 @@ def main():
     elif args.in_dataset in ['ImageNet']:
         out_datasets = ['iNaturalist', 'SUN', 'places365', 'Texture']
     
-    # Calculate ID scores using get_ood_scores_clip (reusing existing utility)
+    # Calculate ID scores using get_ood_scores_prototype (using visual prototypes!)
     print("\nCalculating ID scores...")
-    in_score = get_ood_scores_clip(args, model, test_loader, test_labels)
+    in_score = get_ood_scores_prototype(args, model, test_loader)
     
     auroc_list, aupr_list, fpr_list = [], [], []
     results_dict = {'id_accuracy': id_accuracy}
@@ -252,7 +329,7 @@ def main():
         print(f"\nEvaluating OOD dataset: {out_dataset}")
         try:
             ood_loader = set_ood_loader_ImageNet(args, out_dataset, preprocess, root=args.root_dir)
-            out_score = get_ood_scores_clip(args, model, ood_loader, test_labels)
+            out_score = get_ood_scores_prototype(args, model, ood_loader)
             
             print(f"ID scores: {stats.describe(in_score)}")
             print(f"OOD scores: {stats.describe(out_score)}")
