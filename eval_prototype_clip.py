@@ -40,7 +40,7 @@ def process_args():
     parser.add_argument('--seed', default=1, type=int, help="random seed")
     parser.add_argument('--gpu', default=0, type=int, help='the GPU indice to use')
     parser.add_argument('-b', '--batch-size', default=512, type=int, help='mini-batch size')
-    parser.add_argument('--T', type=int, default=0.8, help='temperature parameter')
+    parser.add_argument('--T', type=int, default=1.0, help='temperature parameter')
     parser.add_argument('--CLIP_ckpt', type=str, default='ViT-B/16',
                         choices=['ViT-B/16', 'RN50', 'RN101'], help='which pretrained img encoder to use')
     parser.add_argument('--score', default='GL-MCM', type=str, 

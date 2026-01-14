@@ -107,7 +107,7 @@ class PrototypeCLIP(nn.Module):
         
         # 3. Use patch mean as global feature for OOD detection
         # This allows using patch token pooling in OOD score calculation
-        global_features = patch_mean
+        global_features = cls_token + patch_mean
         
         # 4. Normalize input features
         global_features = global_features / global_features.norm(dim=-1, keepdim=True)
