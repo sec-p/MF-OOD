@@ -514,6 +514,34 @@ class VisualClassifier(nn.Module):
         self.use_temperature = self.cfg.get('use_temperature', False)
         if self.use_temperature:
             self.temperature = nn.Parameter(torch.ones(1) * 0.07)
+        
+        # Add a hook to ensure prototypes never become NaN
+        self.register_backward_hook(self._prototype_backward_hook)
+        self.register_forward_hook(self._prototype_forward_hook)
+    
+    def _prototype_backward_hook(self, module, grad_input, grad_output):
+        """Hook to prevent prototype gradients from exploding"""
+        # Clip gradients for prototypes to prevent explosion
+        if grad_input[0] is not None:
+            # Clip gradients to [-1, 1] range
+            grad_input = tuple(torch.clamp(g, -1.0, 1.0) if g is not None else g for g in grad_input)
+        return grad_input
+    
+    def _prototype_forward_hook(self, module, input, output):
+        """Hook to ensure prototypes never become NaN"""
+        # Ensure prototypes are always valid
+        with torch.no_grad():
+            # Replace any NaN/Inf with safe values
+            if torch.isnan(self.prototypes.data).any() or torch.isinf(self.prototypes.data).any():
+                print(f"⚠️  Fixing invalid prototypes: NaN/Inf detected")
+                self.prototypes.data = torch.nan_to_num(
+                    self.prototypes.data,
+                    nan=0.0,
+                    posinf=1.0,
+                    neginf=-1.0
+                )
+                # Re-normalize to ensure valid cosine similarity
+                self.prototypes.data = F.normalize(self.prototypes.data, dim=-1)
     
     def forward(self, features: torch.Tensor) -> torch.Tensor:
         """
@@ -526,20 +554,17 @@ class VisualClassifier(nn.Module):
         # Get input dtype to ensure compatibility
         dtype = features.dtype
         
-        # Normalize features and prototypes (cosine similarity)
-        features_norm = F.normalize(features, dim=-1)
-        prototypes_norm = F.normalize(self.prototypes, dim=-1)
-
+        # CRITICAL FIX: Convert prototypes to match input dtype BEFORE normalization
+        # This ensures both features and prototypes are in the same dtype during normalization
+        prototypes_fp32 = self.prototypes.to(dtype)
         
-        # Convert prototypes to match input dtype for matmul
-        prototypes_norm = prototypes_norm.to(dtype)
+        # Normalize features and prototypes (cosine similarity) - same dtype
+        features_norm = F.normalize(features, dim=-1)
+        prototypes_norm = F.normalize(prototypes_fp32, dim=-1)
         
         # Compute cosine similarity - no logit scale needed for CE loss
         # Cosine similarity in [-1, 1] range is sufficient for CE loss
         logits = torch.matmul(features_norm, prototypes_norm.T)  # [B, num_classes]
-        
-        # Check for NaN/Inf in logits and replace with safe values
-        logits = torch.nan_to_num(logits, nan=0.0, posinf=1.0, neginf=-1.0)
         
         return logits
     
