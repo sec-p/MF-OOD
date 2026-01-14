@@ -515,8 +515,8 @@ class VisualClassifier(nn.Module):
         dtype = features.dtype
         
         # Normalize features and prototypes (cosine similarity)
-        features_norm = F.normalize(features, dim=-1, eps=1e-8)
-        prototypes_norm = F.normalize(self.prototypes, dim=-1, eps=1e-8)
+        features_norm = F.normalize(features, dim=-1)
+        prototypes_norm = F.normalize(self.prototypes, dim=-1)
         
         # Convert prototypes to match input dtype for matmul
         prototypes_norm = prototypes_norm.to(dtype)
@@ -1089,7 +1089,8 @@ class ModularCustomCLIP(nn.Module):
                 - 'ce_loss': Cross-entropy loss (if labels provided)
         """
         B = image.shape[0]
-        
+        # import pdb
+        # pdb.set_trace()
         with torch.no_grad():
             # 1. Encode Image (frozen backbone)
             image_features, local_features = self.encode_image(image)
