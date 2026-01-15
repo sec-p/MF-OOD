@@ -70,7 +70,9 @@ class TrainEvalOrchestrator:
                  # OOD score parameters
                  score_type: str = 'GL-MCM',
                  temperature: float = 1.0,
-                 lambda_local: float = 1.0):
+                 lambda_local: float = 1.0,
+                 # Additional config for hybrid models
+                 cfg: Dict = None):
         
         self.method = method
         self.epochs = epochs
@@ -78,6 +80,7 @@ class TrainEvalOrchestrator:
         self.batch_size = batch_size
         self.seed = seed
         self.device = device
+        self.cfg = cfg or {}
         
         # Model components
         self.selector_type = selector_type
@@ -271,6 +274,7 @@ class TrainEvalOrchestrator:
         # Create config dict
         cfg = {
             'device': self.device,
+            'model_type': self.method,  # 'modular', 'prototype', or 'hybrid'
             'selector_type': self.selector_type,
             'num_select': self.num_select,
             'fuser_type': self.fuser_type,
@@ -289,6 +293,10 @@ class TrainEvalOrchestrator:
             
             # Loss weights
             'lambda_redundancy': 0.1,
+            
+            # Hybrid model specific weights
+            'multimodal_weight': self.cfg.get('multimodal_weight', 0.5),
+            'visual_weight': self.cfg.get('visual_weight', 0.5),
         }
         
         self.logger.debug(f'Config: {json.dumps(cfg, default=str, indent=2)}')
@@ -296,6 +304,11 @@ class TrainEvalOrchestrator:
         # Build modular model
         self.model = build_modular_model(cfg, self.classnames, clip_model, class_negatives=self.class_negatives)
         self.model = self.model.to(self.device)
+        
+        # For hybrid models, initialize prototypes from training data
+        if self.method == 'hybrid':
+            self.logger.debug('Initializing prototypes for hybrid model...')
+            self.model.init_prototypes_from_images(self.train_loader)
         
         # Setup optimizer (only for trainable parameters)
         trainable_params = self._get_trainable_params()
@@ -334,6 +347,9 @@ class TrainEvalOrchestrator:
         correct = 0
         total = 0
         
+        # Check if model is HybridCLIP
+        is_hybrid = hasattr(self.model, 'logits_combined')
+        
         # Tqdm bar
         pbar = tqdm(self.train_loader, desc=f'Epoch {epoch+1}/{self.epochs} [Train]', ncols=100)
         
@@ -348,7 +364,11 @@ class TrainEvalOrchestrator:
             with autocast():
                 output_dict = self.model(images, labels=labels, negative_text_tokens=negative_text_tokens)
                 
-                logits = output_dict['logits']
+                # Use combined logits for HybridCLIP, otherwise use regular logits
+                if is_hybrid:
+                    logits = output_dict['logits_combined']
+                else:
+                    logits = output_dict['logits']
                 aux_losses = output_dict['aux_losses']
                 
                 # Main Loss
@@ -414,6 +434,10 @@ class TrainEvalOrchestrator:
         self.model.eval()
         correct = 0
         total = 0
+        
+        # Check if model is HybridCLIP
+        is_hybrid = hasattr(self.model, 'logits_combined')
+        
         with torch.no_grad():
             for images, labels in self.test_loader:
                 images, labels = images.to(self.device), labels.to(self.device)
@@ -421,7 +445,11 @@ class TrainEvalOrchestrator:
                 # Inference only needs images (labels are for metric calc only)
                 with autocast():
                     output_dict = self.model(images, labels=None)  # No labels passed = Inference mode
-                    logits = output_dict['logits']
+                    # Use combined logits for HybridCLIP, otherwise use regular logits
+                    if is_hybrid:
+                        logits = output_dict['logits_combined']
+                    else:
+                        logits = output_dict['logits']
                 
                 _, predicted = logits.max(1)
                 correct += predicted.eq(labels).sum().item()
@@ -659,8 +687,18 @@ def main():
     parser.add_argument('--score_type', type=str, default='GL-MCM', help='OOD scoring method')
     parser.add_argument('--temperature', type=float, default=1.0, help='Temperature for OOD scoring')
     parser.add_argument('--lambda_local', type=float, default=1.0, help='Weight for local component in GL-MCM')
+    
+    # Hybrid model specific parameters
+    parser.add_argument('--multimodal_weight', type=float, default=0.5, help='Weight for multi-modal branch in hybrid model')
+    parser.add_argument('--visual_weight', type=float, default=0.5, help='Weight for visual branch in hybrid model')
 
     args = parser.parse_args()
+    
+    # Create config dict for additional parameters
+    cfg = {
+        'multimodal_weight': args.multimodal_weight,
+        'visual_weight': args.visual_weight,
+    }
 
     # Create trainer
     trainer = TrainEvalOrchestrator(
@@ -687,7 +725,8 @@ def main():
         patches_per_slot_attn=args.patches_per_slot_attn,
         score_type=args.score_type,
         temperature=args.temperature,
-        lambda_local=args.lambda_local
+        lambda_local=args.lambda_local,
+        cfg=cfg
     )
 
     trainer.train_with_eval()

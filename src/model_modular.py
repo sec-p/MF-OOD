@@ -851,6 +851,9 @@ def build_modular_model(cfg: Dict, classnames: list, clip_model, class_negatives
     model_type = cfg.get('model_type', 'modular')
     if model_type == 'prototype':
         return PrototypeCLIP(cfg, classnames, clip_model, class_negatives=class_negatives)
+    elif model_type == 'hybrid':
+        from .model_hybrid import HybridCLIP
+        return HybridCLIP(cfg, classnames, clip_model, class_negatives=class_negatives)
     else:
         return ModularCustomCLIP(cfg, classnames, clip_model, class_negatives=class_negatives)
 

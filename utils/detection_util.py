@@ -99,6 +99,9 @@ def get_ood_scores_clip(args, net, loader, test_labels):
     concat = lambda x: np.concatenate(x, axis=0)
     _score = []
     
+    # Check if model is HybridCLIP
+    is_hybrid = hasattr(net, 'ood_score_combined')
+    
     # Use cached text features from model (already computed during initialization)
     # No need to recompute - this avoids redundant computation
     if hasattr(net, 'text_features') and net.text_features is not None:
@@ -118,6 +121,27 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                 bz = images.size(0)
                 labels = labels.long().cuda()
                 images = images.cuda()
+                
+                # For HybridCLIP, use pre-computed OOD scores
+                if is_hybrid:
+                    res = net(images)
+                    
+                    # Use combined OOD score by default
+                    if args.score == 'HYBRID':
+                        ood_scores = res['ood_score_combined']
+                    elif args.score == 'HYBRID-MULTI':
+                        ood_scores = res['ood_score_multimodal']
+                    elif args.score == 'HYBRID-VISUAL':
+                        ood_scores = res['ood_score_visual']
+                    else:
+                        # Default to combined score
+                        ood_scores = res['ood_score_combined']
+                    
+                    # Convert to negative score for consistency with other methods
+                    _score.append(-to_np(ood_scores))
+                    continue
+                
+                # Original logic for non-hybrid models
                 # global_features, local_features = net.encode_image(images)  # .float()
                 res=net(images)
                 global_features = res['global_features']  # .float()
