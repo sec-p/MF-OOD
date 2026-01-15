@@ -309,8 +309,10 @@ class HybridCLIP(nn.Module):
             'ood_score_visual': ood_score_visual,
             'ood_score_combined': ood_score_combined,
             'selected_feats': selected_feats_raw,
+            'selected_feats_proj': selected_feats_proj,  # For multi-modal branch local scores (512D)
             'global_features': global_features_multimodal,
-            'local_features': patch_tokens_raw,
+            'local_features': patch_tokens_raw,  # For visual branch local scores (768D)
+            'local_features_proj': patch_tokens_proj,  # For multi-modal branch local scores (512D)
             'bg_mask': bg_mask
         }
     

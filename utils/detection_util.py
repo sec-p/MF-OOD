@@ -130,17 +130,26 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                     logits_multimodal = res['logits_multimodal']  # (B, C)
                     logits_visual = res['logits_visual']  # (B, C)
                     
-                    # Get features for local scores
-                    local_features = res['local_features']  # (B, N, 768)
-                    local_features = local_features / local_features.norm(dim=-1, keepdim=True)
+                    # Get local features for both branches
+                    local_features_visual = res['local_features']  # (B, N, 768) - For visual branch
+                    local_features_multimodal = res['local_features_proj']  # (B, N, 512) - For multi-modal branch
+                    
+                    # Normalize local features
+                    local_features_visual = local_features_visual / local_features_visual.norm(dim=-1, keepdim=True)
+                    local_features_multimodal = local_features_multimodal / local_features_multimodal.norm(dim=-1, keepdim=True)
                     
                     # Compute softmax for both branches
                     smax_multimodal = to_np(F.softmax(logits_multimodal / args.T, dim=1))  # (B, C)
                     smax_visual = to_np(F.softmax(logits_visual / args.T, dim=1))  # (B, C)
                     
                     # Compute local scores using text features (512D)
-                    output_local = local_features @ text_features.T  # (B, N, C)
-                    smax_local = to_np(F.softmax(output_local / args.T, dim=-1))  # (B, N, C)
+                    # For visual branch: use local_features_visual (768D) with text features (512D)
+                    # For multi-modal branch: use local_features_multimodal (512D) with text features (512D)
+                    output_local_visual = local_features_visual @ text_features.T  # (B, N, C)
+                    output_local_multimodal = local_features_multimodal @ text_features.T  # (B, N, C)
+                    
+                    smax_local_visual = to_np(F.softmax(output_local_visual / args.T, dim=-1))  # (B, N, C)
+                    smax_local_multimodal = to_np(F.softmax(output_local_multimodal / args.T, dim=-1))  # (B, N, C)
                     
                     # Compute OOD scores based on score type
                     if args.score == 'HYBRID':
