@@ -122,23 +122,89 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                 labels = labels.long().cuda()
                 images = images.cuda()
                 
-                # For HybridCLIP, use pre-computed OOD scores
+                # For HybridCLIP, compute OOD scores using MCM/GL-MCM methods
                 if is_hybrid:
                     res = net(images)
                     
-                    # Use combined OOD score by default
-                    if args.score == 'HYBRID':
-                        ood_scores = res['ood_score_combined']
-                    elif args.score == 'HYBRID-MULTI':
-                        ood_scores = res['ood_score_multimodal']
-                    elif args.score == 'HYBRID-VISUAL':
-                        ood_scores = res['ood_score_visual']
-                    else:
-                        # Default to combined score
-                        ood_scores = res['ood_score_combined']
+                    # Get logits from both branches
+                    logits_multimodal = res['logits_multimodal']  # (B, C)
+                    logits_visual = res['logits_visual']  # (B, C)
                     
-                    # Convert to negative score for consistency with other methods
-                    _score.append(-to_np(ood_scores))
+                    # Get features for local scores
+                    local_features = res['local_features']  # (B, N, 768)
+                    local_features = local_features / local_features.norm(dim=-1, keepdim=True)
+                    
+                    # Compute softmax for both branches
+                    smax_multimodal = to_np(F.softmax(logits_multimodal / args.T, dim=1))  # (B, C)
+                    smax_visual = to_np(F.softmax(logits_visual / args.T, dim=1))  # (B, C)
+                    
+                    # Compute local scores using text features (512D)
+                    output_local = local_features @ text_features.T  # (B, N, C)
+                    smax_local = to_np(F.softmax(output_local / args.T, dim=-1))  # (B, N, C)
+                    
+                    # Compute OOD scores based on score type
+                    if args.score == 'HYBRID':
+                        # Use GL-MCM for both branches and combine
+                        mcm_global_multi = -np.max(smax_multimodal, axis=1)
+                        mcm_global_visual = -np.max(smax_visual, axis=1)
+                        mcm_local_multi = -np.max(smax_local, axis=(1, 2))
+                        mcm_local_visual = -np.max(smax_local, axis=(1, 2))
+                        
+                        # Combine scores
+                        ood_scores_multi = mcm_global_multi + args.lambda_local * mcm_local_multi
+                        ood_scores_visual = mcm_global_visual + args.lambda_local * mcm_local_visual
+                        
+                        # Weighted combination
+                        ood_scores = net.multimodal_weight * ood_scores_multi + net.visual_weight * ood_scores_visual
+                        
+                    elif args.score == 'HYBRID-MULTI':
+                        # Use GL-MCM for multi-modal branch only
+                        mcm_global = -np.max(smax_multimodal, axis=1)
+                        mcm_local = -np.max(smax_local, axis=(1, 2))
+                        ood_scores = mcm_global + args.lambda_local * mcm_local
+                        
+                    elif args.score == 'HYBRID-VISUAL':
+                        # Use GL-MCM for visual branch only
+                        mcm_global = -np.max(smax_visual, axis=1)
+                        mcm_local = -np.max(smax_local, axis=(1, 2))
+                        ood_scores = mcm_global + args.lambda_local * mcm_local
+                        
+                    elif args.score == 'HYBRID-MCM':
+                        # Use MCM for both branches and combine
+                        mcm_multi = -np.max(smax_multimodal, axis=1)
+                        mcm_visual = -np.max(smax_visual, axis=1)
+                        ood_scores = net.multimodal_weight * mcm_multi + net.visual_weight * mcm_visual
+                        
+                    elif args.score == 'HYBRID-SA-MCM':
+                        # Use SA-MCM for multi-modal branch
+                        pred_labels = np.argmax(smax_multimodal, axis=1)  # (B,)
+                        mcm_global = -np.max(smax_multimodal, axis=1)
+                        
+                        # For SA-MCM, we need selected features
+                        selected_feats = res['selected_feats']  # (B, N, 768)
+                        selected_feats = selected_feats / selected_feats.norm(dim=-1, keepdim=True)
+                        output_selected = selected_feats @ text_features.T  # (B, N, C)
+                        smax_selected = to_np(F.softmax(output_selected / args.T, dim=-1))  # (B, N, C)
+                        
+                        # Extract slot confidences for predicted class
+                        B, N, C = smax_selected.shape
+                        slot_confs = smax_selected[np.arange(B)[:, None], np.arange(N)[None, :], pred_labels[:, None]]
+                        min_slot_conf = np.min(slot_confs, axis=1)
+                        mcm_selected = -min_slot_conf
+                        
+                        ood_scores = mcm_global + args.lambda_local * mcm_selected
+                        
+                    else:
+                        # Default to GL-MCM combined
+                        mcm_global_multi = -np.max(smax_multimodal, axis=1)
+                        mcm_global_visual = -np.max(smax_visual, axis=1)
+                        mcm_local = -np.max(smax_local, axis=(1, 2))
+                        
+                        ood_scores_multi = mcm_global_multi + args.lambda_local * mcm_local
+                        ood_scores_visual = mcm_global_visual + args.lambda_local * mcm_local
+                        ood_scores = net.multimodal_weight * ood_scores_multi + net.visual_weight * ood_scores_visual
+                    
+                    _score.append(ood_scores)
                     continue
                 
                 # Original logic for non-hybrid models

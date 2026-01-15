@@ -45,7 +45,13 @@ def process_args():
     parser.add_argument('--CLIP_ckpt', type=str, default='ViT-B/16',
                         choices=['ViT-B/16', 'RN50', 'RN101'], help='which pretrained img encoder to use')
     parser.add_argument('--score', default='HYBRID', type=str, 
-                        choices=['HYBRID', 'HYBRID-MULTI', 'HYBRID-VISUAL'], help='score options for OOD detection')
+                        choices=['HYBRID', 'HYBRID-MULTI', 'HYBRID-VISUAL', 'HYBRID-MCM', 'HYBRID-SA-MCM'], 
+                        help='score options for OOD detection:\n'
+                        '  HYBRID: GL-MCM for both branches and combine\n'
+                        '  HYBRID-MULTI: GL-MCM for multi-modal branch only\n'
+                        '  HYBRID-VISUAL: GL-MCM for visual branch only\n'
+                        '  HYBRID-MCM: MCM for both branches and combine\n'
+                        '  HYBRID-SA-MCM: SA-MCM for multi-modal branch')
     parser.add_argument('--num_ood_sumple', default=-1, type=int, help="numbers of ood_samples")
     parser.add_argument('--shots', default=16, type=int, help='number of shots for prototype initialization')
     parser.add_argument('--templates', type=str, default="a photo of a {}", help='templates for text prompts')

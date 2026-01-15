@@ -108,21 +108,21 @@ class HybridCLIP(nn.Module):
         self.selector = self.selector.to(self.dtype)
     
     def _build_fuser(self):
-        """Build fuser component for multi-modal branch."""
+        """Build fuser component for multi-modal branch (works in projected space - 512D)."""
         f_type = self.cfg.get('fuser_type', 'mean')
         
         if f_type == 'query_attn':
             self.fuser = QueryGuidedAttentionFuser(
-                self.raw_feat_dim, 
+                self.proj_feat_dim,  # Use projected dimension (512)
                 self.cfg.get('num_heads_fuser', 8), self.cfg
             )
         elif f_type == 'self_attn':
             self.fuser = SelfAttentionFuser(
-                self.raw_feat_dim, 
+                self.proj_feat_dim,  # Use projected dimension (512)
                 self.cfg.get('num_heads_fuser', 8), self.cfg
             )
         else:
-            self.fuser = MeanPoolFuser(self.raw_feat_dim)
+            self.fuser = MeanPoolFuser(self.proj_feat_dim)  # Use projected dimension (512)
         
         self.fuser = self.fuser.to(self.dtype)
     
@@ -232,41 +232,40 @@ class HybridCLIP(nn.Module):
         # 1. Encode Image
         cls_token_raw, patch_tokens_raw, cls_token_proj, patch_tokens_proj = self.encode_image(image)
         
-        # 2. Use selector on projected features
+        # 2. Use selector on projected features (512D)
         selected_feats_proj, sel_aux_loss, bg_mask = self.selector(patch_tokens_proj)
         
-        # 3. Apply mask to raw features
+        # 3. Apply mask to raw features (768D) for visual branch
         selected_feats_raw = patch_tokens_raw * bg_mask
         
-        # 4. Text Features
+        # 4. Text Features (512D)
         text_feats = self._text_features.type(self.dtype)
         if labels is not None:
             pos_text_feat = text_feats[labels]
         else:
             pos_text_feat = text_feats.mean(dim=0, keepdim=True).expand(B, -1)
         
-        # 5. Multi-modal branch: Fuser fusion
-        final_feats_multimodal = self.fuser(selected_feats_raw, global_feat=cls_token_raw)
-        global_features_multimodal = cls_token_raw + final_feats_multimodal
+        # 5. Multi-modal branch: Fuser fusion in projected space (512D)
+        # Fuser takes: selected_feats_proj (B, N, 512) + cls_token_proj (B, 512)
+        final_feats_multimodal = self.fuser(selected_feats_proj, global_feat=cls_token_proj)
+        global_features_multimodal = cls_token_proj + final_feats_multimodal
         
-        # Project to shared space
-        proj = self.image_encoder.proj
-        global_features_multimodal_proj = global_features_multimodal @ proj
-        global_features_multimodal_proj = global_features_multimodal_proj / global_features_multimodal_proj.norm(dim=-1, keepdim=True)
+        # Normalize (already in projected space, no need to project)
+        global_features_multimodal = global_features_multimodal / global_features_multimodal.norm(dim=-1, keepdim=True)
         
-        # Compute multi-modal logits
+        # Compute multi-modal logits (both in 512D space)
         logit_scale = self.logit_scale.exp()
-        logits_multimodal = logit_scale * global_features_multimodal_proj @ text_feats.T
+        logits_multimodal = logit_scale * global_features_multimodal @ text_feats.T
         
-        # 6. Pure visual branch: cls + selected patch mean
+        # 6. Pure visual branch: cls + selected patch mean in original space (768D)
         selected_patch_mean = selected_feats_raw.mean(dim=1)
         global_features_visual = cls_token_raw + selected_patch_mean
         global_features_visual = global_features_visual / global_features_visual.norm(dim=-1, keepdim=True)
         
-        # Normalize prototypes
+        # Normalize prototypes (768D)
         prototypes_norm = self.prototypes / self.prototypes.norm(dim=-1, keepdim=True)
         
-        # Compute visual logits
+        # Compute visual logits (both in 768D space)
         logits_visual = logit_scale * global_features_visual @ prototypes_norm.T
         
         # 7. Combine logits
@@ -289,11 +288,11 @@ class HybridCLIP(nn.Module):
         if self.cfg.get('use_semantic_exclusion', False) and labels is not None:
             mask = torch.ones(B, self.num_classes, dtype=torch.bool, device=self.device)
             mask[torch.arange(B), labels] = False
-            neg_text_feats = text_feats.unsqueeze(0).expand(B, -1, -1)[mask].reshape(B, -1, self.feat_dim)
+            neg_text_feats = text_feats.unsqueeze(0).expand(B, -1, -1)[mask].reshape(B, -1, self.proj_feat_dim)  # Use proj_feat_dim (512)
             
             scale_val = logit_scale.item()
             sem_loss = self._compute_semantic_exclusion_loss(
-                global_features_multimodal_proj, pos_text_feat, neg_text_feats,
+                global_features_multimodal, pos_text_feat, neg_text_feats,
                 margin=self.cfg.get('margin', 0.1),
                 logit_scale=scale_val
             )
@@ -304,13 +303,13 @@ class HybridCLIP(nn.Module):
             'logits_visual': logits_visual,
             'logits_combined': logits_combined,
             'aux_losses': aux_losses,
-            'final_feats_multimodal': global_features_multimodal_proj,
-            'final_feats_visual': global_features_visual,
+            'final_feats_multimodal': global_features_multimodal,  # Already in 512D space
+            'final_feats_visual': global_features_visual,  # In 768D space
             'ood_score_multimodal': ood_score_multimodal,
             'ood_score_visual': ood_score_visual,
             'ood_score_combined': ood_score_combined,
             'selected_feats': selected_feats_raw,
-            'global_features': global_features_multimodal_proj,
+            'global_features': global_features_multimodal,
             'local_features': patch_tokens_raw,
             'bg_mask': bg_mask
         }
