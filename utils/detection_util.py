@@ -143,7 +143,7 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                     smax_visual = to_np(F.softmax(logits_visual / args.T, dim=1))  # (B, C)
                     
                     # Compute local scores using text features (512D)
-                    # For visual branch: use local_features_visual (768D) with text features (512D)
+                    # For visual branch: use projected local_features_visual_proj (512D) with text features (512D)
                     # For multi-modal branch: use local_features_multimodal (512D) with text features (512D)
                     output_local_visual = local_features_visual @ text_features.T  # (B, N, C)
                     output_local_multimodal = local_features_multimodal @ text_features.T  # (B, N, C)

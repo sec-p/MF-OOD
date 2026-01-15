@@ -70,19 +70,30 @@ class HybridCLIP(nn.Module):
         self._build_selector()
         self._build_fuser()
         
-        # Initialize prototypes for pure visual branch
+        # Initialize prototypes for pure visual branch (768D)
         self.prototypes = nn.Parameter(
             torch.empty(self.num_classes, self.raw_feat_dim, dtype=self.dtype),
             requires_grad=False
         )
         
-        # Cache text features for multi-modal branch
+        # Add projection layer for visual branch (768D -> 512D)
+        # This allows visual features to be used with text features (512D) for local scores
+        self.visual_proj = nn.Linear(self.raw_feat_dim, self.proj_feat_dim)
+        # Initialize to identity (no-op initially)
+        nn.init.eye_(self.visual_proj.weight)
+        nn.init.zeros_(self.visual_proj.bias)
+        self.visual_proj = self.visual_proj.to(self.dtype)
+        
+        # Cache text features for multi-modal branch (512D)
         self._cache_text_features()
         self._cache_negative_text_features()
         
         # OOD score combination weight
         self.multimodal_weight = cfg.get('multimodal_weight', 0.5)
         self.visual_weight = cfg.get('visual_weight', 0.5)
+        
+        # Add attribute for detection_util.py to identify HybridCLIP
+        self.ood_score_combined = None  # Placeholder, computed in forward
         
         print(f"✓ HybridCLIP initialized. Dtype: {self.dtype}")
         print(f"  Multi-modal weight: {self.multimodal_weight}, Visual weight: {self.visual_weight}")
@@ -261,6 +272,10 @@ class HybridCLIP(nn.Module):
         selected_patch_mean = selected_feats_raw.mean(dim=1)
         global_features_visual = cls_token_raw + selected_patch_mean
         global_features_visual = global_features_visual / global_features_visual.norm(dim=-1, keepdim=True)
+        
+        # Project visual features to 512D space for local scores
+        global_features_visual_proj = self.visual_proj(global_features_visual)
+        global_features_visual_proj = global_features_visual_proj / global_features_visual_proj.norm(dim=-1, keepdim=True)
         
         # Normalize prototypes (768D)
         prototypes_norm = self.prototypes / self.prototypes.norm(dim=-1, keepdim=True)
