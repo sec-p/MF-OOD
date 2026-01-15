@@ -65,9 +65,9 @@ class PrototypeCLIP(nn.Module):
         """Build selector component for feature selection."""
         # Import here to avoid circular import
         from .model_modular import IdentitySelector, MultiHeadMLPSelector, SparseSlotAttentionSelector
-        
-        s_type = self.cfg.get('selector_type', 'identity')
-        num_sel = self.cfg.get('num_select', 49)
+
+        s_type = self.cfg.get('selector_type', 'mlp')
+        num_sel = self.cfg.get('num_select', 64)
         
         # Use projected feature dimension for selector (512 for ViT-B/16)
         if s_type == 'mlp':
@@ -155,7 +155,7 @@ class PrototypeCLIP(nn.Module):
         
         # 5. Use cls_token_raw + selected_patch_mean as global feature for OOD detection
         # This is in raw feature space (768 for ViT-B/16)
-        global_features = cls_token_raw + selected_patch_mean
+        global_features = selected_patch_mean
         
         # 6. Normalize input features
         global_features = global_features / global_features.norm(dim=-1, keepdim=True)
@@ -172,7 +172,7 @@ class PrototypeCLIP(nn.Module):
             'logits': logits,
             'aux_losses': sel_aux_loss,
             'final_feats': global_features,
-            'global_features': global_features,
+            'global_features': selected_patch_mean,
             'local_features': patch_tokens_raw,
             'selected_feats': selected_feats_raw,
             'bg_mask': bg_mask
@@ -249,7 +249,7 @@ class PrototypeCLIP(nn.Module):
         if not os.path.exists(load_path):
             raise FileNotFoundError(f"Selector weights file not found: {load_path}")
         
-        checkpoint = torch.load(load_path, map_location=self.device)
+        checkpoint = torch.load(load_path, map_location=self.device, weights_only=False)
         
         # Check if this is a full checkpoint or just selector weights
         if 'selector_state_dict' in checkpoint:
@@ -277,7 +277,7 @@ class PrototypeCLIP(nn.Module):
             raise ValueError(f"Unknown checkpoint format. Expected 'selector_state_dict' or 'state_dict' in checkpoint.")
         
         # Verify selector type matches
-        current_selector_type = self.cfg.get('selector_type', 'identity')
+        current_selector_type = self.cfg.get('selector_type', 'mlp')
         if saved_selector_type != current_selector_type:
             print(f"Warning: Selector type mismatch. Saved: {saved_selector_type}, Current: {current_selector_type}")
         

@@ -48,7 +48,7 @@ def process_args():
     parser.add_argument('--num_ood_sumple', default=-1, type=int, help="numbers of ood_samples")
     parser.add_argument('--shots', default=16, type=int, help='number of shots for few-shot learning')
     parser.add_argument('--templates', type=str, default="a photo of a {}", help='templates for text prompts')
-    parser.add_argument('--lambda_local', default=0.4, type=float, help='weight for local score in GL-MCM')
+    parser.add_argument('--lambda_local', default=1.0, type=float, help='weight for local score in GL-MCM')
     parser.add_argument('--use_train_set', action='store_true', help='use training set for prototype initialization (default: use validation set)')
     parser.add_argument('--selector-weights', type=str, default=None, help='path to pre-trained selector weights to load')
     
