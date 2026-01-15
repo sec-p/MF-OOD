@@ -328,6 +328,7 @@ class HybridCLIP(nn.Module):
             'global_features': global_features_multimodal,
             'local_features': patch_tokens_raw,  # For visual branch local scores (768D)
             'local_features_proj': patch_tokens_proj,  # For multi-modal branch local scores (512D)
+            'prototypes': prototypes_norm,  # For visual branch local scores (768D)
             'bg_mask': bg_mask
         }
     
