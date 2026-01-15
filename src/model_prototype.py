@@ -155,7 +155,7 @@ class PrototypeCLIP(nn.Module):
         
         # 5. Use cls_token_raw + selected_patch_mean as global feature for OOD detection
         # This is in raw feature space (768 for ViT-B/16)
-        global_features = selected_patch_mean
+        global_features = cls_token_raw + selected_patch_mean
         
         # 6. Normalize input features
         global_features = global_features / global_features.norm(dim=-1, keepdim=True)
@@ -172,7 +172,7 @@ class PrototypeCLIP(nn.Module):
             'logits': logits,
             'aux_losses': sel_aux_loss,
             'final_feats': global_features,
-            'global_features': selected_patch_mean,
+            'global_features': global_features,
             'local_features': patch_tokens_raw,
             'selected_feats': selected_feats_raw,
             'bg_mask': bg_mask
