@@ -94,8 +94,9 @@ class MultiHeadMLPSelector(BaseSelector):
         dtype = local_feats.dtype
         device = local_feats.device
         
-        # 1. Scorer can run in FP16 (faster)
-        head_scores_list = [scorer(local_feats) for scorer in self.scorers]
+        # 1. Convert to FP32 for scorer operations (linear layers expect FP32 params)
+        local_feats_fp32 = local_feats.float()
+        head_scores_list = [scorer(local_feats_fp32) for scorer in self.scorers]
         scores = torch.cat(head_scores_list, dim=-1)  # (B, N, H)
         
         # 2. Selection Logic (Force FP32 for stability with TopK & Indices)
@@ -350,6 +351,7 @@ class SelfAttentionFuser(BaseFuser):
         global_feat:    [B, D]    (CLIP Original CLS)
         """
         B = selected_feats.shape[0]
+        dtype = selected_feats.dtype
         
         # 【修改点 2】拼接：把 Global Feat 变成序列的第一个 Token
         # [B, D] -> [B, 1, D]
@@ -359,15 +361,20 @@ class SelfAttentionFuser(BaseFuser):
         # 这样 Transformer 里的 Self-Attention 就会计算 Global 与 Patches 的交互
         x = torch.cat((global_token, selected_feats), dim=1)
         
-        # 交互
-        x = self.encoder(x)
-        x = self.norm(x)
+        # 交互：转换为 FP32 以匹配编码器参数 dtype
+        x_fp32 = x.float()
+        x_fp32 = self.encoder(x_fp32)
+        x_fp32 = self.norm(x_fp32)
+        
+        # 转回原始精度
+        x = x_fp32.to(dtype)
         
         # 取出第一个 Token (也就是被 Refine 过的 Global Token)
         x_aggregated = x[:, 0, :] 
         
-        # 投影
-        x_out = self.proj(x_aggregated)
+        # 投影：转换为 FP32 计算，再转回原始精度
+        x_out_fp32 = self.proj(x_aggregated.float())
+        x_out = x_out_fp32.to(dtype)
         
         return x_out
 

@@ -17,8 +17,8 @@ DEFAULT_SHOTS=16
 DEFAULT_CLASS_NEGATIVES_PATH="/root/class_negatives.json"
 
 # Hyperparameter search grids
-LEARNING_RATES=(0.005)
-BATCH_SIZES=(1024)
+LEARNING_RATES=(0.002)
+BATCH_SIZES=(128)
 SEEDS=(42)
 
 # Loss function coefficients grids

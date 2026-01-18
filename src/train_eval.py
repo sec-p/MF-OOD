@@ -288,7 +288,7 @@ class TrainEvalOrchestrator:
             'use_mixup_invariance': True if self.lambda_mixup > 0 else False,
             
             # Loss weights
-            'lambda_redundancy': 0.1,
+            'lambda_redundancy': 1.0,
         }
         
         self.logger.debug(f'Config: {json.dumps(cfg, default=str, indent=2)}')

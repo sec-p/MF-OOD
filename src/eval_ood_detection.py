@@ -41,7 +41,7 @@ def process_args():
                         choices=['ViT-B/16', 'RN50', 'RN101'], help='which pretrained img encoder to use')
     parser.add_argument('--score', default='MCM', type=str, choices=['MCM', 'L-MCM', 'GL-MCM','GL-MCM-L','GPT','SA-MCM'], help='score options')
     parser.add_argument('--num_ood_sumple', default=-1, type=int, help="numbers of ood_sumples")
-    parser.add_argument('--lambda_local', default=0.4, type=float, help='weight for local score')
+    parser.add_argument('--lambda_local', default=0.5, type=float, help='weight for local score')
     
     # Modular model parameters
     parser.add_argument('--model_path', type=str, default=None, help='path to trained modular model checkpoint')
@@ -95,8 +95,11 @@ def main():
             'templates': [args.templates],
         }
         
+        test_loader = set_val_loader(args, preprocess)
+        test_labels = get_test_labels(args)
+
         # Build modular model
-        net = build_modular_model(cfg, classnames, clip_model)
+        net = build_modular_model(cfg, test_labels, clip_model)
         
         # Move entire model to CUDA device first (critical for new layers)
         device = torch.device(f'cuda:{args.gpu}')
@@ -125,8 +128,7 @@ def main():
     elif args.in_dataset in ['ImageNet']:
         out_datasets = ['iNaturalist', 'SUN', 'places365', 'Texture']
 
-    test_loader = set_val_loader(args, preprocess)
-    test_labels = get_test_labels(args)
+
 
     in_score = get_ood_scores_clip(args, net, test_loader, test_labels)
 
