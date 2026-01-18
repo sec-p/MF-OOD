@@ -67,6 +67,10 @@ class TrainEvalOrchestrator:
                  # Advanced settings
                  selector_temperature: float = 1.0,
                  patches_per_slot_attn: int = 16,
+                 # Dimension parameters
+                 mlp_hidden_ratio: float = 0.25,
+                 slot_ffn_ratio: float = 4.0,
+                 fuser_ffn_ratio: float = 8.0,
                  # OOD score parameters
                  score_type: str = 'GL-MCM',
                  temperature: float = 1.0,
@@ -108,6 +112,11 @@ class TrainEvalOrchestrator:
         # Advanced settings
         self.selector_temperature = selector_temperature
         self.patches_per_slot_attn = patches_per_slot_attn
+        
+        # Dimension parameters
+        self.mlp_hidden_ratio = mlp_hidden_ratio
+        self.slot_ffn_ratio = slot_ffn_ratio
+        self.fuser_ffn_ratio = fuser_ffn_ratio
         
         # Setup random seeds
         self._setup_seed(seed)
@@ -280,6 +289,11 @@ class TrainEvalOrchestrator:
             'selector_temperature': self.selector_temperature,
             'patches_per_slot_attn': self.patches_per_slot_attn,
             'templates': imagenet_templates,
+            
+            # Dimension parameters
+            'mlp_hidden_ratio': self.mlp_hidden_ratio,
+            'slot_ffn_ratio': self.slot_ffn_ratio,
+            'fuser_ffn_ratio': self.fuser_ffn_ratio,
             
             # Feature flags
             'use_redundancy_loss': True,
@@ -650,6 +664,14 @@ def main():
     # Model parameters
     parser.add_argument('--num_select', type=int, default=16,
                         help='Number of tokens/features to retain in selector (k)')
+    
+    # Dimension parameters
+    parser.add_argument('--mlp_hidden_ratio', type=float, default=0.25,
+                        help='Hidden dimension ratio for MLP selector (default: 0.25 = input_dim // 4)')
+    parser.add_argument('--slot_ffn_ratio', type=float, default=4.0,
+                        help='FFN dimension ratio for slot selector (default: 4.0 = 4 * input_dim)')
+    parser.add_argument('--fuser_ffn_ratio', type=float, default=8.0,
+                        help='FFN dimension ratio for fuser (default: 8.0 = 8 * input_dim)')
 
     # Advanced params
     parser.add_argument('--selector_temperature', type=float, default=1.0)
@@ -685,6 +707,9 @@ def main():
         num_select=args.num_select,
         selector_temperature=args.selector_temperature,
         patches_per_slot_attn=args.patches_per_slot_attn,
+        mlp_hidden_ratio=args.mlp_hidden_ratio,
+        slot_ffn_ratio=args.slot_ffn_ratio,
+        fuser_ffn_ratio=args.fuser_ffn_ratio,
         score_type=args.score_type,
         temperature=args.temperature,
         lambda_local=args.lambda_local

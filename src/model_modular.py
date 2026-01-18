@@ -81,11 +81,14 @@ class MultiHeadMLPSelector(BaseSelector):
         super().__init__(input_dim, num_select, cfg)
         self.num_heads = num_heads
         
+        mlp_hidden_ratio = cfg.get('mlp_hidden_ratio', 0.25) if cfg else 0.25
+        mlp_hidden_dim = int(input_dim * mlp_hidden_ratio)
+        
         self.scorers = nn.ModuleList([
             nn.Sequential(
-                nn.Linear(input_dim, input_dim // 4),
+                nn.Linear(input_dim, mlp_hidden_dim),
                 nn.ReLU(),
-                nn.Linear(input_dim // 4, 1)
+                nn.Linear(mlp_hidden_dim, 1)
             ) for _ in range(num_heads)
         ])
     
@@ -155,21 +158,20 @@ class SparseSlotAttentionSelector(BaseSelector):
         super().__init__(input_dim, num_select, cfg)
         self.num_slots = num_slots
         
-        # 1. Slot Query 初始化 (正交)
-        # 这些是“提问者”，负责去图像里找特定的特征
+        ffn_ratio = cfg.get('slot_ffn_ratio', 4.0) if cfg else 4.0
+        ffn_hidden_dim = int(input_dim * ffn_ratio)
+        
         self.slots = nn.Parameter(torch.empty(num_slots, input_dim))
         nn.init.orthogonal_(self.slots.data, gain=1.0)
-        self.slots.data = self.slots.data.unsqueeze(0) # (1, S, D)
+        self.slots.data = self.slots.data.unsqueeze(0)
         
-        # 2. 简单的特征处理层 (FFN) - 可选，用于增强非线性
-        # 对提取出来的 slot features 做一次变换
         self.norm_slots = nn.LayerNorm(input_dim)
         self.norm_input = nn.LayerNorm(input_dim)
         
         self.ff = nn.Sequential(
-            nn.Linear(input_dim, 4 * input_dim),
+            nn.Linear(input_dim, ffn_hidden_dim),
             nn.GELU(),
-            nn.Linear(4 * input_dim, input_dim),
+            nn.Linear(ffn_hidden_dim, input_dim),
             nn.LayerNorm(input_dim)
         )
         
@@ -321,15 +323,13 @@ class SelfAttentionFuser(BaseFuser):
     def __init__(self, input_dim, num_heads=8, cfg=None):
         super().__init__(input_dim, cfg)
         
-        # 允许配置层数，建议 2 层
-        num_layers = cfg.get('fuser_layers', 2) if cfg else 2
+        fuser_ffn_ratio = cfg.get('fuser_ffn_ratio', 8.0) if cfg else 8.0
         
-        # 【修改点 1】删掉了 self.cls_token = nn.Parameter(...)
-        # 我们直接用外部传入的特征
+        num_layers = cfg.get('fuser_layers', 2) if cfg else 2
         
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=input_dim, nhead=num_heads,
-            dim_feedforward=8*input_dim,
+            dim_feedforward=int(input_dim * fuser_ffn_ratio),
             batch_first=True, activation='gelu',
             norm_first=True
         )
