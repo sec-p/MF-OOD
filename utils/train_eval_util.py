@@ -36,7 +36,7 @@ def set_val_loader(args, preprocess=None):
             transforms.ToTensor(),
             normalize
         ])
-    kwargs = {'num_workers': 12, 'pin_memory': True, 'persistent_workers': True}
+    kwargs = {'num_workers': 8, 'pin_memory': True, 'persistent_workers': True}
     if args.in_dataset == "ImageNet":
         val_loader = torch.utils.data.DataLoader(
             datasets.ImageFolder(os.path.join(root, 'ImageNet','images', 'val'), transform=preprocess),
@@ -94,7 +94,7 @@ def set_ood_loader_ImageNet(args, out_dataset, preprocess, root):
         testsetout = get_subset_with_len(testsetout, length=args.num_ood_sumple, shuffle=True)
     
     # Use consistent kwargs with GL-MCM style
-    kwargs = {'num_workers': 12, 'pin_memory': True, 'persistent_workers': True}
+    kwargs = {'num_workers': 8, 'pin_memory': True, 'persistent_workers': True}
     batch_size = args.batch_size if hasattr(args, 'batch_size') else 64  # Default to 64 if not provided
     
     testloaderOut = torch.utils.data.DataLoader(
@@ -121,7 +121,7 @@ def set_train_loader(args, transform=None):
             transforms.ToTensor(),
             normalize
         ])
-    kwargs = {'num_workers': 12, 'pin_memory': True, 'persistent_workers': True}
+    kwargs = {'num_workers': 8, 'pin_memory': True, 'persistent_workers': True}
     
     # Load full training dataset
     if args.in_dataset == "ImageNet":
