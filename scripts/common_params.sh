@@ -17,8 +17,8 @@ DEFAULT_SHOTS=16
 DEFAULT_CLASS_NEGATIVES_PATH="/root/class_negatives.json"
 
 # Hyperparameter search grids
-LEARNING_RATES=(0.002)
-BATCH_SIZES=(128)
+LEARNING_RATES=(0.003 0.005)
+BATCH_SIZES=(128 256)
 SEEDS=(42)
 
 # Loss function coefficients grids
@@ -34,9 +34,11 @@ SELECTOR_TEMPERATURE=(1.0)
 PATCHES_PER_SLOT_ATTN=(8)
 
 # Dimension parameters
-MLP_HIDDEN_RATIO=(0.25)
+MLP_HIDDEN_RATIO=(0.5 1 1.5)
 SLOT_FFN_RATIO=(4.0)
-FUSER_FFN_RATIO=(8.0)
+FUSER_FFN_RATIO=(1 2 4 8)
+# FUSER_FFN_RATIO=(8)
+
 
 # OOD score parameters
 SCORE_TYPE="GL-MCM-L"
