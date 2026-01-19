@@ -58,8 +58,8 @@ def process_args():
     parser.add_argument('--lambda_local', default=1.0, type=float, help='weight for local score in GL-MCM')
     parser.add_argument('--use_train_set', action='store_true', help='use training set for prototype initialization (default: use validation set)')
     parser.add_argument('--checkpoint', type=str, required=True, help='path to checkpoint file with trained weights')
-    parser.add_argument('--multimodal_weight', type=float, default=0.5, help='weight for multi-modal branch')
-    parser.add_argument('--visual_weight', type=float, default=0.5, help='weight for visual branch')
+    parser.add_argument('--multimodal_weight', type=float, default=0.6, help='weight for multi-modal branch')
+    parser.add_argument('--visual_weight', type=float, default=0.4, help='weight for visual branch')
     
     args = parser.parse_args()
     args.CLIP_ckpt_name = args.CLIP_ckpt.replace('/', '_')
@@ -193,8 +193,10 @@ def main():
         'multimodal_weight': args.multimodal_weight,
         'visual_weight': args.visual_weight,
     }
-    
-    model = build_modular_model(cfg, classnames, clip_model)
+    # Setup test loader
+    test_loader = set_val_loader(args, preprocess)
+    test_labels = get_test_labels(args)
+    model = build_modular_model(cfg, test_labels, clip_model)
     model = model.to(device)
     
     # Load checkpoint
@@ -256,9 +258,7 @@ def main():
     print("\nInitializing prototypes from few-shot examples...")
     init_prototypes_from_fewshot(model, fewshot_loader, classnames)
     
-    # Setup test loader
-    test_loader = set_val_loader(args, preprocess)
-    test_labels = get_test_labels(args)
+    
     
     # Evaluate ID performance
     print("\nEvaluating ID performance...")

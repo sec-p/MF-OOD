@@ -120,7 +120,7 @@ class HybridCLIP(nn.Module):
     
     def _build_fuser(self):
         """Build fuser component for multi-modal branch (works in projected space - 512D)."""
-        f_type = self.cfg.get('fuser_type', 'mean')
+        f_type = self.cfg.get('fuser_type', 'self_attn')
         
         if f_type == 'query_attn':
             self.fuser = QueryGuidedAttentionFuser(
@@ -271,6 +271,7 @@ class HybridCLIP(nn.Module):
         # 6. Pure visual branch: cls + selected patch mean in original space (768D)
         selected_patch_mean = selected_feats_raw.mean(dim=1)
         global_features_visual = cls_token_raw + selected_patch_mean
+        # global_features_visual = cls_token_raw
         global_features_visual = global_features_visual / global_features_visual.norm(dim=-1, keepdim=True)
         
         # Project visual features to 512D space for local scores

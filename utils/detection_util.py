@@ -127,8 +127,16 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                     res = net(images)
                     
                     # Get logits from both branches
-                    logits_multimodal = res['logits_multimodal']  # (B, C)
-                    logits_visual = res['logits_visual']  # (B, C)
+                    logits_multimodal = res['logits_multimodal'] / 100  # (B, C)
+                    logits_visual = res['logits_visual'] / 100  # (B, C)-res['logits_visual']
+                    mean_visual = logits_visual.mean(dim=1, keepdim=True)
+                    logits_visual = torch.where(
+                        logits_visual > mean_visual,
+                        mean_visual,
+                        logits_visual
+                    )
+
+                    logits = net.multimodal_weight * logits_multimodal + net.visual_weight * logits_visual
                     
                     # Get local features for both branches
                     local_features_visual = res['local_features']  # (B, N, 768) - For visual branch
@@ -139,9 +147,9 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                     local_features_multimodal = local_features_multimodal / local_features_multimodal.norm(dim=-1, keepdim=True)
                     
                     # Compute softmax for both branches
-                    smax_multimodal = to_np(F.softmax(logits_multimodal / args.T, dim=1))  # (B, C)
-                    smax_visual = to_np(F.softmax(logits_visual / args.T, dim=1))  # (B, C)
-                    
+                    smax_multimodal = to_np(F.softmax(logits_multimodal / args.T /100, dim=1))  # (B, C)
+                    smax_visual = to_np(F.softmax(logits_visual / args.T /100, dim=1))  # (B, C)
+                    smax = to_np(F.softmax(logits / args.T, dim=1))  # (B, C)
                     # Get prototypes for visual branch (768D) - already normalized
                     prototypes = res['prototypes']  # (C, 768)
                     
@@ -149,25 +157,36 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                     # For visual branch: use local_features_visual (768D) with prototypes (768D)
                     # For multi-modal branch: use local_features_multimodal (512D) with text features (512D)
                     output_local_visual = local_features_visual @ prototypes.T  # (B, N, C)
+                    mean_visual_local = output_local_visual.mean(dim=-1, keepdim=True)
+                    output_local_visual = torch.where(
+                        output_local_visual < mean_visual_local,
+                        mean_visual_local,
+                        output_local_visual
+                    )
+
                     output_local_multimodal = local_features_multimodal @ text_features.T  # (B, N, C)
+                    logits_local = net.multimodal_weight * output_local_multimodal + net.visual_weight * output_local_visual
                     
                     smax_local_visual = to_np(F.softmax(output_local_visual / args.T, dim=-1))  # (B, N, C)
                     smax_local_multimodal = to_np(F.softmax(output_local_multimodal / args.T, dim=-1))  # (B, N, C)
+                    smax_local = to_np(F.softmax(logits_local / args.T, dim=-1))  # (B, N, C)
                     
                     # Compute OOD scores based on score type
                     if args.score == 'HYBRID':
                         # Use GL-MCM for both branches and combine
                         mcm_global_multi = -np.max(smax_multimodal, axis=1)
                         mcm_global_visual = -np.max(smax_visual, axis=1)
-                        mcm_local_multi = -np.max(smax_local, axis=(1, 2))
-                        mcm_local_visual = -np.max(smax_local, axis=(1, 2))
+                        mcm_local_multi = -np.max(smax_local_multimodal, axis=(1, 2))
+                        mcm_local_visual = -np.max(smax_local_visual, axis=(1, 2))
                         
+                        mcm_global = -np.max(smax, axis=1)
+                        mcm_local = -np.max(smax_local, axis=(1, 2))
                         # Combine scores
                         ood_scores_multi = mcm_global_multi + args.lambda_local * mcm_local_multi
                         ood_scores_visual = mcm_global_visual + args.lambda_local * mcm_local_visual
                         
                         # Weighted combination
-                        ood_scores = net.multimodal_weight * ood_scores_multi + net.visual_weight * ood_scores_visual
+                        ood_scores = mcm_global + args.lambda_local * mcm_local
                         
                     elif args.score == 'HYBRID-MULTI':
                         # Use GL-MCM for multi-modal branch only
@@ -204,7 +223,8 @@ def get_ood_scores_clip(args, net, loader, test_labels):
                         min_slot_conf = np.min(slot_confs, axis=1)
                         mcm_selected = -min_slot_conf
                         
-                        ood_scores = mcm_global + args.lambda_local * mcm_selected
+                        # ood_scores = mcm_global + args.lambda_local * mcm_selected
+                        ood_scores = mcm_global
                         
                     else:
                         # Default to GL-MCM combined
