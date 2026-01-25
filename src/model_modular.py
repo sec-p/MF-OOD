@@ -12,6 +12,8 @@ from typing import Tuple, Dict, Optional
 import math
 import clip
 import json
+import os
+import numpy as np
 from torch.cuda.amp import autocast
 
 
@@ -261,7 +263,7 @@ class SparseSlotAttentionSelector(BaseSelector):
 
 class MeanPoolFuser(BaseFuser):
     def forward(self, selected_feats: torch.Tensor, 
-                text_feats: Optional[torch.Tensor] = None, 
+                global_feat: Optional[torch.Tensor] = None, 
                 labels: Optional[torch.Tensor] = None) -> torch.Tensor:
         return selected_feats.mean(dim=1)
 
@@ -342,7 +344,8 @@ class SelfAttentionFuser(BaseFuser):
             nn.Linear(input_dim, input_dim)
         )
         # 依然保持零初始化，保证初始阶段不破坏原特征
-        nn.init.zeros_(self.proj[-1].weight)
+        # nn.init.zeros_(self.proj[-1].weight)
+        nn.init.normal_(self.proj[-1].weight, std=1e-4)
         nn.init.zeros_(self.proj[-1].bias)
 
     def forward(self, selected_feats, global_feat, text_feats=None, labels=None):
@@ -376,7 +379,91 @@ class SelfAttentionFuser(BaseFuser):
         x_out_fp32 = self.proj(x_aggregated.float())
         x_out = x_out_fp32.to(dtype)
         
-        return x_out
+        return x
+
+
+class SimpleAdapterFuser(BaseFuser):
+    def __init__(self, input_dim, num_heads=8, cfg=None):
+        super().__init__(input_dim, cfg)
+        
+        adapter_ratio = cfg.get('adapter_ratio', 0.5) if cfg else 0.5
+        hidden_dim = int(input_dim * adapter_ratio)
+        
+        self.adapter = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.GELU(),
+            nn.Linear(hidden_dim, input_dim)
+        )
+        self.norm = nn.LayerNorm(input_dim)
+        
+        # 零初始化输出层，保证初始阶段不破坏原特征
+        nn.init.zeros_(self.adapter[-1].weight)
+        nn.init.zeros_(self.adapter[-1].bias)
+
+    def forward(self, selected_feats, global_feat, text_feats=None, labels=None):
+        """
+        selected_feats: [B, N, D] (Patches) - not used in this simple adapter
+        global_feat:    [B, D]    (CLIP Original CLS)
+        """
+        dtype = global_feat.dtype
+        
+        # 简单的残差adapter: global_feat + adapter(global_feat)
+        global_feat_fp32 = global_feat.float()
+        adapter_out = self.adapter(global_feat_fp32)
+        x = self.norm(adapter_out)
+        
+        # 转回原始精度
+        x = x.to(dtype)
+        
+        return x
+
+
+class CrossAttentionFuser(BaseFuser):
+    def __init__(self, input_dim, num_heads=8, cfg=None):
+        super().__init__(input_dim, cfg)
+        
+        fuser_ffn_ratio = cfg.get('fuser_ffn_ratio', 4.0) if cfg else 4.0
+        
+        self.attn = nn.MultiheadAttention(
+            embed_dim=input_dim, num_heads=num_heads, batch_first=True
+        )
+        self.norm1 = nn.LayerNorm(input_dim)
+        
+        self.ffn = nn.Sequential(
+            nn.Linear(input_dim, int(input_dim * fuser_ffn_ratio)),
+            nn.GELU(),
+            nn.Linear(int(input_dim * fuser_ffn_ratio), input_dim)
+        )
+        self.norm2 = nn.LayerNorm(input_dim)
+        
+        # 零初始化投影层，保证初始阶段不破坏原特征
+        nn.init.zeros_(self.ffn[-1].weight)
+        # nn.init.normal_(self.ffn[-1].weight, std=1e-4)
+        nn.init.zeros_(self.ffn[-1].bias)
+
+    def forward(self, selected_feats, global_feat, text_feats=None, labels=None):
+        """
+        selected_feats: [B, N, D] (Patches)
+        global_feat:    [B, D]    (CLIP Original CLS)
+        """
+        dtype = selected_feats.dtype
+        
+        # Q: CLS, K/V: patches
+        q = global_feat.unsqueeze(1).float()  # [B, 1, D]
+        k = v = selected_feats.float()        # [B, N, D]
+        
+        # Cross-attention: CLS 作为 query，patches 作为 key 和 value
+        attn_out, _ = self.attn(q, k, v)
+        x = self.norm1(q + attn_out)
+        
+        # FFN
+        ffn_out = self.ffn(x)
+        x = self.norm2(x + ffn_out)
+        
+        # 转回原始精度并squeeze
+        x = x.squeeze(1).to(dtype)
+        
+        return x
 
 
 
@@ -416,7 +503,7 @@ def compute_semantic_exclusion_loss(final_feat: torch.Tensor,
     neg_score = torch.logsumexp(neg_sims, dim=1)
     
     # 5. Margin
-    scaled_margin = margin * logit_scale
+    scaled_margin = margin
     
     # 6. Loss
     loss = F.relu(neg_score - pos_sim + scaled_margin)
@@ -488,6 +575,55 @@ def compute_mixup_invariance_loss(final_feat: torch.Tensor,
     loss = F.kl_div(mixed_log_probs, orig_probs.detach(), reduction='batchmean')
     return loss
 
+@autocast(enabled=False)
+def compute_intra_class_consistency_loss(final_feats: torch.Tensor,
+                                       labels: torch.Tensor,
+                                       temperature: float = 0.1) -> torch.Tensor:
+    """
+    Intra-class Consistency Loss in FP32.
+    Encourages samples from the same class to have similar final features.
+    """
+    # 1. Cast inputs to Float
+    final_feats = final_feats.float()
+    labels = labels.float()
+    
+    B, D = final_feats.shape
+    
+    # 2. Normalize features
+    final_feats_norm = F.normalize(final_feats, dim=-1, eps=1e-8)
+    
+    # 3. Compute pairwise similarity matrix
+    # sim_matrix[i, j] = similarity between sample i and sample j
+    sim_matrix = torch.mm(final_feats_norm, final_feats_norm.t())  # [B, B]
+    
+    # 4. Create class mask: same_class_mask[i, j] = 1 if labels[i] == labels[j]
+    labels_expanded_1 = labels.unsqueeze(1)  # [B, 1]
+    labels_expanded_2 = labels.unsqueeze(0)  # [1, B]
+    same_class_mask = (labels_expanded_1 == labels_expanded_2).float()  # [B, B]
+    
+    # Remove diagonal (self-similarity)
+    diag_mask = torch.eye(B, device=final_feats.device).unsqueeze(0)
+    same_class_mask = same_class_mask * (1 - diag_mask)
+    
+    # 5. Compute loss: maximize similarity for same-class pairs
+    # Use temperature scaling
+    scaled_sim = sim_matrix / temperature
+    
+    # Apply mask to only consider same-class pairs
+    masked_sim = scaled_sim * same_class_mask
+    
+    # Count number of same-class pairs (excluding diagonal)
+    num_pairs = same_class_mask.sum()
+    
+    if num_pairs > 0:
+        # No same-class pairs in batch, return zero loss
+        return torch.tensor(0.0, device=final_feats.device)
+    
+    # Loss: negative mean similarity (we want to maximize similarity)
+    loss = -masked_sim.sum() / num_pairs
+    
+    return loss
+
 
 # ============================================================================
 # PART 5: MAIN MODEL - CustomCLIP
@@ -539,6 +675,10 @@ class ModularCustomCLIP(nn.Module):
             self.fuser = QueryGuidedAttentionFuser(self.feat_dim, self.cfg.get('num_heads_fuser', 8), self.cfg)
         elif f_type == 'self_attn':
             self.fuser = SelfAttentionFuser(self.feat_dim, self.cfg.get('num_heads_fuser', 8), self.cfg)
+        elif f_type == 'cross_attn':
+            self.fuser = CrossAttentionFuser(self.feat_dim, self.cfg.get('num_heads_fuser', 8), self.cfg)
+        elif f_type == 'simple_adapter':
+            self.fuser = SimpleAdapterFuser(self.feat_dim, self.cfg.get('num_heads_fuser', 8), self.cfg)
         else:
             self.fuser = MeanPoolFuser(self.feat_dim, self.cfg)
         # self.fuser = self.fuser.to(self.dtype)
@@ -547,6 +687,43 @@ class ModularCustomCLIP(nn.Module):
         templates = self.cfg.get('templates', ["a photo of a {}"])
         if isinstance(templates, str): templates = [templates]
         
+        # Check if text features path is provided
+        text_features_path = self.cfg.get('text_features_path', '')
+        if text_features_path and os.path.exists(text_features_path):
+            # Load pre-computed text features
+            # Supports two formats:
+            # 1. .pt file: direct PyTorch tensor [num_classes, feat_dim]
+            # 2. .npy file: NumPy array [num_classes, feat_dim]
+            
+            file_ext = os.path.splitext(text_features_path)[1].lower()
+            
+            if file_ext == '.pt':
+                loaded_data = torch.load(text_features_path)
+                # Check if it's a dict or direct tensor
+                if isinstance(loaded_data, dict):
+                    loaded_features = loaded_data['text_features']
+                else:
+                    loaded_features = loaded_data
+            elif file_ext == '.npy':
+                loaded_features = np.load(text_features_path)
+                loaded_features = torch.from_numpy(loaded_features).float()
+            else:
+                raise ValueError(f"Unsupported file format: {file_ext}. Expected .pt or .npy")
+            
+            # Check shape matches number of classes
+            num_classes_expected = len(self.classnames)
+            if loaded_features.shape[0] != num_classes_expected:
+                raise ValueError(
+                    f"Text features shape mismatch: expected {num_classes_expected} classes, "
+                    f"but got {loaded_features.shape[0]} classes. "
+                    f"Features shape: {loaded_features.shape}"
+                )
+            
+            self.text_features = loaded_features.to(self.device).type(self.dtype)
+            self.register_buffer('_text_features', self.text_features)
+            return
+        
+        # Otherwise, compute text features from scratch
         text_features_list = []
         with torch.no_grad():
             for classname in self.classnames:
@@ -561,7 +738,7 @@ class ModularCustomCLIP(nn.Module):
         
         self.text_features = torch.stack(text_features_list, dim=0).to(self.device).type(self.dtype)
         self.register_buffer('_text_features', self.text_features)
-
+    
     def _cache_negative_text_features(self):
         """
         Cache negative text features for all classes in class_negatives.
@@ -678,53 +855,29 @@ class ModularCustomCLIP(nn.Module):
         
         # B. LLM Negatives - now uses cached negative features
         if negative_text_tokens is None and self.cfg.get('use_llm_negatives', False) and labels is not None:
-            # 注意：如果 DataLoader 没传 negative_text_tokens，尝试从缓存获取
-            # 如果你的架构设计是 DataLoader 传进来的，这里的逻辑可能需要调整
-            # 假设这里是依靠 labels 从 self.label_to_neg_features 获取：
-            
             scale_val = logit_scale.item()
             
-            # 1. 收集 Batch 中每个样本的负特征
+            # 收集 Batch 中每个样本的负特征
             valid_indices = []
             raw_neg_list = []
             
             for i, label in enumerate(labels):
                 lbl = label.item()
                 if hasattr(self, 'label_to_neg_features') and lbl in self.label_to_neg_features:
-                    neg_feats = self.label_to_neg_features[lbl] # (Num_Neg, D)
+                    neg_feats = self.label_to_neg_features[lbl]
                     raw_neg_list.append(neg_feats)
                     valid_indices.append(i)
             
             if valid_indices:
-                # 2. 找到当前 Batch 中最大的负样本数量
-                max_neg_count = max([t.size(0) for t in raw_neg_list])
-                
-                # 3. 对齐处理 (Padding)
-                # 使用循环填充：如果不够长，就重复自己的数据，直到填满
-                padded_batch_negs = []
-                for t in raw_neg_list:
-                    current_count = t.size(0)
-                    if current_count < max_neg_count:
-                        # 计算需要补多少
-                        pad_size = max_neg_count - current_count
-                        # 循环重复来填充，保证分布一致性
-                        # 例如：[A, B] -> [A, B, A, B, A] (补到5个)
-                        repeats = (pad_size // current_count) + 1
-                        t_extended = t.repeat(repeats + 1, 1)[:max_neg_count, :]
-                        padded_batch_negs.append(t_extended.unsqueeze(0))
-                    else:
-                        padded_batch_negs.append(t.unsqueeze(0))
-                
-                # 4. 拼接
-                # Shape: (B_valid, Max_Neg, D)
-                valid_neg_feats = torch.cat(padded_batch_negs, dim=0)
+                # 直接拼接，无需padding（因为每个类的负样本数量相同）
+                neg_feats_batch = torch.stack(raw_neg_list, dim=0)
                 
                 # 提取对应的特征和正样本
                 valid_final_feats = final_feats[valid_indices]
                 valid_pos_text_feat = pos_text_feat[valid_indices]
                 
                 llm_loss = compute_semantic_exclusion_loss(
-                    valid_final_feats, valid_pos_text_feat, valid_neg_feats,
+                    valid_final_feats, valid_pos_text_feat, neg_feats_batch,
                     margin=self.cfg.get('margin', 0.1),
                     logit_scale=scale_val
                 )
@@ -743,7 +896,7 @@ class ModularCustomCLIP(nn.Module):
                 margin=self.cfg.get('margin', 0.1),
                 logit_scale=scale_val
             )
-            aux_losses['semantic_exclusion'] = self.cfg.get('lambda_llm_negatives', 0.1) * sem_loss
+            aux_losses['semantic_exclusion'] = self.cfg.get('lambda_llm_negatives', 0.5) * sem_loss
             
         # D. Mixup
         if self.cfg.get('use_mixup_invariance', False):
@@ -756,6 +909,15 @@ class ModularCustomCLIP(nn.Module):
                 alpha=self.cfg.get('mixup_alpha', 0.2)
             )
             aux_losses['mixup_invariance'] = self.cfg.get('lambda_mixup', 0.1) * mixup_loss
+        
+        # E. Intra-class Consistency
+        if self.cfg.get('use_intra_class_consistency', False) and labels is not None:
+            scale_val = logit_scale.item()
+            intra_loss = compute_intra_class_consistency_loss(
+                final_feats, labels,
+                temperature=self.cfg.get('intra_class_temp', 0.1)
+            )
+            aux_losses['intra_class_consistency'] = self.cfg.get('lambda_intra_class', 0.1) * intra_loss
         # import pdb
         # pdb.set_trace()
         return {

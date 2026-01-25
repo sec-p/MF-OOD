@@ -4,6 +4,34 @@ import numpy as np
 import random
 
 
+def read_imagenet_classes(file_path):
+    class_names = []
+    # 打开文件，按行读取（兼容不同编码）
+    with open(file_path, 'r', encoding='utf-8') as f:
+        for line_num, line in enumerate(f, 1):
+            # 去除行首尾的空白字符（换行、空格、制表符）
+            clean_line = line.strip()
+            # 跳过空行或注释行（以#开头的行）
+            if not clean_line or clean_line.startswith('#'):
+                continue
+            
+            # 关键：分割WNID和类名（仅分割第一个空格，兼容类名含空格的情况）
+            # 例如：n03777568 ford model t → 分割为 ['n03777568', 'ford model t']
+            parts = clean_line.split(maxsplit=1)
+            if len(parts) < 2:
+                # 跳过格式错误的行（无类名），并提示
+                print(f"警告：第{line_num}行格式错误，跳过 → 内容：{clean_line}")
+                continue
+            
+            # 提取类名（第二个部分）并加入列表
+            class_name = parts[1]
+            class_names.append(class_name)
+    
+    return class_names
+
+
+
+
 def setup_seed(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
@@ -26,11 +54,14 @@ def get_test_labels(args):
 def obtain_ImageNet_classes():
     # Try to load from the standard location first
     loc = os.path.join('data', 'ImageNet')
-    class_file = os.path.join(loc, 'imagenet_class_clean.npy')
+    # class_file = os.path.join(loc, 'imagenet_class_clean.npy')
+    class_file = os.path.join(loc, 'classname.txt')
+
     
     if os.path.exists(class_file):
         with open(class_file, 'rb') as f:
-            imagenet_cls = np.load(f)
+            # imagenet_cls = np.load(f)
+            imagenet_cls = read_imagenet_classes(class_file)
         return imagenet_cls
     else:
         # Fallback: Return a placeholder list for ImageNet classes

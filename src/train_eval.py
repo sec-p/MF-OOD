@@ -62,7 +62,7 @@ class TrainEvalOrchestrator:
                  selector_type: str = None, fuser_type: str = None, id_dataset: str = 'ImageNet',
                  root_path: str = '/data/datasets', shots: int = 16, lambda_llm_negatives: float = 0.1,
                  lambda_mixup: float = 0.1, margin: float = 0.2, num_select: int = 16,
-                 backbone: str = 'ViT-L/16', class_negatives_path: str = '', use_full_data: bool = False,
+                 backbone: str = 'ViT-L/16', class_negatives_path: str = '', text_features_path: str = '', use_full_data: bool = False,
                  num_ood_sumple: int = -1,
                  # Advanced settings
                  selector_temperature: float = 1.0,
@@ -71,6 +71,10 @@ class TrainEvalOrchestrator:
                  mlp_hidden_ratio: float = 0.25,
                  slot_ffn_ratio: float = 4.0,
                  fuser_ffn_ratio: float = 8.0,
+                 adapter_ratio: float = 0.5,
+                 # Intra-class consistency parameters
+                 lambda_intra_class: float = 0.1,
+                 intra_class_temp: float = 0.1,
                  # OOD score parameters
                  score_type: str = 'GL-MCM',
                  temperature: float = 1.0,
@@ -98,6 +102,8 @@ class TrainEvalOrchestrator:
         self.lambda_llm_negatives = lambda_llm_negatives
         self.lambda_mixup = lambda_mixup
         self.margin = margin
+        self.lambda_intra_class = lambda_intra_class
+        self.intra_class_temp = intra_class_temp
         
         # OOD score parameters
         self.score_type = score_type
@@ -108,6 +114,7 @@ class TrainEvalOrchestrator:
         self.num_select = num_select
         self.backbone = backbone
         self.class_negatives_path = class_negatives_path
+        self.text_features_path = text_features_path
         
         # Advanced settings
         self.selector_temperature = selector_temperature
@@ -117,6 +124,7 @@ class TrainEvalOrchestrator:
         self.mlp_hidden_ratio = mlp_hidden_ratio
         self.slot_ffn_ratio = slot_ffn_ratio
         self.fuser_ffn_ratio = fuser_ffn_ratio
+        self.adapter_ratio = adapter_ratio
         
         # Setup random seeds
         self._setup_seed(seed)
@@ -192,7 +200,7 @@ class TrainEvalOrchestrator:
         
         # Get classnames using GL-MCM standard method
         self.classnames = get_test_labels(data_args)
-        
+
         # Load class negatives
         self.class_negatives = self._load_class_negatives()
         if self.class_negatives:
@@ -288,21 +296,26 @@ class TrainEvalOrchestrator:
             'margin': self.margin,
             'selector_temperature': self.selector_temperature,
             'patches_per_slot_attn': self.patches_per_slot_attn,
+            'text_features_path': self.text_features_path,
             'templates': imagenet_templates,
             
             # Dimension parameters
             'mlp_hidden_ratio': self.mlp_hidden_ratio,
             'slot_ffn_ratio': self.slot_ffn_ratio,
             'fuser_ffn_ratio': self.fuser_ffn_ratio,
+            'adapter_ratio': self.adapter_ratio,
             
             # Feature flags
             'use_redundancy_loss': True,
             'use_llm_negatives': False if self.lambda_llm_negatives > 0 else False,
             'use_semantic_exclusion': True,
             'use_mixup_invariance': True if self.lambda_mixup > 0 else False,
+            'use_intra_class_consistency': True if self.lambda_intra_class > 0 else False,
             
             # Loss weights
             'lambda_redundancy': 1.0,
+            'lambda_intra_class': self.lambda_intra_class,
+            'intra_class_temp': self.intra_class_temp,
         }
         
         self.logger.debug(f'Config: {json.dumps(cfg, default=str, indent=2)}')
@@ -411,11 +424,11 @@ class TrainEvalOrchestrator:
             pbar.set_postfix(loss_info)
             
             # Log detailed loss info occasionally (reduced frequency)
-            if batch_idx % 100 == 0:
-                loss_str = f"CE: {ce_loss.item():.4f}"
-                for k, v in aux_losses.items():
-                    loss_str += f", {k}: {v.item():.4f}"
-                self.logger.debug(f"  Batch {batch_idx}: {loss_str}")
+            # if batch_idx % 100 == 0:
+            #     loss_str = f"CE: {ce_loss.item():.4f}"
+            #     for k, v in aux_losses.items():
+            #         loss_str += f", {k}: {v.item():.4f}"
+            #     self.logger.debug(f"  Batch {batch_idx}: {loss_str}")
 
         avg_loss = total_loss / len(self.train_loader) if len(self.train_loader) > 0 else 0
         train_acc = 100.0 * correct / total if total > 0 else 0
@@ -589,8 +602,9 @@ class TrainEvalOrchestrator:
             self.logger.debug(f'\n[Epoch {epoch+1}/{self.epochs}]')
             self.logger.debug(f'  Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%')
 
-            if (epoch+1) % 10 == 0 and epoch+1 > 20:
-                # Evaluate (reduced frequency from 5 to 10 epochs)
+            # Evaluate every 5 epochs (more frequent than before)
+            if (epoch+1) % 5 == 0 and epoch+1 > 1:
+                # Evaluate
                 eval_results = self.evaluate_epoch(epoch)
                 self.logger.debug(f'  ID Accuracy: {eval_results["id_accuracy"]:.2f}%')
                 
@@ -603,9 +617,8 @@ class TrainEvalOrchestrator:
                 avg_fpr95 = eval_results["avg_ood_fpr95"]
                 self.logger.debug(f'  Avg OOD AUROC: {avg_auroc:.2f}%, Avg OOD FPR95: {avg_fpr95:.2f}%')
             
-                # Save checkpoint (Every 10 epochs or best)
-                if (epoch % 10 == 0 or epoch == self.epochs - 1) and epoch+1 > 20:
-                    self.save_checkpoint(epoch, eval_results)
+                # Save checkpoint (Every 5 epochs or best or last epoch)
+                self.save_checkpoint(epoch, eval_results)
             
                 # Track best
                 if avg_auroc > best_avg_auroc:
@@ -619,12 +632,18 @@ class TrainEvalOrchestrator:
                 'train_loss': train_loss,
                 **eval_results
             })
+        
+        # Save final checkpoint at the end of training
+        self.logger.debug('\nSaving final checkpoint...')
+        final_checkpoint_path = self.save_checkpoint(self.epochs - 1, results_history[-1] if results_history else {})
+        self.logger.debug(f'Final checkpoint saved to: {final_checkpoint_path}')
                 
         # Save all results at once after training completes
         with open(os.path.join(self.log_dir, 'results.json'), 'w') as f:
             json.dump(results_history, f, indent=2)
                 
         self.logger.debug('\nTraining completed.')
+        self.logger.debug(f'All logs and checkpoints saved to: {self.log_dir}')
 
 
 
@@ -643,7 +662,8 @@ def main():
 
     # Components
     parser.add_argument('--selector_type', type=str, default='slot', help="'mlp' or 'slot'")
-    parser.add_argument('--fuser_type', type=str, default='query_attn')
+    parser.add_argument('--fuser_type', type=str, default='query_attn', 
+                       help="'mean', 'query_attn', 'self_attn', 'cross_attn', or 'simple_adapter'")
     
     # Dataset
     parser.add_argument('--id_dataset', type=str, default='ImageNet')
@@ -656,9 +676,17 @@ def main():
     parser.add_argument('--lambda_llm_negatives', type=float, default=0.1)
     parser.add_argument('--lambda_mixup', type=float, default=0.1)
     parser.add_argument('--margin', type=float, default=0.2)
+    parser.add_argument('--lambda_intra_class', type=float, default=0.1,
+                        help='Weight for intra-class consistency loss (default: 0.1)')
+    parser.add_argument('--intra_class_temp', type=float, default=0.1,
+                        help='Temperature for intra-class consistency loss (default: 0.1)')
     
     # Paths
     parser.add_argument('--class_negatives_path', type=str, default='')
+    parser.add_argument('--text_features_path', type=str, default='',
+                       help='Path to pre-computed text features (.pt or .npy file). '
+                            'Format: [num_classes, feat_dim] tensor/array, L2 normalized. '
+                            'Features should be in classname order matching your dataset.')
     parser.add_argument('--backbone', type=str, default='ViT-B/16')
 
     # Model parameters
@@ -672,6 +700,8 @@ def main():
                         help='FFN dimension ratio for slot selector (default: 4.0 = 4 * input_dim)')
     parser.add_argument('--fuser_ffn_ratio', type=float, default=8.0,
                         help='FFN dimension ratio for fuser (default: 8.0 = 8 * input_dim)')
+    parser.add_argument('--adapter_ratio', type=float, default=0.5,
+                        help='Hidden dimension ratio for simple adapter (default: 0.5 = input_dim // 2)')
 
     # Advanced params
     parser.add_argument('--selector_temperature', type=float, default=1.0)
@@ -700,8 +730,11 @@ def main():
         lambda_llm_negatives=args.lambda_llm_negatives,
         lambda_mixup=args.lambda_mixup,
         margin=args.margin,
+        lambda_intra_class=args.lambda_intra_class,
+        intra_class_temp=args.intra_class_temp,
         backbone=args.backbone,
         class_negatives_path=args.class_negatives_path,
+        text_features_path=args.text_features_path,
         use_full_data=args.use_full_data,
         num_ood_sumple=args.num_ood_sumple,
         num_select=args.num_select,
@@ -710,6 +743,7 @@ def main():
         mlp_hidden_ratio=args.mlp_hidden_ratio,
         slot_ffn_ratio=args.slot_ffn_ratio,
         fuser_ffn_ratio=args.fuser_ffn_ratio,
+        adapter_ratio=args.adapter_ratio,
         score_type=args.score_type,
         temperature=args.temperature,
         lambda_local=args.lambda_local
