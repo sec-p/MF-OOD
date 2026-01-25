@@ -339,9 +339,9 @@ class SelfAttentionFuser(BaseFuser):
         self.norm = nn.LayerNorm(input_dim)
         
         self.proj = nn.Sequential(
-            nn.Linear(input_dim, input_dim),
+            nn.Linear(input_dim, input_dim*2),
             nn.GELU(),
-            nn.Linear(input_dim, input_dim)
+            nn.Linear(input_dim*2, input_dim)
         )
         # 依然保持零初始化，保证初始阶段不破坏原特征
         # nn.init.zeros_(self.proj[-1].weight)
