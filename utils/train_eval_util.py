@@ -39,7 +39,7 @@ def set_val_loader(args, preprocess=None):
     kwargs = {'num_workers': 8, 'pin_memory': True, 'persistent_workers': True}
     if args.in_dataset == "ImageNet":
         val_loader = torch.utils.data.DataLoader(
-            datasets.ImageFolder(os.path.join(root, 'ImageNet','images', 'val'), transform=preprocess),
+            datasets.ImageFolder(os.path.join(root, 'imagenet','images', 'val'), transform=preprocess),
             batch_size=args.batch_size, shuffle=False, **kwargs)
     elif args.in_dataset == 'COCO_single':
         val_loader = torch.utils.data.DataLoader(
@@ -89,6 +89,9 @@ def set_ood_loader_ImageNet(args, out_dataset, preprocess, root):
     elif out_dataset == 'Texture':
         testsetout = datasets.ImageFolder(root=os.path.join(root, 'dtd', 'images'),
                                         transform=preprocess)
+    elif out_dataset == 'NINCO':
+        testsetout = datasets.ImageFolder(root=os.path.join(root, 'NINCO', 'NINCO_OOD_classes'),
+                                        transform=preprocess)
 
     if hasattr(args, 'num_ood_sumple') and args.num_ood_sumple > 0 and out_dataset != 'ood_voc':
         testsetout = get_subset_with_len(testsetout, length=args.num_ood_sumple, shuffle=True)
@@ -125,7 +128,7 @@ def set_train_loader(args, transform=None):
     
     # Load full training dataset
     if args.in_dataset == "ImageNet":
-        full_train_dataset = datasets.ImageFolder(os.path.join(root, 'ImageNet','images', 'train'), transform=transform)
+        full_train_dataset = datasets.ImageFolder(os.path.join(root, 'imagenet','images', 'train'), transform=transform)
     elif args.in_dataset == 'COCO_single':
         full_train_dataset = datasets.ImageFolder(os.path.join(root, 'ID_COCO_single'), transform=transform)
     elif args.in_dataset == 'COCO_multi':

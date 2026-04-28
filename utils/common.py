@@ -53,9 +53,9 @@ def get_test_labels(args):
 
 def obtain_ImageNet_classes():
     # Try to load from the standard location first
-    loc = os.path.join('data', 'ImageNet')
+    loc = "/amax/yeliu/data/imagenet"
     # class_file = os.path.join(loc, 'imagenet_class_clean.npy')
-    class_file = os.path.join(loc, 'classname.txt')
+    class_file = os.path.join(loc, 'classnames.txt')
 
     
     if os.path.exists(class_file):

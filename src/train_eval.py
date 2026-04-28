@@ -75,10 +75,22 @@ class TrainEvalOrchestrator:
                  # Intra-class consistency parameters
                  lambda_intra_class: float = 0.1,
                  intra_class_temp: float = 0.1,
+                 # LoCoOp OOD regularization parameters
+                 use_locoop_ood: bool = False,
+                 lambda_locoop_ood: float = 0.1,
+                 locoop_topk: int = 200,
+                 lambda_locoop_cls: float = 0.5,
+                 lambda_locoop_patch: float = 0.5,
+                 # Dimension parameters
+                 residual_coef: float = 0.2,
                  # OOD score parameters
                  score_type: str = 'GL-MCM',
                  temperature: float = 1.0,
-                 lambda_local: float = 1.0):
+                 lambda_local: float = 1.0,
+                 # Warmup parameters
+                 warmup_epochs: int = 1,
+                 warmup_type: str = 'constant',
+                 warmup_cons_lr: float = 1e-5):
         
         self.method = method
         self.epochs = epochs
@@ -105,12 +117,24 @@ class TrainEvalOrchestrator:
         self.lambda_intra_class = lambda_intra_class
         self.intra_class_temp = intra_class_temp
         
+        # LoCoOp OOD regularization parameters
+        self.use_locoop_ood = use_locoop_ood
+        self.lambda_locoop_ood = lambda_locoop_ood
+        self.locoop_topk = locoop_topk
+        self.lambda_locoop_cls = lambda_locoop_cls
+        self.lambda_locoop_patch = lambda_locoop_patch
+        
         # OOD score parameters
         self.score_type = score_type
         self.temperature = temperature
         self.lambda_local = lambda_local
         
-        # Model settings
+        # Warmup settings
+        self.warmup_epochs = warmup_epochs
+        self.warmup_type = warmup_type
+        self.warmup_cons_lr = warmup_cons_lr
+        
+        # Model components
         self.num_select = num_select
         self.backbone = backbone
         self.class_negatives_path = class_negatives_path
@@ -125,6 +149,7 @@ class TrainEvalOrchestrator:
         self.slot_ffn_ratio = slot_ffn_ratio
         self.fuser_ffn_ratio = fuser_ffn_ratio
         self.adapter_ratio = adapter_ratio
+        self.residual_coef = residual_coef
         
         # Setup random seeds
         self._setup_seed(seed)
@@ -152,7 +177,7 @@ class TrainEvalOrchestrator:
     def _setup_logging(self) -> str:
         """Setup logging directory and configure logging using file_ops utility."""
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        log_dir = f'/data/ICML2026/GL_MCM_FA/logs/{self.method}_{self.selector_type}_{self.seed}_{timestamp}'
+        log_dir = f'/home/yeliu/huhuhu/data/ICML2026/GL_MCM_FA/logs/{self.method}_{self.selector_type}_{self.seed}_{timestamp}'
         os.makedirs(log_dir, exist_ok=True)
         os.makedirs(f'{log_dir}/checkpoints', exist_ok=True)
         
@@ -304,6 +329,7 @@ class TrainEvalOrchestrator:
             'slot_ffn_ratio': self.slot_ffn_ratio,
             'fuser_ffn_ratio': self.fuser_ffn_ratio,
             'adapter_ratio': self.adapter_ratio,
+            'residual_coef': self.residual_coef,
             
             # Feature flags
             'use_redundancy_loss': True,
@@ -311,11 +337,16 @@ class TrainEvalOrchestrator:
             'use_semantic_exclusion': True,
             'use_mixup_invariance': True if self.lambda_mixup > 0 else False,
             'use_intra_class_consistency': True if self.lambda_intra_class > 0 else False,
+            'use_locoop_ood': self.use_locoop_ood,
             
             # Loss weights
             'lambda_redundancy': 1.0,
             'lambda_intra_class': self.lambda_intra_class,
             'intra_class_temp': self.intra_class_temp,
+            'lambda_locoop_ood': self.lambda_locoop_ood,
+            'locoop_topk': self.locoop_topk,
+            'lambda_locoop_cls': self.lambda_locoop_cls,
+            'lambda_locoop_patch': self.lambda_locoop_patch,
         }
         
         self.logger.debug(f'Config: {json.dumps(cfg, default=str, indent=2)}')
@@ -337,14 +368,21 @@ class TrainEvalOrchestrator:
             weight_decay=1e-5
         )
         
-        # Setup scheduler
-        self.scheduler = CosineAnnealingLR(self.optimizer, T_max=self.epochs)
+        # Setup scheduler with warmup
+        if self.warmup_epochs > 0:
+            # Create warmup scheduler
+            self.scheduler = self._get_scheduler_with_warmup()
+        else:
+            # No warmup, use standard scheduler
+            self.scheduler = CosineAnnealingLR(self.optimizer, T_max=self.epochs)
         
         # Setup GradScaler for AMP
         self.scaler = GradScaler()
         
         self.logger.debug(f'  ✓ Model: {self.method}')
         self.logger.debug(f'  ✓ Trainable parameters: {sum(p.numel() for p in trainable_params)}')
+        if self.warmup_epochs > 0:
+            self.logger.debug(f'  ✓ Warmup: {self.warmup_epochs} epochs, type={self.warmup_type}, cons_lr={self.warmup_cons_lr}')
     
     def _get_trainable_params(self):
         """Get only trainable parameters."""
@@ -353,6 +391,45 @@ class TrainEvalOrchestrator:
             if param.requires_grad:
                 trainable_params.append(param)
         return trainable_params
+    
+    def _get_scheduler_with_warmup(self):
+        """Create scheduler with warmup."""
+        from torch.optim.lr_scheduler import SequentialLR, LinearLR, ConstantLR
+        
+        warmup_scheduler = None
+        
+        if self.warmup_type == 'constant':
+            # Constant warmup: use constant learning rate during warmup
+            warmup_scheduler = ConstantLR(
+                self.optimizer,
+                factor=1.0,
+                total_iters=self.warmup_epochs
+            )
+        elif self.warmup_type == 'linear':
+            # Linear warmup: linearly increase from warmup_cons_lr to lr
+            warmup_scheduler = LinearLR(
+                self.optimizer,
+                start_factor=self.warmup_cons_lr / self.lr,
+                end_factor=1.0,
+                total_iters=self.warmup_epochs
+            )
+        else:
+            raise ValueError(f"Unknown warmup_type: {self.warmup_type}")
+        
+        # Main scheduler (cosine annealing)
+        main_scheduler = CosineAnnealingLR(
+            self.optimizer,
+            T_max=self.epochs - self.warmup_epochs
+        )
+        
+        # Combine warmup and main scheduler
+        scheduler = SequentialLR(
+            self.optimizer,
+            schedulers=[warmup_scheduler, main_scheduler],
+            milestones=[self.warmup_epochs]
+        )
+        
+        return scheduler
     
     def train_epoch(self, epoch: int) -> float:
         """Train for one epoch with AMP (Automatic Mixed Precision)."""
@@ -486,8 +563,8 @@ class TrainEvalOrchestrator:
         measures = detection_get_measures(-id_scores, -out_score)
         auroc, aupr, fpr95 = measures
         
-        # Convert AUROC to percentage, FPR95 is already in correct decimal form
-        return auroc * 100, fpr95
+        # Convert AUROC and FPR95 to percentage
+        return auroc * 100, fpr95 * 100
     
 
     
@@ -603,7 +680,7 @@ class TrainEvalOrchestrator:
             self.logger.debug(f'  Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%')
 
             # Evaluate every 5 epochs (more frequent than before)
-            if (epoch+1) % 5 == 0 and epoch+1 > 1:
+            if (epoch+1) % 5 == 0 and epoch+1 > 25:
                 # Evaluate
                 eval_results = self.evaluate_epoch(epoch)
                 self.logger.debug(f'  ID Accuracy: {eval_results["id_accuracy"]:.2f}%')
@@ -681,6 +758,18 @@ def main():
     parser.add_argument('--intra_class_temp', type=float, default=0.1,
                         help='Temperature for intra-class consistency loss (default: 0.1)')
     
+    # LoCoOp OOD regularization parameters
+    parser.add_argument('--use_locoop_ood', action='store_true',
+                        help='Use LoCoOp-style OOD regularization loss')
+    parser.add_argument('--lambda_locoop_ood', type=float, default=0.1,
+                        help='Weight for LoCoOp OOD regularization loss (default: 0.1)')
+    parser.add_argument('--locoop_topk', type=int, default=200,
+                        help='Top-k value for LoCoOp OOD patch selection (default: 200)')
+    parser.add_argument('--lambda_locoop_cls', type=float, default=0.5,
+                        help='Weight for CLS token OOD loss in dual adapter mode (default: 0.5)')
+    parser.add_argument('--lambda_locoop_patch', type=float, default=0.5,
+                        help='Weight for patch token OOD loss in dual adapter mode (default: 0.5)')
+    
     # Paths
     parser.add_argument('--class_negatives_path', type=str, default='')
     parser.add_argument('--text_features_path', type=str, default='',
@@ -702,7 +791,8 @@ def main():
                         help='FFN dimension ratio for fuser (default: 8.0 = 8 * input_dim)')
     parser.add_argument('--adapter_ratio', type=float, default=0.5,
                         help='Hidden dimension ratio for simple adapter (default: 0.5 = input_dim // 2)')
-
+    parser.add_argument('--residual_coef', type=float, default=0.2,
+                        help='Residual coefficient for shared adapter (default: 0.2)')
     # Advanced params
     parser.add_argument('--selector_temperature', type=float, default=1.0)
     parser.add_argument('--patches_per_slot_attn', type=int, default=16)
@@ -711,6 +801,11 @@ def main():
     parser.add_argument('--score_type', type=str, default='GL-MCM', help='OOD scoring method')
     parser.add_argument('--temperature', type=float, default=1.0, help='Temperature for OOD scoring')
     parser.add_argument('--lambda_local', type=float, default=1.0, help='Weight for local component in GL-MCM')
+    
+    # Warmup parameters
+    parser.add_argument('--warmup_epochs', type=int, default=1, help='Number of warmup epochs')
+    parser.add_argument('--warmup_type', type=str, default='constant', choices=['constant', 'linear'], help='Warmup type')
+    parser.add_argument('--warmup_cons_lr', type=float, default=1e-5, help='Constant learning rate for constant warmup')
 
     args = parser.parse_args()
 
@@ -732,6 +827,12 @@ def main():
         margin=args.margin,
         lambda_intra_class=args.lambda_intra_class,
         intra_class_temp=args.intra_class_temp,
+        use_locoop_ood=args.use_locoop_ood,
+        lambda_locoop_ood=args.lambda_locoop_ood,
+        locoop_topk=args.locoop_topk,
+        lambda_locoop_cls=args.lambda_locoop_cls,
+        lambda_locoop_patch=args.lambda_locoop_patch,
+        residual_coef=args.residual_coef,
         backbone=args.backbone,
         class_negatives_path=args.class_negatives_path,
         text_features_path=args.text_features_path,
@@ -746,7 +847,10 @@ def main():
         adapter_ratio=args.adapter_ratio,
         score_type=args.score_type,
         temperature=args.temperature,
-        lambda_local=args.lambda_local
+        lambda_local=args.lambda_local,
+        warmup_epochs=args.warmup_epochs,
+        warmup_type=args.warmup_type,
+        warmup_cons_lr=args.warmup_cons_lr
     )
 
     trainer.train_with_eval()

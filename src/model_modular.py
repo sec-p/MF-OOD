@@ -390,15 +390,16 @@ class SimpleAdapterFuser(BaseFuser):
         hidden_dim = int(input_dim * adapter_ratio)
         
         self.adapter = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
+            nn.Linear(input_dim, hidden_dim, bias=False),
             nn.GELU(),
-            nn.Linear(hidden_dim, input_dim)
+            nn.Linear(hidden_dim, input_dim, bias=False),
+            nn.GELU()
         )
         self.norm = nn.LayerNorm(input_dim)
         
         # 零初始化输出层，保证初始阶段不破坏原特征
-        nn.init.zeros_(self.adapter[-1].weight)
-        nn.init.zeros_(self.adapter[-1].bias)
+        nn.init.zeros_(self.adapter[-2].weight)
+        # nn.init.zeros_(self.adapter[-2].bias)
 
     def forward(self, selected_feats, global_feat, text_feats=None, labels=None):
         """
@@ -416,6 +417,64 @@ class SimpleAdapterFuser(BaseFuser):
         x = x.to(dtype)
         
         return x
+
+
+class SharedAdapterFuser(BaseFuser):
+    """
+    Shared Adapter that processes both CLS token and patch tokens with the same adapter.
+    The adapter is shared, so CLS and patches are in the same feature space.
+    Returns adapted CLS and adapted patches for separate loss computation.
+    """
+    def __init__(self, input_dim, num_heads=8, cfg=None):
+        super().__init__(input_dim, cfg)
+        
+        adapter_ratio = cfg.get('adapter_ratio', 0.5) if cfg else 0.5
+        hidden_dim = int(input_dim * adapter_ratio)
+        
+        # Shared adapter for both CLS and patches
+        self.shared_adapter = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim, bias=False),
+            nn.GELU(),
+            nn.Linear(hidden_dim, input_dim, bias=False),
+            nn.GELU()
+        )
+        
+        # Separate normalization layers for CLS and patches
+        self.cls_norm = nn.LayerNorm(input_dim)
+        self.patch_norm = nn.LayerNorm(input_dim)
+        
+        # 零初始化输出层，保证初始阶段不破坏原特征
+        nn.init.zeros_(self.shared_adapter[-2].weight)
+    
+    def forward(self, selected_feats, global_feat, text_feats=None, labels=None):
+        """
+        selected_feats: [B, N, D] (Patches)
+        global_feat:    [B, D]    (CLIP Original CLS)
+        
+        Returns:
+            adapted_cls: [B, D] - Adapted CLS token
+            adapted_patches: [B, N, D] - Adapted patch tokens
+        """
+        dtype = global_feat.dtype
+        
+        # Process CLS token with shared adapter
+        global_feat_fp32 = global_feat.float()
+        cls_adapter_out = self.shared_adapter(global_feat_fp32)
+        adapted_cls = self.cls_norm(cls_adapter_out)
+        adapted_cls = adapted_cls.to(dtype)
+        
+        # Process patch tokens with the SAME shared adapter
+        selected_feats_fp32 = selected_feats.float()
+        B, N, D = selected_feats_fp32.shape
+        selected_feats_flat = selected_feats_fp32.reshape(B * N, D)
+        
+        # Use the same adapter
+        patch_adapter_out = self.shared_adapter(selected_feats_flat)
+        patch_adapter_out = patch_adapter_out.reshape(B, N, D)
+        adapted_patches = self.patch_norm(patch_adapter_out)
+        adapted_patches = adapted_patches.to(dtype)
+        
+        return adapted_cls, adapted_patches
 
 
 class CrossAttentionFuser(BaseFuser):
@@ -625,6 +684,175 @@ def compute_intra_class_consistency_loss(final_feats: torch.Tensor,
     return loss
 
 
+@autocast(enabled=False)
+def compute_locoop_ood_loss(local_feats: torch.Tensor,
+                           text_feats: torch.Tensor,
+                           labels: torch.Tensor,
+                           top_k: int = 200,
+                           logit_scale: float = 100.0) -> torch.Tensor:
+    """
+    LoCoOp-style OOD regularization loss.
+    Identifies OOD patches by checking if their top-k predictions don't contain the ground truth label,
+    then maximizes the entropy of these OOD patches.
+    
+    Args:
+        local_feats: [B, N, D] - Local patch features
+        text_feats: [C, D] - Text features for all classes
+        labels: [B] - Ground truth labels
+        top_k: Number of top predictions to check
+        logit_scale: Temperature scaling for logits
+    
+    Returns:
+        OOD regularization loss (negative entropy of OOD patches)
+    """
+    # Cast to FP32 for stability
+    local_feats = local_feats.float()
+    text_feats = text_feats.float()
+    
+    B, N, D = local_feats.shape
+    C = text_feats.shape[0]
+    
+    # Normalize features
+    local_feats_norm = F.normalize(local_feats, dim=-1, eps=1e-8)
+    text_feats_norm = F.normalize(text_feats, dim=-1, eps=1e-8)
+    
+    # Compute logits for all patches: [B, N, C]
+    # Each patch gets logits for all classes
+    patch_logits = logit_scale * torch.einsum('bnd,cd->bnc', local_feats_norm, text_feats_norm)
+    
+    # Reshape to [B*N, C] for easier processing
+    patch_logits_flat = patch_logits.reshape(B * N, C)
+    
+    # Repeat labels for each patch: [B*N]
+    labels_repeated = labels.unsqueeze(1).expand(-1, N).reshape(B * N)
+    
+    # Get top-k predictions for each patch
+    pred_topk = torch.topk(patch_logits_flat, k=top_k, dim=1)[1]  # [B*N, top_k]
+    
+    # Check if ground truth label is in top-k predictions
+    # contains_label[i] = True if labels[i] is in pred_topk[i]
+    contains_label = pred_topk.eq(labels_repeated.unsqueeze(1)).any(dim=1)  # [B*N]
+    
+    # Select OOD patches (those where ground truth is NOT in top-k)
+    ood_mask = ~contains_label  # [B*N]
+    
+    # Get probabilities for OOD patches
+    patch_probs = F.softmax(patch_logits_flat, dim=-1)  # [B*N, C]
+    ood_probs = patch_probs[ood_mask]  # [num_ood_patches, C]
+    
+    # If no OOD patches found, return zero loss
+    if ood_probs.shape[0] == 0:
+        return torch.tensor(0.0, device=local_feats.device)
+    
+    # Compute entropy of OOD patches
+    # Entropy = -sum(p * log(p))
+    entropy = -torch.sum(ood_probs * torch.log(ood_probs + 1e-8), dim=1)  # [num_ood_patches]
+    
+    # Return negative mean entropy (we want to maximize entropy)
+    return -entropy.mean()
+
+
+@autocast(enabled=False)
+def compute_locoop_cls_loss(cls_feats: torch.Tensor,
+                          text_feats: torch.Tensor,
+                          labels: torch.Tensor,
+                          top_k: int = 200,
+                          logit_scale: float = 100.0) -> torch.Tensor:
+    """
+    LoCoOp-style OOD regularization loss for CLS token.
+    Similar to patch-based loss but applied to CLS token only.
+    
+    Args:
+        cls_feats: [B, D] - CLS token features
+        text_feats: [C, D] - Text features for all classes
+        labels: [B] - Ground truth labels
+        top_k: Number of top predictions to check
+        logit_scale: Temperature scaling for logits
+    
+    Returns:
+        OOD regularization loss for CLS token
+    """
+    # Cast to FP32 for stability
+    cls_feats = cls_feats.float()
+    text_feats = text_feats.float()
+    
+    B, D = cls_feats.shape
+    C = text_feats.shape[0]
+    
+    # Normalize features
+    cls_feats_norm = F.normalize(cls_feats, dim=-1, eps=1e-8)
+    text_feats_norm = F.normalize(text_feats, dim=-1, eps=1e-8)
+    
+    # Compute logits for CLS tokens: [B, C]
+    cls_logits = logit_scale * torch.einsum('bd,cd->bc', cls_feats_norm, text_feats_norm)
+    
+    # Get top-k predictions for each sample
+    pred_topk = torch.topk(cls_logits, k=top_k, dim=1)[1]  # [B, top_k]
+    
+    # Check if ground truth label is in top-k predictions
+    # contains_label[i] = True if labels[i] is in pred_topk[i]
+    contains_label = pred_topk.eq(labels.unsqueeze(1)).any(dim=1)  # [B]
+    
+    # Select OOD samples (those where ground truth is NOT in top-k)
+    ood_mask = ~contains_label  # [B]
+    
+    # Get probabilities for OOD samples
+    cls_probs = F.softmax(cls_logits, dim=-1)  # [B, C]
+    ood_probs = cls_probs[ood_mask]  # [num_ood_samples, C]
+    
+    # If no OOD samples found, return zero loss
+    if ood_probs.shape[0] == 0:
+        return torch.tensor(0.0, device=cls_feats.device)
+    
+    # Compute entropy of OOD samples
+    # Entropy = -sum(p * log(p))
+    entropy = -torch.sum(ood_probs * torch.log(ood_probs + 1e-8), dim=1)  # [num_ood_samples]
+    
+    # Return negative mean entropy (we want to maximize entropy)
+    return -entropy.mean()
+
+
+@autocast(enabled=False)
+def compute_locoop_dual_loss(cls_feats: torch.Tensor,
+                            patch_feats: torch.Tensor,
+                            text_feats: torch.Tensor,
+                            labels: torch.Tensor,
+                            top_k: int = 200,
+                            logit_scale: float = 100.0,
+                            lambda_cls: float = 0.5,
+                            lambda_patch: float = 0.5) -> torch.Tensor:
+    """
+    Combined LoCoOp OOD regularization loss for both CLS and patch tokens.
+    
+    Args:
+        cls_feats: [B, D] - CLS token features
+        patch_feats: [B, N, D] - Patch token features
+        text_feats: [C, D] - Text features for all classes
+        labels: [B] - Ground truth labels
+        top_k: Number of top predictions to check
+        logit_scale: Temperature scaling for logits
+        lambda_cls: Weight for CLS loss
+        lambda_patch: Weight for patch loss
+    
+    Returns:
+        Combined OOD regularization loss
+    """
+    # Compute CLS loss
+    cls_loss = compute_locoop_cls_loss(
+        cls_feats, text_feats, labels, top_k=top_k, logit_scale=logit_scale
+    )
+    
+    # Compute patch loss
+    patch_loss = compute_locoop_ood_loss(
+        patch_feats, text_feats, labels, top_k=top_k, logit_scale=logit_scale
+    )
+    
+    # Combine losses
+    total_loss = lambda_cls * cls_loss + lambda_patch * patch_loss
+    
+    return total_loss
+
+
 # ============================================================================
 # PART 5: MAIN MODEL - CustomCLIP
 # ============================================================================
@@ -659,16 +887,17 @@ class ModularCustomCLIP(nn.Module):
         print(f"✓ ModularCustomCLIP initialized. Dtype: {self.dtype}")
 
     def _build_components(self):
-        s_type = self.cfg.get('selector_type', 'mlp')
-        num_sel = self.cfg.get('num_select', 49)
-        
-        if s_type == 'mlp':
-            self.selector = MultiHeadMLPSelector(self.feat_dim, num_sel, self.cfg.get('num_heads_selector', 8), self.cfg)
-        elif s_type == 'slot':
-            self.selector = SparseSlotAttentionSelector(self.feat_dim, num_sel, self.cfg.get('num_slots', 8), self.cfg)
-        else:
-            self.selector = IdentitySelector(self.feat_dim, num_sel, self.cfg)
-        # self.selector = self.selector.to(self.dtype)
+        # Selector disabled - use all patches directly
+        # s_type = self.cfg.get('selector_type', 'mlp')
+        # num_sel = self.cfg.get('num_select', 49)
+        # 
+        # if s_type == 'mlp':
+        #     self.selector = MultiHeadMLPSelector(self.feat_dim, num_sel, self.cfg.get('num_heads_selector', 8), self.cfg)
+        # elif s_type == 'slot':
+        #     self.selector = SparseSlotAttentionSelector(self.feat_dim, num_sel, self.cfg.get('num_slots', 8), self.cfg)
+        # else:
+        #     self.selector = IdentitySelector(self.feat_dim, num_sel, self.cfg)
+        # # self.selector = self.selector.to(self.dtype)
         
         f_type = self.cfg.get('fuser_type', 'mean')
         if f_type == 'query_attn':
@@ -679,8 +908,10 @@ class ModularCustomCLIP(nn.Module):
             self.fuser = CrossAttentionFuser(self.feat_dim, self.cfg.get('num_heads_fuser', 8), self.cfg)
         elif f_type == 'simple_adapter':
             self.fuser = SimpleAdapterFuser(self.feat_dim, self.cfg.get('num_heads_fuser', 8), self.cfg)
+        elif f_type == 'shared_adapter':
+            self.fuser = SharedAdapterFuser(self.feat_dim, self.cfg.get('num_heads_fuser', 8), self.cfg)
         else:
-            self.fuser = MeanPoolFuser(self.feat_dim, self.cfg)
+            self.fuser = MeanPoolFuser(self.feat_dim)
         # self.fuser = self.fuser.to(self.dtype)
 
     def _cache_text_features(self):
@@ -823,35 +1054,48 @@ class ModularCustomCLIP(nn.Module):
         # image_features = F.normalize(image_features, dim=-1)
         # local_features = F.normalize(local_features, dim=-1)
         
-        # 2. Select Features (Mixed Precision managed internally)
-        selected_feats, sel_aux_loss, bg_mask = self.selector(local_features)
-
-        # 3. Text Features
+        # 2. Text Features
         text_feats = self._text_features.type(self.dtype)
         if labels is not None:
             pos_text_feat = text_feats[labels]
         else:
             pos_text_feat = text_feats.mean(dim=0, keepdim=True).expand(B, -1)
             
-        # 4. Fusion
-        final_feats = self.fuser(selected_feats, global_feat=image_features)
-        global_features=image_features+final_feats
+        # 3. Fusion (No selector, use all patches directly)
+        # Check if using SharedAdapterFuser
+        if isinstance(self.fuser, SharedAdapterFuser):
+            # Shared adapter returns adapted CLS and adapted patches separately
+            # Both use the SAME adapter, so they're in the same feature space
+            adapted_cls, adapted_patches = self.fuser(local_features, global_feat=image_features)
+            adapted_patches_for_loss = self.cfg.get('residual_coef', 0.2) * adapted_patches + local_features
+            # For final classification, use adapted CLS (or combine with patches)
+            # Here we use adapted CLS for simplicity
+            # final_feats = adapted_cls
+            global_features = image_features + self.cfg.get('residual_coef', 0.2) * adapted_cls
+            final_feats = global_features / global_features.norm(dim=-1, keepdim=True)
+            
+            # Store adapted features for OOD loss computation
+            # adapted_cls_for_loss = final_feats
+            # adapted_patches_for_loss = local_features
+        else:
+            # Standard fuser returns single feature
+            final_feats = self.fuser(local_features, global_feat=image_features)
+            global_features = image_features + final_feats
+            final_feats = global_features / global_features.norm(dim=-1, keepdim=True)
+            
+            # Use original features for OOD loss
+            adapted_cls_for_loss = image_features
+            adapted_patches_for_loss = local_features
+        
         # final_feats = F.normalize(global_features, dim=-1)
         # final_feats = F.normalize(final_feats, dim=-1)
-        final_feats = global_features / global_features.norm(dim=-1, keepdim=True)
-        # final_feats = F.normalize(final_feats, dim=-1)
 
-        # 5. Logits
+        # 4. Logits
         logit_scale = self.logit_scale.exp()
         logits = logit_scale * final_feats @ text_feats.T
         
-        # 6. Losses
-        aux_losses = sel_aux_loss.copy()
-        
-        # A. Redundancy
-        if self.cfg.get('use_redundancy_loss', False):
-            aux_losses['redundancy'] = self.cfg.get('lambda_redundancy', 0) * \
-                                     compute_redundancy_loss(selected_feats)
+        # 5. Losses
+        aux_losses = {}
         
         # B. LLM Negatives - now uses cached negative features
         if negative_text_tokens is None and self.cfg.get('use_llm_negatives', False) and labels is not None:
@@ -898,17 +1142,17 @@ class ModularCustomCLIP(nn.Module):
             )
             aux_losses['semantic_exclusion'] = self.cfg.get('lambda_llm_negatives', 0.5) * sem_loss
             
-        # D. Mixup
-        if self.cfg.get('use_mixup_invariance', False):
-            scale_val = logit_scale.item()
-            mixup_loss = compute_mixup_invariance_loss(
-                final_feats, local_features, bg_mask,
-                text_feats=text_feats,
-                labels=labels,
-                logit_scale=scale_val,
-                alpha=self.cfg.get('mixup_alpha', 0.2)
-            )
-            aux_losses['mixup_invariance'] = self.cfg.get('lambda_mixup', 0.1) * mixup_loss
+        # D. Mixup (Disabled - requires bg_mask from selector)
+        # if self.cfg.get('use_mixup_invariance', False):
+        #     scale_val = logit_scale.item()
+        #     mixup_loss = compute_mixup_invariance_loss(
+        #         final_feats, local_features, bg_mask,
+        #         text_feats=text_feats,
+        #         labels=labels,
+        #         logit_scale=scale_val,
+        #         alpha=self.cfg.get('mixup_alpha', 0.2)
+        #     )
+        #     aux_losses['mixup_invariance'] = self.cfg.get('lambda_mixup', 0.1) * mixup_loss
         
         # E. Intra-class Consistency
         if self.cfg.get('use_intra_class_consistency', False) and labels is not None:
@@ -918,15 +1162,52 @@ class ModularCustomCLIP(nn.Module):
                 temperature=self.cfg.get('intra_class_temp', 0.1)
             )
             aux_losses['intra_class_consistency'] = self.cfg.get('lambda_intra_class', 0.1) * intra_loss
+        
+        # F. LoCoOp-style OOD regularization
+        if self.cfg.get('use_locoop_ood', False) and labels is not None:
+            scale_val = logit_scale.item()
+            top_k = self.cfg.get('locoop_topk', 200)
+            
+            # Check if using shared adapter (separate CLS and patch losses)
+            if isinstance(self.fuser, SharedAdapterFuser):
+                # Shared adapter returns adapted CLS and adapted patches separately
+                # Both use SAME adapter, so they're in the same feature space
+                
+                # CLS token: used for classification only, NO OOD regularization
+                # (all training samples are ID, CLS should match ground truth)
+                
+                # Patch tokens: apply OOD regularization
+                # (patches have foreground/ID and background/OOD distinction)
+                
+                # Apply OOD regularization ONLY to patch tokens
+                ood_loss = compute_locoop_ood_loss(
+                    adapted_patches_for_loss,  # Only patches
+                    text_feats,
+                    labels,
+                    top_k=top_k,
+                    logit_scale=scale_val
+                )
+                aux_losses['locoop_ood'] = self.cfg.get('lambda_locoop_ood', 0.1) * ood_loss
+            else:
+                # Use standard patch-based loss
+                ood_loss = compute_locoop_ood_loss(
+                    adapted_patches_for_loss,  # Use adapted patches or selected features
+                    text_feats,
+                    labels,
+                    top_k=top_k,
+                    logit_scale=scale_val
+                )
+                aux_losses['locoop_ood'] = self.cfg.get('lambda_locoop_ood', 0.1) * ood_loss
         # import pdb
         # pdb.set_trace()
         return {
             'logits': logits,
             'aux_losses': aux_losses,
-            'selected_feats': selected_feats,
+            'selected_feats': adapted_patches_for_loss,
             'final_feats': final_feats,
             'global_features': global_features,
-            'local_features': local_features
+            'local_features': local_features,
+            'global_feature': image_features,
         }
 
 

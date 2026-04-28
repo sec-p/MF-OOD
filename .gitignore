@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*.pyc
+.Python
+logs/
+results/
+distance_results/
+tsne_results/
+*.log
+.DS_Store
+.vscode/
+.idea/
